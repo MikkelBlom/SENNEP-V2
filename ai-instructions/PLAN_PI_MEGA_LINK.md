@@ -95,7 +95,7 @@ Not done in the Mega firmware: VL53L0X/TCA9548A driver, HC-SR04 (pin-change inte
 
 | # | Question | Recommendation |
 |---|---|---|
-| Q1 | **Should the Mega run Rust too?** Explained to Mikkel: every Arduino sketch already *is* custom firmware; the language only changes the tools (Arduino IDE vs Rust's `cargo` + avrdude) and the libraries. AVR is Rust's weakest target (nightly compiler, fewer drivers). | **Rust on the Pi, Arduino C++ on the Mega for now.** If Rust on the MCU is wanted later, use an RP2040 (Pico, ~40 kr, 3.3 V, embassy) rather than AVR. Waiting for his answer. |
+| Q1 | **Should the Mega run Rust too?** Explained to Mikkel: every Arduino sketch already *is* custom firmware; the language only changes the tools (Arduino IDE vs Rust's `cargo` + avrdude) and the libraries. AVR is Rust's weakest target (nightly compiler, fewer drivers). | **Rust on the Pi, Arduino C++ on the Mega for now.** If Rust on the MCU is wanted later, use an RP2040 (Pico, ~40 kr, 3.3 V, embassy) rather than AVR. **DECIDED 2026-10-12: Arduino C++ + Arduino IDE on the Mega** (Mikkel). |
 | Q2 | Inventory: Mikkel says 1 Mega + several Uno + some Nano; `components/inventory.csv` says 2 Mega, 2 Nano, 0 Uno. | Fix in the documentation task. |
 | Q3 | Which Pi 5 device is GPIO14/15 (`/dev/ttyAMA0` vs `ttyAMA10`), and is it `dtparam=uart0=on` or `dtoverlay=uart0-pi5`? Sources disagree. | Check on the Pi: `ls -l /dev/serial* /dev/ttyAMA*`. |
 | Q4 | 250 k or 500 k baud through the BSS138? | Start at 250 k; measure with the `latency` test. |
@@ -202,7 +202,7 @@ custom firmware … I guess it is just a processing unit, so it could work. Plea
   hand-written work. That is a lot of new things for a first non-IDE firmware.
 - **Recommendation given: Rust on the Pi, Arduino C++ on the Mega for now; RP2040/Pico if Rust on an MCU is wanted later.**
   (In the question before that, "Rust on Mega" had been marked "recommended"; this was corrected in the explanation once it was clear he only knows the IDE.)
-- He was asked to reply "Arduino on Mega" or "Rust on Mega". **He has not answered (Q1 is still open).**
+- He was asked to reply "Arduino on Mega" or "Rust on Mega". **Answered in the consolidation session: Arduino C++ on the Mega** (he had thought custom firmware meant rewriting the Mega's BIOS).
 
 **Last instruction:** write everything down for a separate consolidating session. Six cloud sessions ran independently (LiDAR stack,
 this link, breadboard circuit, PCB, documentation/component list, 3S6P battery). The PCB session logged that it was blocked

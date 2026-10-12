@@ -34,6 +34,7 @@ Newest first. Reasoning included so they are not re-litigated.
 
 | Date | Decision | Why | Rejected |
 |---|---|---|---|
+| 2026-10-12 | Mega stays Arduino C++ with the Arduino IDE; Rust only on the Pi | Code already written and tested; IDE + Upload keeps working; AVR is Rust's weakest target | Rust on the Mega (avr-hal); later Rust MCU → RP2040/Pico |
 | 2026-10-12 | Project hub `hub/`: local HTML over plain CSV/Markdown files in the repo, edits saved through Chrome folder access | Mikkel and Claude edit the same files; no server, works offline | Tiny local server; online claude.ai page |
 | 2026-10-12 | All docs in English, including the electronics and LiDAR plans | One language (docs session choice) | — |
 | 2026-10-12 | Battery: measure and match cells first, then spot-weld at a workshop (Fyns Batteri Service first) | Mikkel is wary of soldering/welding cells; 48 W iron too weak | Printed compression pack (backup), soldering on cells, magnets, loose strip |

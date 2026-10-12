@@ -9,11 +9,11 @@ t07;Write the illustrated battery assembly guide;Battery;todo;Claude;medium;t01,
 t08;Wiring diagrams for milestone M1 (Pi 5 + Mega + 4 motors + LiDAR);Electronics;todo;Claude;high;;Breadboard plan v0.2 approved 2026-10-12
 t09;Step-by-step build + test guide for M1;Electronics;todo;Claude;high;t08;10 test steps are in BREADBOARD_PLAN §7
 t10;Hardware measurements: e-stop contacts, BTS7960 IS resistors, 12 V adapter rating, buck under load, largest electrolytic cap;Electronics;todo;Mikkel;medium;;See BREADBOARD_PLAN
-t11;Decide: Arduino C++ or Rust on the Mega (Q1);Firmware;todo;Mikkel;high;;Read the explanation in docs/electronics/PI_MEGA_LINK.md. Recommendation: Arduino C++
+t11;Decide: Arduino C++ or Rust on the Mega (Q1);Firmware;done;Mikkel;high;;Arduino C++ + Arduino IDE (2026-10-12)
 t12;Rust Pi-side link (sennep-proto / sennep-link / sennep-cli) + Rust output in gen_msgs.py;Firmware;todo;Claude;medium;;Replaces tools/sennep_link.py (Python). PLAN_PI_MEGA_LINK §9 phase A
-t13;Mega firmware: VL53L0X via TCA9548A, HC-SR04, NRF24 RC, EEPROM params, firmware/README.md;Firmware;todo;Claude;medium;t11;
+t13;Mega firmware (Arduino C++): VL53L0X via TCA9548A, HC-SR04, NRF24 RC, EEPROM params, firmware/README.md;Firmware;todo;Claude;medium;;
 t14;Send LiDAR zone report (41 B) to the Mega over the link;Firmware;todo;Claude;medium;t12;ObstacleSink trait is ready in lidar/
-t15;Run sennep-lidar on the real LiDAR + Pi 5, record drives;LiDAR;todo;Mikkel;medium;;Commands in lidar/README.md. Check the LiDAR 0° direction and the 800 × 650 outline
+t15;Test the LiDAR stack with the real LiDAR on the PC (then on the Pi 5);LiDAR;todo;Mikkel;medium;;CP2102 adapter → PC. Run locally: cargo run --release -- --serial <port>. Check 0° direction
 t16;Check Pi 5 RAM (printed next to the RAM chip);Parts;todo;Mikkel;low;;4 or 8 GB
 t17;Physical parts count (qty, source, condition, counted ✓);Parts;doing;Mikkel;high;;Parts and Tools tabs. Add anything missing with "+ Add row"
 t18;Find Pi 5 and LiDAR receipts (price);Parts;todo;Claude;low;;Gmail connector needed re-auth last time

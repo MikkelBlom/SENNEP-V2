@@ -1,6 +1,6 @@
 # Pi 5 ↔ Arduino Mega — link and protocol
 
-Status: **design APPROVED 2026-10-12** (round 2, §0b). Open question **Q1 (Arduino C++ vs Rust on the Mega)** is still waiting for Mikkel (§0c). Combined plan + next steps: `ai-instructions/PLAN_PI_MEGA_LINK.md`. Code: `firmware/`, `protocol/`, `tools/`, `tests/`.
+Status: **design APPROVED 2026-10-12** (round 2, §0b). Q1 decided 2026-10-12: **Arduino C++ + Arduino IDE on the Mega**, Rust on the Pi (§0c). Combined plan + next steps: `ai-instructions/PLAN_PI_MEGA_LINK.md`. Code: `firmware/`, `protocol/`, `tools/`, `tests/`.
 
 ## 0. Mikkel's answers, round 1 (2026-10-12)
 
