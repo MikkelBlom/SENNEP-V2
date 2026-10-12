@@ -1,0 +1,6 @@
+# Static aarch64 binary for the Raspberry Pi 5, built on any PC:
+#   cargo build --release --target aarch64-unknown-linux-musl
+# Rust's bundled lld links it; no cross toolchain needed (the crate has no C dependencies).
+[target.aarch64-unknown-linux-musl]
+linker = "rust-lld"
+rustflags = ["-C", "target-cpu=cortex-a76"]

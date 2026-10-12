@@ -35,6 +35,18 @@ impl Default for PipelineConfig {
     }
 }
 
+impl PipelineConfig {
+    /// For a LiDAR that is not mounted on the robot (desk tests, the old recordings): no body mask,
+    /// zones measured from the sensor itself.
+    pub fn off_robot() -> Self {
+        let mut cfg = PipelineConfig::default();
+        cfg.filter.self_mask = None;
+        cfg.zones.footprint = crate::filter::Footprint { length: 0.0, width: 0.0 };
+        cfg.zones.self_margin = -1.0;
+        cfg
+    }
+}
+
 /// Fixed-size window of recent timings for live diagnostics.
 #[derive(Clone, Debug)]
 pub struct Window {

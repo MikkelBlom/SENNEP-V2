@@ -237,6 +237,15 @@ impl Trajectory {
         ]
     }
 
+    /// Continues with `other`'s motion from where this trajectory ends.
+    pub fn append(&self, other: &Trajectory) -> Trajectory {
+        let end = *self.poses.last().unwrap();
+        let start = other.poses[0];
+        let mut poses = self.poses.clone();
+        poses.extend(other.poses.iter().skip(1).map(|p| end.compose(&start.between(p))));
+        Trajectory { poses, dt: self.dt }
+    }
+
     pub fn duration(&self) -> f64 {
         (self.poses.len() - 1) as f64 * self.dt
     }

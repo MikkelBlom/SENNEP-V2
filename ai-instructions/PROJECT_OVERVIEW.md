@@ -29,7 +29,7 @@ Sidste prompt-retning: aflang rektangulær krop, lodrette flade sider flush med 
 
 ## 3. Arkitektur (besluttet)
 
-- **Raspberry Pi** (højniveau: LiDAR, kamera, skærm, de fleste sensorer, Python fra bunden — INGEN ROS2).
+- **Raspberry Pi** (højniveau: LiDAR, kamera, skærm, de fleste sensorer, fra bunden — INGEN ROS2). **Sprog: Rust** (besluttet 2026-10-12 i LiDAR-sessionen, fordi Pi'en også skal køre kamera/AI; Mikkel vil helst undgå Python). Se `docs/lidar/PLAN.md`.
 - **Arduino Nano** (motorstyring + sekundær kollisionsundgåelse, RF-override). Mega som plan B hvis pins slipper op.
 - Pi ↔ Nano via UART.
 - Strøm: 3S Li-ion → sikring → nødstop (hovedafbryder) → 12 V direkte til motordrivere; buck-convertere → 5 V til logik. TVS/Schottky/kondensatorer pga. V1-skaden.
@@ -390,3 +390,12 @@ Mikkel kunne ikke lide bakkerne og ville have en "rigtig" bilramme (stigeramme).
 - Tjek: ingen kollision med ramme, hjul, motorer, mast og batteri. Skal 650 × 800 × 176, ca. 2,8 kg PETG massivt. LiDAR-margen 17 mm ved 2° hældning.
 - **Fejl rettet undervejs:** `BIG` (størrelsen på hjælpekasserne til halvrums-snit) var 1000 mm, og det var for lidt til skrå planer på hele robotten. Nu er den 4000. Rammen er genbygget efter rettelsen, og tjekkene er uændrede.
 - Mangler: opdeling i printbare paneler (≤ 220) med samlinger, beslag til rammen (og hurtig af/på, så skallen kan skiftes), holdere indvendigt til skærm/blæsere/højttalere/ToF/LED, kantsensorer (sidder i rammens kofangerhjørner), farver/lygteglas.
+
+## 14. LiDAR-stack v2 (2026-10-12)
+
+Ny stack i Rust: `lidar/` (én binær `sennep-lidar` + `bench`). Plan/beslutninger: `docs/lidar/PLAN.md`;
+målinger: `docs/lidar/BENCHMARK.md`; brug: `lidar/README.md`. Den gamle Electron-app er kun testdata.
+- Sikkerhedszoner (16 sektorer, frirum fra robottens kant, pr. pakke) → skal til Megaen over linket.
+- LiDAR-odometri (ingen encodere) + occupancy grid + web-UI (browser/7" skærm) på port 8080.
+- Robotomrids i koden: 800 × 650 mm (Body v0), LiDAR i centrum, 0° = front. Ret hvis monteringen ændres.
+- Ikke testet på rigtig hardware endnu.

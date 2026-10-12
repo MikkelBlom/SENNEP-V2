@@ -2,95 +2,16 @@
 //! Simulator runs with known ground truth: drift, jitter, map quality, zone correctness.
 mod common;
 use common::*;
+use sennep_lidar::eval::Score;
 use sennep_lidar::geom::{wrap_angle, Pose2};
-use sennep_lidar::grid::Grid;
 use sennep_lidar::pipeline::PipelineConfig;
 use sennep_lidar::sim::*;
 use sennep_lidar::source::{SimSource, SIM_HOST_EPOCH_US};
 
 const EPOCH: f64 = SIM_HOST_EPOCH_US as f64 * 1e-6;
 
-struct Score {
-    ate_rms: f64,
-    final_pos_err: f64,
-    final_th_err: f64,
-    path_len: f64,
-    accepted: f64,
-    map_precision: f64,
-    map_recall: f64,
-}
-
-/// Compares estimated poses with the truth, both expressed relative to their first pose, and
-/// scores the occupancy grid against the world's walls.
 fn score(run: &Run, traj: &Trajectory, world: &World) -> Score {
-    let first = run.poses[0];
-    let truth0 = traj.at(first.0 - EPOCH);
-    let mut sq = 0.0;
-    let mut last = (0.0, 0.0);
-    for &(t, est) in &run.poses {
-        let rel_est = first.1.between(&est);
-        let rel_true = truth0.between(&traj.at(t - EPOCH));
-        let e = rel_est.between(&rel_true);
-        sq += e.dist().powi(2);
-        last = (e.dist(), wrap_angle(rel_true.th - rel_est.th).abs());
-    }
-    let accepted = run.accepted.iter().filter(|a| **a).count() as f64 / run.accepted.len() as f64;
-    let (map_precision, map_recall) =
-        run.pipeline.grid.as_ref().map_or((0.0, 0.0), |g| map_quality(g, &first.1, &truth0, world));
-    Score {
-        ate_rms: (sq / run.poses.len() as f64).sqrt(),
-        final_pos_err: last.0,
-        final_th_err: last.1,
-        path_len: traj.length().0,
-        accepted,
-        map_precision,
-        map_recall,
-    }
-}
-
-/// Precision: share of occupied cells within 10 cm of a real wall.
-/// Recall: share of wall cells (sampled along every wall seen) that have an occupied cell within 10 cm.
-fn map_quality(g: &Grid, est0: &Pose2, true0: &Pose2, world: &World) -> (f64, f64) {
-    // map frame -> world: world = true0 ∘ est0⁻¹ ∘ map
-    let to_world = true0.compose(&est0.inverse());
-    let to_map = to_world.inverse();
-    let occ = Grid::occupied_threshold();
-    let (mut good, mut total) = (0usize, 0usize);
-    let mut occupied = Vec::new();
-    for cy in 0..g.dim {
-        for cx in 0..g.dim {
-            if g.value(cx, cy) >= occ {
-                let (mx, my) = g.cell_center(cx, cy);
-                let w = to_world.apply(mx as f64, my as f64);
-                total += 1;
-                if world.static_distance(w) < 0.10 {
-                    good += 1;
-                }
-                occupied.push((mx, my));
-            }
-        }
-    }
-    // Recall over wall samples that the map has observed at all (cell touched by a beam).
-    let (mut found, mut seen) = (0usize, 0usize);
-    for s in &world.segments {
-        let len = (s.b.0 - s.a.0).hypot(s.b.1 - s.a.1);
-        let n = (len / 0.05).ceil() as usize;
-        for i in 0..=n {
-            let k = i as f64 / n as f64;
-            let w = (s.a.0 + (s.b.0 - s.a.0) * k, s.a.1 + (s.b.1 - s.a.1) * k);
-            let (mx, my) = to_map.apply(w.0, w.1);
-            let cx = ((mx as f32 - g.origin.0) / g.cfg.resolution) as usize;
-            let cy = ((my as f32 - g.origin.1) / g.cfg.resolution) as usize;
-            if g.value(cx, cy) == 0 {
-                continue; // never observed (behind furniture, outside view)
-            }
-            seen += 1;
-            if occupied.iter().any(|&(ox, oy)| (ox as f64 - mx).hypot(oy as f64 - my) < 0.10) {
-                found += 1;
-            }
-        }
-    }
-    (good as f64 / total.max(1) as f64, found as f64 / seen.max(1) as f64)
+    sennep_lidar::eval::score(&run.poses, &run.accepted, run.pipeline.grid.as_ref(), traj, world)
 }
 
 fn simulate(world: World, traj: Trajectory, cfg: SimConfig) -> (Run, Score) {
@@ -239,4 +160,14 @@ fn zones_match_ground_truth() {
     assert_eq!(stale, 0);
     assert_eq!(worst_opt, 0.0, "zones reported more room than there was");
     assert!(worst_cons < 0.10, "conservative by {worst_cons}");
+}
+
+#[test]
+fn returning_to_known_places_cancels_drift() {
+    // Out and back the same way: the robot must re-lock onto the keyframes it made on the way out.
+    let (_, s) =
+        simulate(World::apartment().with_person(), Trajectory::tour_round_trip(), SimConfig::default());
+    assert!(s.final_pos_err < 0.02, "back at start but {} m off", s.final_pos_err);
+    assert!(s.final_th_err.to_degrees() < 0.3);
+    assert!(s.map_precision > 0.90);
 }

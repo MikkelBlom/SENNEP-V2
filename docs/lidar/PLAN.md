@@ -1,6 +1,8 @@
-# LiDAR-stack v2 — plan (UDKAST, ikke godkendt)
+# LiDAR-stack v2 — plan
 
-Status: **udkast til Mikkels beslutninger** (2026-10-12). Intet er bygget endnu.
+Status (2026-10-12): **godkendt og v1 bygget** i Rust (`lidar/`, se `lidar/README.md`). Alle fire
+skridt fra runde 2 er lavet og testet mod optagelser + simulator; resultater i §10 og `BENCHMARK.md`.
+**Ikke** testet på den rigtige LiDAR eller Pi'en endnu.
 Gammel app (`Lidar Test Enviornment/`) bruges kun som inspiration og testdata.
 
 ---
@@ -233,3 +235,30 @@ på Pi'en end man skulle tro — men det ændrer ikke valget, fordi Rust også e
 | `sim` | Syntetisk rum + bane + støj fra databladet → **rå LD19-bytes** (tester hele kæden) |
 | `server` | HTTP (én statisk side) + WebSocket med binære frames; klienter får altid nyeste frame (ingen kø) |
 | `bench` | Afspiller optagelser + sim, måler latens, CPU, RSS, jitter, drift, kort-IoU → `docs/lidar/BENCHMARK.md` |
+
+## 10. Status efter v1 (2026-10-12)
+
+Målt i skyen (x86, ~1,5–2,5× hurtigere pr. kerne end Pi 5) — fuld tabel i `BENCHMARK.md`:
+
+| Mål (§3) | Krav | Målt |
+|---|---|---|
+| Behandling pr. omgang, median / p99 | ≤ 10 / ≤ 25 ms | 2,9 / 7,2 ms (Pi-estimat ~5–7 / ~15 ms) |
+| Zoner pr. pakke | ≤ 2 ms | < 1 µs median, p99 2 µs |
+| CPU | ≤ 10–25 % af én kerne | 2–3,4 % (inkl. web-server: 5–6 % med sim) |
+| RAM | ≤ 150 MB | ~6 MB for hele programmet |
+| Statisk jitter | ≤ 5 mm / 0,2° | 0,25–0,7 mm / 0,07–0,09° (optagelser), 1,4 mm / 0,04° (sim, 15 mm støj) |
+| Kort der holder | — | 8,7 m tur: 0,02 % drift, 99 % præcision; 173 m (11 min): 2,6 mm / 0,01° tilbage ved start, 92 % præcision |
+| Zoner korrekte | — | 0 optimistiske fejl i 4800 sektorværdier med gående person |
+
+Vigtige fund undervejs: sensoren overlapper af og til to pakker med 0,2° (også ved sømmen) — ufarligt;
+tynde ting langt væk rammes ikke hver omgang (fysik, ikke bug); en zone er op til én omdrejning (100 ms)
+gammel, hvilket ved rotation betyder at en ting kan "skifte sektor" mellem to passager; tykke vægge kræver
+at ICP afviser bagsiden (normaler orienteret mod sensoren); keyframes skal genbruges når robotten kommer
+tilbage, ellers driver kursen ~4° på 11 minutter.
+
+**Næste skridt (forslag):**
+1. Mikkel: kør `sennep-lidar --serial …` + `bench` på Pi'en med den rigtige LiDAR; optag et par ture med `--record`.
+2. Tjek monteringen: at LiDAR'ens 0° peger fremad (ellers `Mount.yaw`) og at robottens omrids passer.
+3. Send `ZoneReport` over Pi↔Mega-linket, når det er bygget (`ObstacleSink`).
+4. Flet gyroen (MPU-6050 via Megaen) ind i prædiktionen → robust ved hurtige drej.
+5. Gem/indlæs kort + lokalisering i et gemt kort; derefter bevægelige objekter.

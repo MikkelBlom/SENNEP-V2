@@ -8,7 +8,11 @@
 //!    is moved to where it would have been seen at the scan's end time, using its own timestamp.
 //! 3. **Match against keyframes, not the previous scan.** A keyframe is a stored scan with surface
 //!    normals. While the robot stands still every scan matches the same keyframe, so noise does
-//!    not accumulate (zero drift, sub-mm jitter). New keyframes are added only after real motion.
+//!    not accumulate (zero drift, sub-mm jitter). All keyframes are kept with their pose, and the
+//!    ones near the robot form the local map, so when the robot comes back to a place it locks
+//!    onto what it mapped before instead of piling new drift on top. A new keyframe is only made
+//!    where no existing one covers the current position and heading: memory grows with the area
+//!    explored, not with driving time.
 //! 4. **Point-to-line ICP** (Gauss-Newton on point-to-normal distance, Huber weights), with a
 //!    shrinking correspondence radius. Converges in a few iterations on indoor walls, where
 //!    point-to-point ICP slides along them.
@@ -17,13 +21,15 @@
 use crate::geom::{wrap_angle, Pose2};
 use crate::scan::ScanPoint;
 use crate::sim::range_sigma;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct OdomConfig {
     pub keyframe_dist: f64,
     pub keyframe_angle: f64,
-    pub max_keyframes: usize,
+    /// Keyframes used for matching: the nearest ones within `local_radius` (m), at most this many.
+    pub local_keyframes: usize,
+    pub local_radius: f64,
     pub max_iterations: usize,
     /// Huber threshold on point-to-line distance (m).
     pub huber: f64,
@@ -38,7 +44,8 @@ impl Default for OdomConfig {
         OdomConfig {
             keyframe_dist: 0.25,
             keyframe_angle: 12f64.to_radians(),
-            max_keyframes: 10,
+            local_keyframes: 12,
+            local_radius: 4.0,
             max_iterations: 25,
             huber: 0.02,
             min_inlier_ratio: 0.35,
@@ -71,9 +78,8 @@ struct LocalMap {
 }
 
 impl LocalMap {
-    fn build(keyframes: &VecDeque<Keyframe>) -> LocalMap {
+    fn build<'a>(keyframes: impl Iterator<Item = &'a Keyframe>) -> LocalMap {
         let mut pts: Vec<(i32, i32, MapPoint)> = keyframes
-            .iter()
             .flat_map(|k| k.points.iter())
             .map(|p| ((p.x / CELL).floor() as i32, (p.y / CELL).floor() as i32, *p))
             .collect();
@@ -183,7 +189,9 @@ pub struct Odometry {
     /// Body-frame velocity (vx, vy, w) estimated from the last two scans.
     pub vel: Pose2,
     last_t: Option<f64>,
-    keyframes: VecDeque<Keyframe>,
+    keyframes: Vec<Keyframe>,
+    /// Indices of the keyframes in `map`, sorted.
+    active: Vec<usize>,
     map: LocalMap,
     /// Scratch buffers, reused to avoid per-scan allocation.
     body: Vec<(f32, f32)>,
@@ -196,7 +204,8 @@ impl Odometry {
             pose: Pose2::IDENTITY,
             vel: Pose2::IDENTITY,
             last_t: None,
-            keyframes: VecDeque::new(),
+            keyframes: Vec::new(),
+            active: Vec::new(),
             map: LocalMap::default(),
             body: Vec::new(),
         }
@@ -239,6 +248,7 @@ impl Odometry {
             return (self.pose, info);
         }
 
+        self.select_local_map(&predicted);
         let (mut est, mut m) = self.icp(predicted);
         if !m.accepted {
             // Sudden acceleration: try rotated starting guesses (no gyro yet).
@@ -265,17 +275,39 @@ impl Odometry {
         }
         self.last_t = Some(t_end);
 
-        let last = self.keyframes.back().map(|k| k.pose).unwrap_or(self.pose);
-        let d = last.between(&self.pose);
-        if info.accepted
-            && (d.dist() > self.cfg.keyframe_dist
-                || d.th.abs() > self.cfg.keyframe_angle
-                || info.inlier_ratio < self.cfg.min_inlier_ratio + 0.2)
-        {
+        let covered = self.keyframes.iter().any(|k| {
+            let d = k.pose.between(&self.pose);
+            d.dist() < self.cfg.keyframe_dist && d.th.abs() < self.cfg.keyframe_angle
+        });
+        if info.accepted && !covered {
             self.add_keyframe(self.pose);
             info.new_keyframe = true;
         }
         (self.pose, info)
+    }
+
+    /// Chooses the keyframes near `pose` (plus the newest, for continuity) and rebuilds the
+    /// spatial index if the set changed.
+    fn select_local_map(&mut self, pose: &Pose2) {
+        let newest = self.keyframes.len() - 1;
+        let mut near: Vec<(f64, usize)> = self
+            .keyframes
+            .iter()
+            .enumerate()
+            .map(|(i, k)| ((k.pose.x - pose.x).hypot(k.pose.y - pose.y), i))
+            .filter(|&(d, i)| d < self.cfg.local_radius || i == newest)
+            .collect();
+        near.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let mut set: Vec<usize> = near.iter().take(self.cfg.local_keyframes).map(|&(_, i)| i).collect();
+        if !set.contains(&newest) {
+            set.pop();
+            set.push(newest);
+        }
+        set.sort_unstable();
+        if set != self.active {
+            self.map = LocalMap::build(set.iter().map(|&i| &self.keyframes[i]));
+            self.active = set;
+        }
     }
 
     fn add_keyframe(&mut self, pose: Pose2) {
@@ -287,12 +319,8 @@ impl Odometry {
                 (wx as f32, wy as f32)
             })
             .collect();
-        self.keyframes
-            .push_back(Keyframe { pose, points: with_normals(&world, (pose.x as f32, pose.y as f32)) });
-        while self.keyframes.len() > self.cfg.max_keyframes {
-            self.keyframes.pop_front();
-        }
-        self.map = LocalMap::build(&self.keyframes);
+        self.keyframes.push(Keyframe { pose, points: with_normals(&world, (pose.x as f32, pose.y as f32)) });
+        self.select_local_map(&pose);
         self.pose = pose;
     }
 

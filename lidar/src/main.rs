@@ -11,7 +11,6 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use sennep_lidar::filter::{FilterConfig, Footprint};
 use sennep_lidar::pipeline::{Output, Pipeline, PipelineConfig};
 use sennep_lidar::server::{serve, Hub};
 use sennep_lidar::sim::{SimConfig, Simulator, Trajectory, World};
@@ -51,12 +50,7 @@ fn main() {
         usage()
     };
 
-    let mut cfg = PipelineConfig::default();
-    if has("--no-body") {
-        cfg.filter = FilterConfig { self_mask: None, ..FilterConfig::default() };
-        cfg.zones.footprint = Footprint { length: 0.0, width: 0.0 };
-        cfg.zones.self_margin = -1.0;
-    }
+    let cfg = if has("--no-body") { PipelineConfig::off_robot() } else { PipelineConfig::default() };
     let footprint = cfg.zones.footprint;
     let mut recorder =
         val("--record").map(|p| Recorder::create(&PathBuf::from(p)).expect("cannot create recording"));

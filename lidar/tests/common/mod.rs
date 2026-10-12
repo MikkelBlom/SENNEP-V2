@@ -1,5 +1,4 @@
 #![allow(dead_code, clippy::field_reassign_with_default)]
-use sennep_lidar::filter::{FilterConfig, Footprint};
 use sennep_lidar::geom::Pose2;
 use sennep_lidar::pipeline::{Output, Pipeline, PipelineConfig};
 use sennep_lidar::scan::ScanPoint;
@@ -34,11 +33,7 @@ pub fn run(src: &mut dyn ByteSource, cfg: PipelineConfig) -> Run {
 
 /// The old recordings were made with the LiDAR on a desk, not on the robot: no body mask.
 pub fn bench_config() -> PipelineConfig {
-    let mut cfg = PipelineConfig::default();
-    cfg.filter = FilterConfig { self_mask: None, ..FilterConfig::default() };
-    cfg.zones.footprint = Footprint { length: 0.0, width: 0.0 };
-    cfg.zones.self_margin = -1.0;
-    cfg
+    PipelineConfig::off_robot()
 }
 
 pub fn recordings() -> Vec<PathBuf> {

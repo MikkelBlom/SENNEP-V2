@@ -1,6 +1,7 @@
 //! SENNEP V2 LiDAR stack. See docs/lidar/PLAN.md for the why.
 
 pub mod clock;
+pub mod eval;
 pub mod filter;
 pub mod geom;
 pub mod grid;
