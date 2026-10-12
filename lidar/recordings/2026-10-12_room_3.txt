@@ -1,8 +1,11 @@
 # Mikkel's living room, LiDAR at chest height, Mikkel alone (times since the recording started)
 00:16.7  walks in
-01:21.0  out of view ~3.5 s (far end of the room), reappears 0.5 m away
-02:43.0  a small 3-7 point blob near him for ~15 s (static thing; used to become a false mover)
-03:08.6  walks out
-03:32.9  comes back in
+01:21.0  stands right against the wall for ~3.5 s (invisible: points within 10 cm of a wall are ignored), then moves on
+02:12.3  starts covering the LiDAR with his hands
+02:16.2  LiDAR fully covered (all 500 points within 30 cm); matching refuses, pose holds within 6 mm
+02:17.1  hands away, everything back
+02:43.0  his arm, 0.6-1 m from his body, for ~15 s (used to become a false mover)
+03:08.6  walks out, sits down and watches the screen
+03:32.9  comes back to look at the flickering thing: the glass electric kettle; picks it up and puts it down
 03:49.1  walks out
 # The glass electric kettle flickers the whole time (laser partly through glass).

@@ -129,7 +129,7 @@ fn main() {
                 ("play:seek" | "play:step", Mode::Play(p)) => {
                     let v: f64 = arg.parse().unwrap_or(0.0);
                     let target = if verb == "play:step" { p.pos_s() + v } else { v };
-                    pipeline.reset_map();
+                    pipeline.reset_all();
                     hub.reset_map();
                     p.seek(target, |b, t| pipeline.feed(b, t, &mut |_| {}));
                     if let Some(g) = &mut pipeline.grid {
@@ -143,7 +143,11 @@ fn main() {
                 _ => {}
             }
         }
-        if restart || hub.reset_requested.swap(false, Ordering::Relaxed) {
+        if restart {
+            // A new byte stream (other recording, playing again, live again): everything from scratch.
+            pipeline.reset_all();
+            hub.reset_map();
+        } else if hub.reset_requested.swap(false, Ordering::Relaxed) {
             pipeline.reset_map();
             hub.reset_map();
         }

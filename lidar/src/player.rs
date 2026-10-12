@@ -116,6 +116,15 @@ impl Player {
         Some(t + self.shift_us)
     }
 
+    /// The next chunk regardless of time (tests, fast-forward).
+    pub fn next_now(&mut self, buf: &mut Vec<u8>) -> Option<u64> {
+        let (t, bytes) = self.chunks.get(self.next)?;
+        self.next += 1;
+        buf.clear();
+        buf.extend_from_slice(bytes);
+        Some(*t + self.shift_us)
+    }
+
     /// Chunks from the start up to `t_s`, for rebuilding the map before a jump. Afterwards playback
     /// continues from `t_s`.
     pub fn seek(&mut self, t_s: f64, mut feed: impl FnMut(&[u8], u64)) {

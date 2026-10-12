@@ -213,3 +213,79 @@ fn room_3_glass_kettle_and_corner_keep_one_id() {
     assert_eq!(first_visit.len(), 1, "one person, one id during the first visit");
     assert!(all.len() <= 2, "kettle or furniture became a mover: {all:?}");
 }
+
+#[test]
+fn jumping_back_in_playback_works_like_a_fresh_start() {
+    // Mikkel: playback got "stuck" after jumping or switching recordings until he pressed New map.
+    use sennep_lidar::player::Player;
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("recordings/2026-10-12_room_3.ldr");
+    let count = |p: &mut Pipeline, player: &mut Player, until: f64| {
+        let (mut scans, mut accepted) = (0, 0);
+        let mut buf = Vec::new();
+        let mut t0 = None;
+        loop {
+            let Some(t) = player.next_now(&mut buf) else { break };
+            let t0 = *t0.get_or_insert(t);
+            if (t - t0) as f64 * 1e-6 > until {
+                break;
+            }
+            p.feed(&buf, t, &mut |o| {
+                if let Output::Scan(r) = o {
+                    scans += 1;
+                    accepted += r.info.accepted as usize;
+                }
+            });
+        }
+        (scans, accepted)
+    };
+    // Play 60 s, then jump back to 0:10 the way the UI does, then play 10 s.
+    let mut p = Pipeline::new(bench_config());
+    let mut player = Player::open(&path, false).unwrap();
+    count(&mut p, &mut player, 60.0);
+    p.reset_all();
+    player.seek(10.0, |b, t| p.feed(b, t, &mut |_| {}));
+    let after = count(&mut p, &mut player, 10.0);
+    // Reference: a fresh pipeline doing the same.
+    let mut q = Pipeline::new(bench_config());
+    let mut fresh = Player::open(&path, false).unwrap();
+    fresh.seek(10.0, |b, t| q.feed(b, t, &mut |_| {}));
+    let reference = count(&mut q, &mut fresh, 10.0);
+    println!("after jump back: {after:?}, fresh: {reference:?}");
+    assert_eq!(after, reference);
+}
+
+#[test]
+fn switching_recordings_works_like_a_fresh_start() {
+    // Every recording has its own timestamps: the old pipeline's clock got stuck after a switch.
+    use sennep_lidar::player::Player;
+    let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("recordings");
+    let run = |p: &mut Pipeline, player: &mut Player, until: f64| {
+        let (mut scans, mut accepted) = (0, 0);
+        let mut buf = Vec::new();
+        let mut t0 = None;
+        while let Some(t) = player.next_now(&mut buf) {
+            let t0 = *t0.get_or_insert(t);
+            if (t - t0) as f64 * 1e-6 > until {
+                break;
+            }
+            p.feed(&buf, t, &mut |o| {
+                if let Output::Scan(r) = o {
+                    scans += 1;
+                    accepted += r.info.accepted as usize;
+                }
+            });
+        }
+        (scans, accepted, p.walls.walls.len())
+    };
+    let mut p = Pipeline::new(bench_config());
+    let mut a = Player::open(&dir.join("2026-10-12_room_2.ldr"), false).unwrap();
+    run(&mut p, &mut a, 30.0);
+    p.reset_all();
+    let mut b = Player::open(&dir.join("2026-10-12_room_3.ldr"), false).unwrap();
+    let switched = run(&mut p, &mut b, 10.0);
+    let mut q = Pipeline::new(bench_config());
+    let mut c = Player::open(&dir.join("2026-10-12_room_3.ldr"), false).unwrap();
+    let fresh = run(&mut q, &mut c, 10.0);
+    println!("after switching: {switched:?}, fresh: {fresh:?}");
+    assert_eq!(switched, fresh);
+}

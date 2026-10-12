@@ -152,6 +152,13 @@ impl Pipeline {
     }
 
     /// Forgets the map and starts odometry again from the origin.
+    /// Everything from scratch, incl. the parser and the sensor clock: for a new byte stream
+    /// (another recording, a jump in playback, back to live). `reset_map` keeps those, which is right
+    /// only while the stream itself continues ("New map" on a live LiDAR).
+    pub fn reset_all(&mut self) {
+        *self = Pipeline::new(self.cfg.clone());
+    }
+
     pub fn reset_map(&mut self) {
         self.odom = Odometry::new(self.cfg.odom.clone());
         self.grid = self.cfg.grid.clone().map(Grid::new);
