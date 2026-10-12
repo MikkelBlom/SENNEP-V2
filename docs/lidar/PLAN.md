@@ -295,3 +295,18 @@ and as 360° backup for the camera that will follow people.
 **Next (ideas, in the hub):** collision prediction (a mover's path vs the robot's planned path), hand-over
 with the AI camera (camera says "that is the person I follow", LiDAR keeps the track 360°), stopping "lost"
 predictions at walls, gyro in the odometry.
+
+### 11b. Second recording: sprints and bending down (2026-10-12)
+
+`lidar/recordings/2026-10-12_room_2.ldr` (+ `.txt`): Mikkel walks in, stands still 22 s, sprints three times to
+the far wall and back, bends down to fix the carpet. **Sprint speed** (raw detections, not the filter): peak
+3.3–3.6 m/s over 0.4 s (12–13 km/h), 3.0–3.2 m/s over 0.6 s; the dash is only ~3.3 m long.
+
+First version lost the id at each sprint turn (the filter assumed gentle acceleration and the prediction ran
+through the wall) and after bending down (2.4 s below the scan plane, coast was 2 s). Now: acceleration σ 5 m/s²,
+gate 0.8 m + 0.3 s × speed, a lost track slows down (τ 0.5 s) and stays within 1 m of where it was seen, coasts
+3 s, and a detection within 1.2 m of a lost track takes over its id. Result: **one id for the whole 80 s**,
+seen in 180/180 scans while standing still, tracker top speed 3.6 m/s (test `room_2_sprints_and_bending_down_keep_one_id`).
+
+Recording is now done from the page (`recording.rs`): live LiDAR records automatically into `recordings/auto/`;
+Keep / Mark / Stop / Start buttons.

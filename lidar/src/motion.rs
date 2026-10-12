@@ -26,8 +26,10 @@ pub struct MotionConfig {
     /// Points closer than this belong to the same moving thing (two legs → one person).
     pub link: f32,
     pub min_points: usize,
-    /// Max distance from a track's predicted position to a new detection, metres.
+    /// Max distance from a track's predicted position to a new detection: `gate` + `gate_per_speed` × speed.
+    /// A sprinter turning at a wall is 0.5 m off the prediction within a scan or two.
     pub gate: f32,
+    pub gate_per_speed: f32,
     /// Detections needed before a track is shown...
     pub confirm_hits: u32,
     /// ...and how far it must have moved from where it was first seen, metres. Map artefacts
@@ -35,8 +37,16 @@ pub struct MotionConfig {
     pub confirm_move: f32,
     /// How long an unconfirmed track survives without detections, s.
     pub tentative_life: f64,
-    /// How long a confirmed track keeps predicting without detections, s.
+    /// How long a confirmed track keeps predicting without detections, s (bending down below the
+    /// scan plane takes ~2 s).
     pub coast: f64,
+    /// While unseen, the speed decays with this time constant and the guess stays within
+    /// `coast_max` metres of where it was last seen (so it does not fly through walls).
+    pub coast_tau: f64,
+    pub coast_max: f64,
+    /// A new detection this close to where a lost track was last seen (or is predicted) takes over
+    /// that track's id instead of starting a new one.
+    pub reacquire: f64,
     /// Kalman noise: acceleration (m/s²) and measurement (m), 1 σ.
     pub accel_sigma: f64,
     pub meas_sigma: f64,
@@ -53,11 +63,15 @@ impl Default for MotionConfig {
             link: 0.35,
             min_points: 3,
             gate: 0.8,
+            gate_per_speed: 0.3,
             confirm_hits: 3,
             confirm_move: 0.25,
             tentative_life: 0.35,
-            coast: 2.0,
-            accel_sigma: 2.0,
+            coast: 3.0,
+            coast_tau: 0.5,
+            coast_max: 1.0,
+            reacquire: 1.2,
+            accel_sigma: 5.0,
             meas_sigma: 0.08,
             history_s: 4.0,
         }
@@ -98,6 +112,8 @@ pub struct Track {
     pub origin: (f32, f32),
     pub travelled: f32,
     pub last_seen: f64,
+    /// Position of the last detection.
+    pub seen_pos: (f64, f64),
     pub t: f64,
     /// Points in the last detection (size cue).
     pub points: usize,
@@ -220,6 +236,18 @@ impl Tracker {
             tr.sx.predict(dt, q);
             tr.sy.predict(dt, q);
             tr.t = t;
+            if tr.coasting() {
+                let k = (-dt / self.cfg.coast_tau).exp();
+                tr.sx.x[1] *= k;
+                tr.sy.x[1] *= k;
+                let (dx, dy) = (tr.sx.x[0] - tr.seen_pos.0, tr.sy.x[0] - tr.seen_pos.1);
+                let d = dx.hypot(dy);
+                if d > self.cfg.coast_max {
+                    let f = self.cfg.coast_max / d;
+                    tr.sx.x[0] = tr.seen_pos.0 + dx * f;
+                    tr.sy.x[0] = tr.seen_pos.1 + dy * f;
+                }
+            }
         }
         if let Some(pts) = moving {
             let blobs = self.blobs(pts);
@@ -227,9 +255,11 @@ impl Tracker {
             let mut pairs: Vec<(f64, usize, usize)> = Vec::new();
             for (ti, tr) in self.tracks.iter().enumerate() {
                 let (px, py) = tr.pos();
+                let (vx, vy) = tr.vel();
+                let gate = self.cfg.gate as f64 + self.cfg.gate_per_speed as f64 * vx.hypot(vy);
                 for (bi, b) in blobs.iter().enumerate() {
                     let d = (b.x as f64 - px).hypot(b.y as f64 - py);
-                    if d <= self.cfg.gate as f64 {
+                    if d <= gate {
                         pairs.push((d, ti, bi));
                     }
                 }
@@ -248,12 +278,38 @@ impl Tracker {
                 tr.sy.update(b.y as f64, r);
                 tr.hits += 1;
                 tr.last_seen = t;
+                tr.seen_pos = (b.x as f64, b.y as f64);
                 tr.points = b.n;
                 tr.travelled = tr.travelled.max((b.x - tr.origin.0).hypot(b.y - tr.origin.1));
                 tr.confirmed |= tr.hits >= self.cfg.confirm_hits && tr.travelled >= self.cfg.confirm_move;
             }
             for (bi, b) in blobs.iter().enumerate() {
-                if !b_used[bi] {
+                if b_used[bi] {
+                    continue;
+                }
+                // Re-acquire: a lost confirmed track near here (last seen or predicted) keeps its id.
+                let near = |tr: &Track| {
+                    let (bx, by) = (b.x as f64, b.y as f64);
+                    let (px, py) = tr.pos();
+                    (bx - px).hypot(by - py).min((bx - tr.seen_pos.0).hypot(by - tr.seen_pos.1))
+                };
+                let lost = (0..t_used.len()) // tracks created in this loop are new, never lost
+                    .filter(|&ti| !t_used[ti] && self.tracks[ti].confirmed && self.tracks[ti].coasting())
+                    .map(|ti| (near(&self.tracks[ti]), ti))
+                    .filter(|(d, _)| *d <= self.cfg.reacquire)
+                    .min_by(|a, b| a.0.total_cmp(&b.0));
+                if let Some((_, ti)) = lost {
+                    t_used[ti] = true;
+                    let tr = &mut self.tracks[ti];
+                    tr.sx = Kf::new(b.x as f64, self.cfg.meas_sigma);
+                    tr.sy = Kf::new(b.y as f64, self.cfg.meas_sigma);
+                    tr.hits += 1;
+                    tr.last_seen = t;
+                    tr.seen_pos = (b.x as f64, b.y as f64);
+                    tr.points = b.n;
+                    continue;
+                }
+                {
                     let id = self.next_id;
                     self.next_id += 1;
                     self.tracks.push(Track {
@@ -266,6 +322,7 @@ impl Tracker {
                         origin: (b.x, b.y),
                         travelled: 0.0,
                         last_seen: t,
+                        seen_pos: (b.x as f64, b.y as f64),
                         t,
                         points: b.n,
                         history: VecDeque::new(),
@@ -336,8 +393,26 @@ mod tests {
         tr.update(1.5, Some(&[]));
         assert_eq!(tr.tracks.len(), 1);
         assert!(tr.tracks[0].coasting());
-        assert!(tr.tracks[0].pos().0 > 1.2, "kept moving while unseen");
-        tr.update(3.5, Some(&[]));
+        let p = tr.tracks[0].pos().0;
+        assert!(p > 1.0 && p < 1.9 + 0.01, "kept moving while unseen, but slowing and within 1 m: {p}");
+        tr.update(5.0, Some(&[]));
         assert!(tr.tracks.is_empty());
+    }
+
+    #[test]
+    fn reappearing_after_bending_down_keeps_the_id() {
+        let mut tr = Tracker::new(MotionConfig::default());
+        for k in 0..10 {
+            let x = k as f32 * 0.08;
+            tr.update(k as f64 * 0.1, Some(&[(x, 0.0), (x, 0.03), (x, 0.06)]));
+        }
+        let id = tr.tracks[0].id;
+        for k in 10..30 {
+            tr.update(k as f64 * 0.1, Some(&[])); // 2 s below the scan plane
+        }
+        tr.update(3.0, Some(&[(0.85, 0.1), (0.85, 0.13), (0.85, 0.16)]));
+        assert_eq!(tr.tracks.len(), 1);
+        assert_eq!(tr.tracks[0].id, id);
+        assert!(!tr.tracks[0].coasting());
     }
 }

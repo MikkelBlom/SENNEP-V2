@@ -179,3 +179,23 @@ fn room_recording_walls_hold_still() {
     assert!(worst.0 < 0.04, "a wall jumped {:.0} mm", worst.0 * 1e3);
     assert!(ids_late.len() <= final_ids.len() + 1, "walls appear and vanish: {ids_late:?} vs {final_ids:?}");
 }
+
+#[test]
+fn room_2_sprints_and_bending_down_keep_one_id() {
+    // Mikkel: walks in (~26 s), stands still (60–82 s), sprints to the far wall and back three times
+    // (~3.5 m/s), bends down below the scan plane to fix the carpet (~91 s), walks out (~104 s).
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("recordings/2026-10-12_room_2.ldr");
+    let mut src = ReplaySource::open(&path, false, false).unwrap();
+    let (frames, _) = drive(&mut src, bench_config());
+    let t0 = frames[0].t;
+    let ids = ids(&frames);
+    let before = frames.iter().filter(|f| f.t - t0 < 25.0 && !f.tracks.is_empty()).count();
+    let still = frames.iter().filter(|f| (62.0..80.0).contains(&(f.t - t0)));
+    let (n, seen) = still.fold((0, 0), |(n, k), f| (n + 1, k + f.tracks.iter().any(|t| !t.3) as usize));
+    println!(
+        "ids {ids:?}; before entering: {before} scans with tracks; standing still: seen in {seen} of {n}"
+    );
+    assert_eq!(before, 0);
+    assert_eq!(ids.len(), 1, "one person, one id: {ids:?}");
+    assert!(seen * 100 >= n * 95, "standing still: seen in {seen} of {n}");
+}

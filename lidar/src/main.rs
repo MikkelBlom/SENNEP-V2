@@ -4,7 +4,10 @@
 //!   sennep-lidar --replay recording.ldr [--loop]                          (PC development)
 //!   sennep-lidar --sim [--person]                                         (no hardware at all)
 //!
-//! Options: --http ADDR (default 0.0.0.0:8080), --record FILE.ldr, --no-body (LiDAR not on the robot).
+//! Options: --http ADDR (default 0.0.0.0:8080), --no-body (LiDAR not on the robot),
+//!   --record-dir DIR (default lidar/recordings or recordings), --no-record (don't start recording by itself),
+//!   --record FILE.ldr (record into this file instead of auto/).
+//! A live LiDAR is recorded automatically into <record-dir>/auto/; the page can keep, mark, stop and start.
 
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
@@ -12,15 +15,16 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use sennep_lidar::pipeline::{Output, Pipeline, PipelineConfig};
+use sennep_lidar::recording::Recordings;
 use sennep_lidar::server::{serve, Hub};
 use sennep_lidar::sim::{SimConfig, Simulator, Trajectory, World};
-use sennep_lidar::source::{ByteSource, Recorder, ReplaySource, SerialSource, SimSource};
+use sennep_lidar::source::{ByteSource, ReplaySource, SerialSource, SimSource};
 use sennep_lidar::sys::{rss_mb, CpuMeter};
 
 fn usage() -> ! {
     eprintln!(
         "usage: sennep-lidar (--serial PATH | --replay FILE [--loop] | --sim [--person]) \
-         [--http ADDR] [--record FILE.ldr] [--no-body]"
+         [--http ADDR] [--no-body] [--record-dir DIR] [--no-record] [--record FILE.ldr]"
     );
     std::process::exit(2)
 }
@@ -52,8 +56,14 @@ fn main() {
 
     let cfg = if has("--no-body") { PipelineConfig::off_robot() } else { PipelineConfig::default() };
     let footprint = cfg.zones.footprint;
-    let mut recorder =
-        val("--record").map(|p| Recorder::create(&PathBuf::from(p)).expect("cannot create recording"));
+    let live = val("--serial").is_some();
+    let dir = val("--record-dir").map(PathBuf::from).unwrap_or_else(Recordings::default_dir);
+    let mut recordings = Recordings::new(dir, live || val("--record").is_some());
+    if let Some(p) = val("--record") {
+        recordings.start_at(&PathBuf::from(p));
+    } else if live && !has("--no-record") {
+        recordings.start();
+    }
 
     let hub = Arc::new(Hub::new());
     let addr = val("--http").unwrap_or_else(|| "0.0.0.0:8080".into());
@@ -82,11 +92,9 @@ fn main() {
                 continue;
             }
         };
-        if let Some(r) = &mut recorder {
-            if let Err(e) = r.write(host_us, &buf) {
-                eprintln!("recording stopped: {e}");
-                recorder = None;
-            }
+        recordings.write(host_us, &buf);
+        for cmd in std::mem::take(&mut *hub.commands.lock().unwrap()) {
+            recordings.command(&cmd);
         }
         if hub.reset_requested.swap(false, Ordering::Relaxed) {
             pipeline.reset_map();
@@ -147,16 +155,13 @@ fn main() {
                 "parser": { "packets": st.packets, "crc_errors": st.crc_errors, "skipped_bytes": st.skipped_bytes },
                 "clients": hub.clients.load(Ordering::Relaxed),
                 "footprint": [footprint.length, footprint.width],
+                "rec": recordings.status(),
             });
             hub.publish_stats(json.to_string());
-            if let Some(r) = &mut recorder {
-                let _ = r.flush();
-            }
+            recordings.flush();
         }
     }
-    if let Some(r) = &mut recorder {
-        let _ = r.flush();
-    }
+    recordings.stop();
 }
 
 /// The simulator tour, restarted when it ends, paced in real time.

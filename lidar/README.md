@@ -17,9 +17,12 @@ cargo run --release -- --sim --person                 # simulated flat with a wa
 cargo run --release -- --replay recordings/2026-10-12_room_walkthrough.ldr --loop --no-body
 cargo run --release -- --replay "../Lidar Test Enviornment/recordings/<file>.jsonl" --loop --no-body
 ```
-Real LiDAR on a PC (Windows: the COM port from Device Manager):
-`sennep-lidar --serial COM5 --no-body --http 127.0.0.1:8080 --record recordings/<name>.ldr`.
-Commit good recordings to `lidar/recordings/`: they become test data.
+Real LiDAR on a PC (Windows: the COM port from Device Manager), started from the repo root:
+`sennep-lidar --serial COM5 --no-body --http 127.0.0.1:8080`.
+**It records by itself** into `lidar/recordings/auto/` (git-ignored, newest 20 files kept, a new file every 30 min).
+The panel bottom-left on the page: **Mark moment** (a note with the time, saved next to the recording),
+**Keep recording…** (moves it to `lidar/recordings/<name>.ldr` + `.txt`, where it becomes test data, and starts a
+new one), **Stop / Start recording**. Options: `--no-record`, `--record-dir DIR`, `--record FILE.ldr`.
 
 **Layers** (buttons on the page): Walls · Objects · Movement · Points · Map pixels. Walls are fitted to the
 map (which averages hundreds of revolutions), keep an id and only move when the map does; their ends glide on
@@ -52,7 +55,7 @@ set up yet. The page only draws when new data arrives, so it does not load the P
 ## Test
 
 ```bash
-cargo test --release          # 26 tests: parser, clock, filters, zones, walls, motion, recordings, simulator
+cargo test --release          # 30 tests: parser, clock, filters, zones, walls, motion, recordings, simulator
 cargo run --release --bin bench -- --long
 ```
 The tests run the old recordings through the real parser, and the simulator (known ground truth) through
@@ -71,6 +74,7 @@ the whole chain. The simulator makes **raw LD19 bytes**, incl. bit errors on the
 | `odom.rs` | Prediction → de-skew → point-to-line ICP against nearby keyframes |
 | `grid.rs` | Log-odds map (5 cm), free space cleared by rays, changed tiles are sent |
 | `walls.rs` | Wall segments fitted to the map (re-fit known walls first, RANSAC for new ones, sticky corners), objects = the rest |
+| `recording.rs` | Auto-recording, keep/mark/stop/start from the page |
 | `motion.rs` | Moving points (hit in known-free space, ≥ 10 cm from anything solid), blobs, Kalman tracks with coasting |
 | `server.rs`, `web/index.html` | HTTP + WebSocket, one static page (no build step) |
 | `sim.rs`, `eval.rs` | Simulated flat, trips, ground truth and scoring |
@@ -99,4 +103,6 @@ The actual sending over the link is done when the link is built (the `ObstacleSi
   (it takes ~1 s of view). Something that stands still long enough becomes part of the map. A thing must move
   ≥ 25 cm before it is shown (that removes map artefacts at door frames while the robot drives).
 - Moving things within 10 cm of a wall are not flagged. Two people walking side by side (< 35 cm) are one track.
-- A "lost" track keeps going in a straight line, also through walls (it is a guess for 2 s).
+- A "lost" track slows down and stays within 1 m of where it was last seen, for up to 3 s. Something that
+  reappears within 1.2 m of it gets the same id (bending down below the scan plane, a sprinter turning at a wall).
+  Two people crossing close to each other can swap ids.
