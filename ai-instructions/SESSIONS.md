@@ -128,3 +128,10 @@
 **Issues:** Intet kørt på rigtig LiDAR/Pi (cloud). Pi-tal er estimater; Mikkel skal køre `bench` på Pi'en. Kiosk-autostart på 7" skærm ikke sat op. `pkill -f <mønster>` i samme kommando dræber egen shell — brug `[s]ennep`-tricket.
 **Handoff:** fuld kontekst (Mikkels svar ordret, beslutninger, antagelser, næste skridt) i `ai-instructions/HANDOFF_LIDAR.md`.
 **Next:** Kør på Pi'en med rigtig LiDAR + `--record` nogle ture; tjek LiDAR'ens 0°-retning og robotomrids; integrér `ZoneReport` i Pi↔Mega-linket; gyro i odometrien; gem/indlæs kort.
+
+## 2026-10-12 — Claude Code (Opus 5.5), elektronik/breadboard-chat
+**Summary:** Plan v0.2 i `docs/electronics/BREADBOARD_PLAN.md`: status over alle elektriske dele, effektbudget, ledningstværsnit/sikringer, stjernestel og støj, nødstop via relæspolen (fejlsikker, ingen automatisk genstart), pinfordeling for Mega + Pi 5, blokdiagram, indkøb (minimum ~190 kr / anbefalet ~900–1200 kr) og testrækkefølge for M1 (Pi + Mega + 4 motorer + LiDAR). To runder spørgsmål til Mikkel.
+**Decisions:** M1 = Pi, Mega, 4 motorer med hjul, LiDAR. Wago/skrue til strøm, breadboard til signaler. Pi↔Mega fysisk og sensorfordeling ejes af andre sessioner (mine forslag står i planen). Budget fastlægges ved konsolideringen.
+**Findings:** Testbatteriet er en Zippy 1000 mAh 3S 35C LiPo uden BMS (samme der ødelagde V1) → 20 A-sikring ved XT60, LiPo-alarm, bænk-tilstand med logik på 12 V-adapter og kun motorer på LiPo (fælles GND). INA219's 0,1 Ω shunt kan kun 3,2 A. Motorens stallstrøm står ikke i databladet (estimat 15–25 A, måles). PI_MEGA_LINK.md fandtes ikke ved sessionens start.
+**Handoff:** `ai-instructions/HANDOFF_ELECTRONICS.md` (alle svar fra Mikkel, beslutninger, fund).
+**Next:** Fælles konsolideringssession → godkend planen → ledningsdiagrammer (SVG/KiCad) og detaljeret byggevejledning pr. trin.
