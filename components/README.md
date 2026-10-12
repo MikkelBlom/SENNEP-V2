@@ -1,39 +1,45 @@
-# components/ — alt hardware, der er købt til SENNEP V2
+# components/ — every part for SENNEP V2
 
-| Fil | Til hvad |
+| File | Purpose |
 |---|---|
-| **`index.html`** | Åbn i en browser: søgning, filtrering pr. kategori, sortering og klik direkte ind i databladene |
-| **`INVENTORY.md`** | Samme liste som tabeller pr. kategori (læses i VS Code eller på GitHub) |
-| **`inventory.csv`** | **Kilden.** Én linje pr. komponent, `;`-separeret (åbner direkte i dansk Excel) |
-| `datasheets/` | PDF-datablade, navngivet efter komponent (fx `vl53l0x.pdf`) |
-| `<id>/` | Noter, diagrammer og kode for en enkelt komponent (fx [`esp-01/`](esp-01/README.md)) |
-| `build_inventory.py` | Genererer `INVENTORY.md`, `index.html` og kolonnen `dkk` ud fra CSV'en |
-| `index.template.html` | Skabelon til `index.html` |
+| **`index.html`** | Open in a browser: search, filter by category and source, sort, click straight into datasheets |
+| **`INVENTORY.md`** | The same list as tables per category (VS Code or GitHub) |
+| **`inventory.csv`** | **The source.** One line per part, `;`-separated (opens directly in Excel with a `;` list separator) |
+| `datasheets/` | PDF datasheets, named after the part (e.g. `vl53l0x.pdf`) |
+| `<id>/` | Notes, diagrams and code for a single part (e.g. [`esp-01/`](esp-01/README.md)) |
+| `build_inventory.py` | Generates `INVENTORY.md`, `index.html` and the `dkk` column from the CSV |
+| `index.template.html` | Template for `index.html` |
 
-## Opdatering
+## Updating
 
-1. Tilføj eller ret en linje i `inventory.csv`. **Brug aldrig `;` i en note**, for det er feltadskilleren.
-2. Læg eventuelle datablade i `datasheets/` og skriv filnavnene (adskilt med mellemrum) i `datablade`.
-3. Kør `python build_inventory.py`. Scriptet melder fejl, hvis et datablad mangler eller ikke bruges.
+1. Add or edit a line in `inventory.csv`. **Never use `;` in a note**, because it is the field separator.
+2. Put any datasheets in `datasheets/` and list the file names (space-separated) in `datasheets`.
+3. Run `python build_inventory.py`. It fails on an unknown `source`/`condition` and warns about missing or unused datasheets.
 
-Kolonner: `id` (kort, unik, bruges som mappenavn) · `navn` · `kategori` · `antal` · `linjepris` (samlet pris
-for linjen i original valuta) · `valuta` · `dkk` (beregnet, ca.: GBP 8,67 / EUR 7,46) · `butik` · `dato` ·
-`ordre` · `chip` (hovedchippen på modulet) · `datablade` · `links` (web eller lokale noter) · `noter`.
+### Columns
+| Column | Meaning |
+|---|---|
+| `id` | Short, unique, also used as a folder name |
+| `name`, `category`, `qty` | What it is, and how many Mikkel has **now** (counted, not bought) |
+| `source` | `SENNEP V2` (bought for this robot) · `SENNEP V1` (from the school robot) · `other project` (already owned) |
+| `condition` | `ok` · `used` (works, but used/soldered) · `broken` · `unknown` (not checked yet) |
+| `line_price`, `currency` | Total price for the line in the original currency |
+| `dkk` | Computed, approximate (GBP 8.67 / EUR 7.46) |
+| `store`, `date` | Where and when it was bought (`own stock` for leftovers) |
+| `chip` | The main chip on the module |
+| `datasheets`, `links` | PDF names in `datasheets/`, web links or local notes |
+| `notes` | Anything else |
 
-## Til AI-agenter
+Order numbers are deliberately not stored (public repo).
 
-Spørgsmål af typen "har jeg en X?", "hvor mange Y?" eller "hvilken spænding kører Z på?": søg i
-`inventory.csv` (grep på navn, chip eller id) og læs den relevante PDF i `datasheets/`. Undersøg også
-`<id>/`, hvis mappen findes. Lad være med at gennemgå kvitteringer eller Gmail igen. Hvis noget mangler på
-listen, så tilføj det til CSV'en og kør scriptet.
+## For AI agents
 
-## Kilder og huller
+For questions like "do I have an X?", "how many Y?" or "what voltage does Z run on?": search `inventory.csv` (grep on name, chip or id) and read the relevant PDF in `datasheets/`. Also look in `<id>/` if it exists. Do not go through receipts or Gmail again. If something is missing from the list, add it to the CSV and run the script.
 
-- Kvitteringer (kun lokalt, ikke i det offentlige repo): Ardustore 14-05-2024, Hobby Components 18-04-2025,
-  Bot'n Roll 01-05-2025 og AliExpress dec 2025 (18 ordrer i Gmail, varenavnene er afkortede).
-- Priserne er ekskl. fragt (39 kr, £6,42, €46,40). Hobby Components-fakturaen er uden moms. Eventuel importmoms
-  er ikke med.
-- **Uden kvittering:** Raspberry Pi 5, LD19-LiDAR, de 4 motorer (pris ca.) og PETG.
-- **Ikke bekræftet:** at AliExpress-H-broerne er BTS7960, og at Bot'n Roll-MOSFET'erne er IRFZ44N.
-- Komponenter uden datablad er generiske ting (kabler, stik, kontakter, kits), eller også findes der ikke et
-  officielt datablad (E18-D80NK, 3S-BMS, 5 A-buck, 7"-skærm: se `links`).
+## Sources and gaps
+
+- Receipts (local only, not in the public repo): Ardustore 2024-05-14, Hobby Components 2025-04-18, Bot'n Roll 2025-05-01 and AliExpress Dec 2025 (18 orders in Gmail; item names are truncated).
+- Prices exclude shipping (39 kr, £6.42, €46.40). The Hobby Components invoice is without VAT. Any import VAT is not included.
+- **No receipt:** Raspberry Pi 5, LD19 LiDAR, the 4 motors (approximate price) and PETG.
+- **Not confirmed:** that the AliExpress H-bridges are BTS7960, and that the Bot'n Roll MOSFETs are IRFZ44N.
+- Parts without a datasheet are generic (cables, connectors, switches, kits), or no official datasheet exists (E18-D80NK, 3S BMS, 5 A buck, 7" screen: see `links`).

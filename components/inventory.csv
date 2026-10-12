@@ -1,86 +1,86 @@
-id;navn;kategori;antal;linjepris;valuta;dkk;butik;dato;ordre;chip;datablade;links;noter
-arduino-mega;Arduino Mega 2560 R3 (klon);Compute;2;490;DKK;490.00;Ardustore;2024-05-14;;ATmega2560;arduino-mega-2560.pdf;;Plan B hvis Nano løber tør for pins
-arduino-nano;Arduino Nano-klon, CH340, USB-C;Compute;2;7.48;GBP;64.85;Hobby Components;2025-04-18;;ATmega328P + CH340;arduino-nano.pdf ch340.pdf;;Planlagt motorstyring (Pi <-> Nano via UART). Kræver CH340-driver på Windows
-nano-terminal;Terminaladapter til Arduino Nano;Compute;2;3.15;GBP;27.31;Hobby Components;2025-04-18;;;;;
-raspberry-pi-5;Raspberry Pi 5;Compute;1;;;;ukendt;2025-05;;BCM2712;raspberry-pi-5.pdf;;Ingen kvittering. RAM-størrelse ukendt. Ligger hos forældre (okt 2026)
-pi5-kabinet;Aluminiumskabinet til Pi 5 m. 2 blæsere (Waveshare 26086);Compute;1;9.40;EUR;70.12;Bot'n Roll;2025-05-01;;;;;
-sd-32gb;microSDHC 32 GB Adata Class 10;Compute;1;4.50;EUR;33.57;Bot'n Roll;2025-05-01;;;;;Pi OS installeret maj 2025 (bruger sennep)
-sd-16gb;SD-kort 16 GB Class 10 + adapter;Compute;1;50;DKK;50.00;Ardustore;2024-05-14;;;;;
-l298n;L298N dual H-bridge-modul;Drivlinje;2;80;DKK;80.00;Ardustore;2024-05-14;;L298N;l298n.pdf;;Maks ~2 A/kanal og ~2 V spændingsfald. Erstattes af h-bridge-43a
-h-bridge-43a;H-bridge high-power motordriver (formentlig BTS7960, 43 A);Drivlinje;5;182.25;DKK;182.25;AliExpress;2025-12;;BTS7960 (antaget);bts7960.pdf;;Varenavnet er afkortet i mailen, så chippen er ikke bekræftet. 4 i brug + 1 reserve
-motor-rs834;RS PRO 834-7641 gearmotor 12 V, 49:1 (975D-serien);Drivlinje;4;2400;DKK;2400.00;RS / skolen (V1);2020-2023;;;rs-pro-834-7641-motor.pdf;;Ca.-pris for alle 4. 8 mm aksel, 143 rpm, 41 W. Radial last < 5 kgf -> pillow blocks bærer vægten
-kfl003;KFL003 pillow block-leje, 17 mm (2 stk/pk);Mekanik;6;130.91;DKK;130.91;AliExpress;2025-12;;;;;3 pakker = 6 lejer. Selvjusterende
-18650-35e;Samsung INR18650-35E Li-ion 3400 mAh;Strøm;20;118.00;EUR;880.28;Bot'n Roll;2025-05-01;;;samsung-inr18650-35e.pdf;;Samlet som 3S6P (10,8 V nom / 12,6 V fuld, ~20 Ah). Serieforbindelser ikke lavet endnu
-18650-holder;18650-holder 1×2 m. afstandsstykke;Strøm;20;6.00;EUR;44.76;Bot'n Roll;2025-05-01;;;;;
-bms-3s;3S 40 A BMS m. balance;Strøm;2;9.80;EUR;73.11;Bot'n Roll;2025-05-01;;;;;
-lader-3s;3S Li-ion-lader 12,6 V 2 A (EU-stik);Strøm;1;11.95;EUR;89.15;Bot'n Roll;2025-05-01;;;;;
-buck-5a;DC-DC step-down 5 A;Strøm;2;6.98;GBP;60.52;Hobby Components;2025-04-18;;ukendt (ofte XL4015);;;Tænkt til Pi 5 (5 V / 5 A)
-lm2596-modul;LM2596 step-down-modul m. voltmeter;Strøm;3;6.73;GBP;58.35;Hobby Components;2025-04-18;;LM2596;lm2596.pdf;;Maks 3 A
-lm2596t-12;LM2596T-12 regulator (TO-220, fast 12 V);Strøm;3;24;DKK;24.00;Ardustore;2024-05-14;;LM2596;lm2596.pdf;;
-l7805;L7805 5 V lineær regulator (TO-220);Strøm;10;20;DKK;20.00;Ardustore;2024-05-14;;7805;l7805.pdf;;Databladet er TI's µA7800 (samme pinout/funktion som ST L7805)
-ld1117-33;LD1117V33 3,3 V lineær regulator (TO-220);Strøm;3;24;DKK;24.00;Ardustore;2024-05-14;;LD1117;ld1117-3v3.pdf;;Maks 800 mA. Kan forsyne esp-01
-breadboard-psu;Breadboard-strømforsyning (MB102-type);Strøm;2;40;DKK;40.00;Ardustore;2024-05-14;;AMS1117;ams1117-breadboard-psu.pdf;;5 V + 3,3 V til breadboard
-irfz44n;IRFZ44N N-MOSFET (TO-220);Strøm;5;30;DKK;30.00;Ardustore;2024-05-14;;IRFZ44N;irfz44n.pdf;;Ikke logic level: kræver ~10 V gate for fuld ledning
-mosfet-55v;N-MOSFET 55 V 41 A (formentlig IRFZ44N);Strøm;3;3.00;EUR;22.38;Bot'n Roll;2025-05-01;;IRFZ44N (antaget);irfz44n.pdf;;
-koeleplade-to220;Køleplade aluminium TO-220;Mekanik;5;25;DKK;25.00;Ardustore;2024-05-14;;;;;
-rele-40a;Bilrelæ 12 V 40 A, 5-ben;Strøm;1;7.58;DKK;7.58;AliExpress;2025-12;;;;;Nødstop styrer relæet i stedet for at bryde hovedstrømmen
-sikringsholder;Sikringsholder 5×20 mm m. låg;Strøm;10;3.00;EUR;22.38;Bot'n Roll;2025-05-01;;;;;
-bilsikringer;Bilsikringer (blade), 180 stk sortiment;Strøm;1;27.79;DKK;27.79;AliExpress;2025-12;;;;;
-xt60;XT60 han/hun-par;Kontakter;2;3.00;EUR;22.38;Bot'n Roll;2025-05-01;;;;;
-nodstop-40mm;Nødstop 40 mm;Kontakter;1;1.49;GBP;12.92;Hobby Components;2025-04-18;;;;;
-vl53l0x;VL53L0X ToF-afstandssensor (laser);Sensorer;8;25.27;GBP;219.09;Hobby Components;2025-04-18;;VL53L0X;vl53l0x.pdf;;Samme I²C-adresse (0x29) -> bruges via tca9548a. 8 stk rundt om robotten
-e18-d80nk;E18-D80NK IR-nærhedssensor (justerbar);Sensorer;4;14.63;GBP;126.84;Hobby Components;2025-04-18;;;;;Kantdetektorer i hjørnerne. Der findes ikke noget officielt datablad
-hc-sr04;HC-SR04 ultralyd-afstandsmåler;Sensorer;4;80;DKK;80.00;Ardustore;2024-05-14;;;hc-sr04.pdf;;5 V-logik
-mpu-6050;MPU-6050 accelerometer + gyro;Sensorer;1;4.90;EUR;36.55;Bot'n Roll;2025-05-01;;MPU-6050;mpu-6050.pdf mpu-6050-register-map.pdf;;I²C 0x68
-qmc5883l;GY-271 magnetometer (QMC5883L);Sensorer;1;18.99;DKK;18.99;AliExpress;2025-12;;QMC5883L;qmc5883l.pdf;;I²C 0x0D (ikke HMC5883L's 0x1E)
-neo-6m;GY-NEO6MV2 GPS-modul;Sensorer;1;16.66;DKK;16.66;AliExpress;2025-12;;u-blox NEO-6M;neo-6m.pdf;;UART 9600 baud. Skal med (afklaret)
-ina219;INA219 strøm-/spændingsmåler;Sensorer;1;14.52;DKK;14.52;AliExpress;2025-12;;INA219;ina219.pdf;;Batteriovervågning. Maks 26 V
-tsl2561;TSL2561 lyssensor;Sensorer;1;4.16;GBP;36.07;Hobby Components;2025-04-18;;TSL2561;tsl2561.pdf;;
-ds3231;DS3231 RTC-modul (ZS-042);Sensorer;1;45;DKK;45.00;Ardustore;2024-05-14;;DS3231;ds3231.pdf;;ZS-042 har en ladekreds til CR2032. Fjern dioden/modstanden ved ikke-genopladeligt batteri
-mikrofon-modul;Mikrofonmodul m. justering;Sensorer;5;75;DKK;75.00;Ardustore;2024-05-14;;LM393;lm393-microphone-module.pdf;;Digital udgang via komparator + analog udgang
-vs1838b;VS1838B IR-modtager 38 kHz;Sensorer;10;4.00;EUR;29.84;Bot'n Roll;2025-05-01;;VS1838B;vs1838b-ir-receiver.pdf;;Dock-beacon (modtager)
-magnetkontakt;Dørmagnetkontakt MC-38 (NC);Sensorer;1;25;DKK;25.00;Ardustore;2024-05-14;;;;;
-lidar-ld19;LDROBOT LD19 / STL-19P LiDAR (solgt som youyeetoo FHL-LD19);Sensorer;1;;;;ukendt;2025-05;;LD19;ld19-stl-19p-datasheet.pdf ld19-development-manual.pdf;;Ingen kvittering. UART 230400 baud, 3,3 V-logik. Testmiljø i Lidar Test Enviornment/
-pi-ai-camera;Raspberry Pi AI Camera (IMX500, 12 MP);Sensorer;1;84.90;EUR;633.35;Bot'n Roll;2025-05-01;;Sony IMX500;pi-ai-camera.pdf;https://www.raspberrypi.com/documentation/accessories/ai-camera.html;
-nrf24l01;NRF24L01 2,4 GHz radiomodul;Kommunikation;3;60;DKK;60.00;Ardustore;2024-05-14;;nRF24L01+;nrf24l01.pdf;;3,3 V forsyning (5 V-tolerante pins). Manuel styring / RF-joystick
-esp-01;ESP8266 ESP-01 WiFi-modul;Kommunikation;1;25;DKK;25.00;Ardustore;2024-05-14;;ESP8266EX;esp8266ex.pdf esp8266-at-commands.pdf;esp-01/README.md;Formentlig aldrig brugt. KUN 3,3 V: brug ikke Megaens 3,3V-pin. Pinout, diagram og kode i esp-01/
-tca9548a;TCA9548A I²C-multiplexer (8 kanaler);Kommunikation;5;34.83;DKK;34.83;AliExpress;2025-12;;TCA9548A;tca9548a.pdf;;Løser at alle 8 VL53L0X har samme adresse. I²C 0x70-0x77
-level-converter;4-kanal logic level converter 3,3 V <-> 5 V;Kommunikation;1;11.35;DKK;11.35;AliExpress;2025-12;;BSS138;bss138-level-converter.pdf;;Bidirektional (BSS138). Fin til I²C og UART
-skaerm-7;"7"" HDMI LCD (C) 1024×600 IPS, touch (Waveshare)";UI;1;64.90;EUR;484.15;Bot'n Roll;2025-05-01;;;;https://www.waveshare.com/wiki/7inch_HDMI_LCD_(C);Monteringshullerne passede ikke i laserskæringstesten
-lcd-20x4;20×4 LCD, hvid;UI;2;160;DKK;160.00;Ardustore;2024-05-14;;HD44780;hd44780-lcd.pdf;;
-lcd-16x2;16×2 LCD, hvid;UI;4;240;DKK;240.00;Ardustore;2024-05-14;;HD44780;hd44780-lcd.pdf;;
-i2c-lcd-adapter;I²C-adapter til LCD (backpack);UI;6;120;DKK;120.00;Ardustore;2024-05-14;;PCF8574;pcf8574-i2c-lcd-adapter.pdf;;I²C 0x27 (PCF8574) eller 0x3F (PCF8574A)
-keypad-3x4;Membran-keypad 3×4;UI;1;15;DKK;15.00;Ardustore;2024-05-14;;;;;
-voltmeter-display;"0,28"" voltmeter-display 0–30 V";UI;1;9.46;DKK;9.46;AliExpress;2025-12;;;;;
-dfplayer;DFPlayer Mini MP3-afspiller;Lyd;2;60;DKK;60.00;Ardustore;2024-05-14;;FN-M16P;dfplayer-mini.pdf;;UART 9600 baud. Brug 1 kΩ i serie på RX ved 5 V-logik
-dfplayer-2;DFPlayer Mini MP3-afspiller;Lyd;1;9.90;EUR;73.85;Bot'n Roll;2025-05-01;;FN-M16P;dfplayer-mini.pdf;;Samlet 3 stk med dfplayer
-hojttaler-1w;Højttaler 1 W 8 Ω m. selvklæbende pakning;Lyd;8;5.53;GBP;47.95;Hobby Components;2025-04-18;;;;;
-pam8403;PAM8403 mini-forstærker 2×3 W (5 stk);Lyd;5;11.87;DKK;11.87;AliExpress;2025-12;;PAM8403;pam8403.pdf;;5 V forsyning
-ws2812b;WS2812B LED-strip 5 m, 30 LED/m;Lys;1;52.30;DKK;52.30;AliExpress;2025-12;;WS2812B;ws2812b.pdf;;150 LED -> op til ~9 A ved fuld hvid. 5 V
-led-3w;3 W LED-modul;Lys;4;11.80;EUR;88.03;Bot'n Roll;2025-05-01;;;;;Forlygter
-ir-led-940;IR-LED 940 nm;Lys;10;6.00;EUR;44.76;Bot'n Roll;2025-05-01;;;;;Dock-beacon (sender)
-joystick-ky023;KY-023 analog joystick (XY + knap);Styring;4;60;DKK;60.00;Ardustore;2024-05-14;;;;;
-potentiometer;Potentiometer, liggende;Styring;5;10;DKK;10.00;Ardustore;2024-05-14;;;;;
-noegleafbryder;Nøgleafbryder S1203 12 mm on/off;Kontakter;1;18;DKK;18.00;Ardustore;2024-05-14;;;;;
-toggle-mts103;Vippekontakt MTS-103 on-off-on 6 A;Kontakter;1;7;DKK;7.00;Ardustore;2024-05-14;;;;;
-trykknap-rod;Trykknap PBS-110 rød;Kontakter;1;5;DKK;5.00;Ardustore;2024-05-14;;;;;
-skrueterminal-3p;Skrueterminal 3-pol 5,0 mm, blå (10 stk/pk);Kontakter;3;3.28;GBP;28.44;Hobby Components;2025-04-18;;;;;3 pakker = 30 stk
-jst-ph-2;JST PH 2,0 mm stik, 2-pol;Kontakter;5;1.00;EUR;7.46;Bot'n Roll;2025-05-01;;;;;
-jst-ph-3;JST PH 2,0 mm stik, 3-pol;Kontakter;5;1.00;EUR;7.46;Bot'n Roll;2025-05-01;;;;;
-9v-clip;DC-stik til 9 V-batteriklips;Kontakter;2;0.75;GBP;6.50;Hobby Components;2025-04-18;;;;;
-kabel-10awg;Silikonekabel 10 AWG, 2 m;Kabler;3;114.75;DKK;114.75;AliExpress;2025-12;;;;;
-kabel-16awg;Kabel 16 AWG, 10 m;Kabler;1;59.96;DKK;59.96;AliExpress;2025-12;;;;;
-kabel-22awg;Kabel 22 AWG, 50 m (5×10 m);Kabler;1;74.01;DKK;74.01;AliExpress;2025-12;;;;;
-krokodillenaebe;Krokodilleledninger, 10 stk;Kabler;1;3.90;EUR;29.09;Bot'n Roll;2025-05-01;;;;;
-keramik-kit;Keramiske kondensatorer, 300 stk (2 pF–0,1 µF);Passive;1;1.99;GBP;17.25;Hobby Components;2025-04-18;;;;;
-elektrolyt-kit;Elektrolytkondensatorer, 120 stk;Passive;1;3.09;GBP;26.79;Hobby Components;2025-04-18;;;;;
-smd-dioder;SMD-dioder, 70 stk;Passive;1;1.49;GBP;12.92;Hobby Components;2025-04-18;;;;;
-blaeser-40mm;Blæser 40×40 mm brushless DC;Mekanik;4;2.63;GBP;22.80;Hobby Components;2025-04-18;;;;;Spænding står ikke på fakturaen
-protoboard-12x18;Protoboard dobbeltsidet 12×18 cm;Mekanik;4;6.43;GBP;55.75;Hobby Components;2025-04-18;;;;;
-loddebart-breadboard;Loddbart breadboard, 400 huller;Mekanik;1;10.16;DKK;10.16;AliExpress;2025-12;;;;;
-unbrako-sortiment;Rustfri unbrakoskruer, sortiment 290 stk;Mekanik;1;63.62;DKK;63.62;AliExpress;2025-12;;;;;
-gevindindsats-m3;Messing-gevindindsatser M3, 100 stk;Mekanik;1;41.52;DKK;41.52;AliExpress;2025-12;;;;;
-petg;PETG-filament (kg);Forbrug;15;;;;ukendt;;;;;;15 kg på lager
-loddetin;Loddetin 1,0 mm, 100 g;Forbrug;1;95;DKK;95.00;Ardustore;2024-05-14;;;;;
-koelepasta;Silikone-kølepasta, 30 g;Forbrug;1;75;DKK;75.00;Ardustore;2024-05-14;;;;;
-afbidertang;Afbidertang 125 mm;Værktøj;1;45;DKK;45.00;Ardustore;2024-05-14;;;;;
+id;name;category;qty;source;condition;line_price;currency;dkk;store;date;chip;datasheets;links;notes
+arduino-mega;Arduino Mega 2560 R3 (clone);Compute;2;SENNEP V2;unknown;490;DKK;490.00;Ardustore;2024-05-14;ATmega2560;arduino-mega-2560.pdf;;Main MCU for the Pi link (Nano also used)
+arduino-nano;Arduino Nano clone, CH340, USB-C;Compute;2;SENNEP V2;unknown;7.48;GBP;64.85;Hobby Components;2025-04-18;ATmega328P + CH340;arduino-nano.pdf ch340.pdf;;Low-level jobs alongside the Mega. Needs the CH340 driver on Windows
+nano-terminal;Screw-terminal adapter for Arduino Nano;Compute;2;SENNEP V2;unknown;3.15;GBP;27.31;Hobby Components;2025-04-18;;;;
+raspberry-pi-5;Raspberry Pi 5;Compute;1;SENNEP V2;unknown;;;;unknown;2025-05;BCM2712;raspberry-pi-5.pdf;;No receipt. RAM size unknown. At Mikkel's parents (Oct 2026)
+pi5-case;Aluminium case for Pi 5 with 2 fans (Waveshare 26086);Compute;1;SENNEP V2;unknown;9.40;EUR;70.12;Bot'n Roll;2025-05-01;;;;
+sd-32gb;microSDHC 32 GB Adata Class 10;Compute;1;SENNEP V2;unknown;4.50;EUR;33.57;Bot'n Roll;2025-05-01;;;;Pi OS installed May 2025 (user sennep)
+sd-16gb;SD card 16 GB Class 10 + adapter;Compute;1;SENNEP V2;unknown;50;DKK;50.00;Ardustore;2024-05-14;;;;
+l298n;L298N dual H-bridge module;Drivetrain;2;SENNEP V2;unknown;80;DKK;80.00;Ardustore;2024-05-14;L298N;l298n.pdf;;Max ~2 A/channel and ~2 V drop. To be replaced by h-bridge-43a
+h-bridge-43a;High-power H-bridge motor driver (probably BTS7960, 43 A);Drivetrain;5;SENNEP V2;unknown;182.25;DKK;182.25;AliExpress;2025-12;BTS7960 (assumed);bts7960.pdf;;Item name truncated in the order mail, so the chip is not confirmed. 4 in use + 1 spare
+motor-rs834;RS PRO 834-7641 gear motor 12 V, 49:1 (975D series);Drivetrain;4;SENNEP V1;unknown;2400;DKK;2400.00;RS / school (V1);2020-2023;;rs-pro-834-7641-motor.pdf;;Approximate price for all 4. 8 mm shaft, 143 rpm, 41 W. Radial load < 5 kgf -> pillow blocks carry the weight
+kfl003;KFL003 pillow block bearing, 17 mm (2 per pack);Mechanical;6;SENNEP V2;unknown;130.91;DKK;130.91;AliExpress;2025-12;;;;3 packs = 6 bearings. Self-aligning
+18650-35e;Samsung INR18650-35E Li-ion 3400 mAh;Power;20;SENNEP V2;unknown;118.00;EUR;880.28;Bot'n Roll;2025-05-01;;samsung-inr18650-35e.pdf;;18 built as 3S6P (10.8 V nom / 12.6 V full, ~20 Ah). Series connections not made yet
+18650-holder;18650 holder 1×2 with spacer;Power;20;SENNEP V2;unknown;6.00;EUR;44.76;Bot'n Roll;2025-05-01;;;;
+bms-3s;3S 40 A BMS with balancing;Power;2;SENNEP V2;unknown;9.80;EUR;73.11;Bot'n Roll;2025-05-01;;;;
+charger-3s;3S Li-ion charger 12.6 V 2 A (EU plug);Power;1;SENNEP V2;unknown;11.95;EUR;89.15;Bot'n Roll;2025-05-01;;;;
+buck-5a;DC-DC step-down 5 A;Power;2;SENNEP V2;unknown;6.98;GBP;60.52;Hobby Components;2025-04-18;unknown (often XL4015);;;Meant for the Pi 5 (5 V / 5 A)
+lm2596-module;LM2596 step-down module with voltmeter;Power;3;SENNEP V2;unknown;6.73;GBP;58.35;Hobby Components;2025-04-18;LM2596;lm2596.pdf;;Max 3 A
+lm2596t-12;LM2596T-12 regulator (TO-220, fixed 12 V);Power;3;SENNEP V2;unknown;24;DKK;24.00;Ardustore;2024-05-14;LM2596;lm2596.pdf;;
+l7805;L7805 5 V linear regulator (TO-220);Power;10;SENNEP V2;unknown;20;DKK;20.00;Ardustore;2024-05-14;7805;l7805.pdf;;The datasheet is TI's µA7800 (same pinout/function as ST L7805)
+ld1117-33;LD1117V33 3.3 V linear regulator (TO-220);Power;3;SENNEP V2;unknown;24;DKK;24.00;Ardustore;2024-05-14;LD1117;ld1117-3v3.pdf;;Max 800 mA. Can supply the esp-01
+breadboard-psu;Breadboard power supply (MB102 type);Power;2;SENNEP V2;unknown;40;DKK;40.00;Ardustore;2024-05-14;AMS1117;ams1117-breadboard-psu.pdf;;5 V + 3.3 V for a breadboard
+irfz44n;IRFZ44N N-MOSFET (TO-220);Power;5;SENNEP V2;unknown;30;DKK;30.00;Ardustore;2024-05-14;IRFZ44N;irfz44n.pdf;;Not logic-level: needs ~10 V gate for full conduction
+mosfet-55v;N-MOSFET 55 V 41 A (probably IRFZ44N);Power;3;SENNEP V2;unknown;3.00;EUR;22.38;Bot'n Roll;2025-05-01;IRFZ44N (assumed);irfz44n.pdf;;
+heatsink-to220;Aluminium heatsink TO-220;Mechanical;5;SENNEP V2;unknown;25;DKK;25.00;Ardustore;2024-05-14;;;;
+relay-40a;Car relay 12 V 40 A, 5-pin;Power;1;SENNEP V2;unknown;7.58;DKK;7.58;AliExpress;2025-12;;;;The E-stop drives the relay instead of breaking main power itself
+fuse-holder;Fuse holder 5×20 mm with cap;Power;10;SENNEP V2;unknown;3.00;EUR;22.38;Bot'n Roll;2025-05-01;;;;
+blade-fuses;Car blade fuses, 180-piece assortment;Power;1;SENNEP V2;unknown;27.79;DKK;27.79;AliExpress;2025-12;;;;
+xt60;XT60 male/female pair;Connectors;2;SENNEP V2;unknown;3.00;EUR;22.38;Bot'n Roll;2025-05-01;;;;
+estop-40mm;Emergency stop 40 mm;Connectors;1;SENNEP V2;unknown;1.49;GBP;12.92;Hobby Components;2025-04-18;;;;
+vl53l0x;VL53L0X ToF distance sensor (laser);Sensors;8;SENNEP V2;unknown;25.27;GBP;219.09;Hobby Components;2025-04-18;VL53L0X;vl53l0x.pdf;;Same I²C address (0x29) -> used via tca9548a. 8 around the robot
+e18-d80nk;E18-D80NK IR proximity sensor (adjustable);Sensors;4;SENNEP V2;unknown;14.63;GBP;126.84;Hobby Components;2025-04-18;;;;Edge detectors in the corners. No official datasheet exists
+hc-sr04;HC-SR04 ultrasonic range finder;Sensors;4;SENNEP V2;unknown;80;DKK;80.00;Ardustore;2024-05-14;;hc-sr04.pdf;;5 V logic
+mpu-6050;MPU-6050 accelerometer + gyro;Sensors;1;SENNEP V2;unknown;4.90;EUR;36.55;Bot'n Roll;2025-05-01;MPU-6050;mpu-6050.pdf mpu-6050-register-map.pdf;;I²C 0x68
+qmc5883l;GY-271 magnetometer (QMC5883L);Sensors;1;SENNEP V2;unknown;18.99;DKK;18.99;AliExpress;2025-12;QMC5883L;qmc5883l.pdf;;I²C 0x0D (not the HMC5883L's 0x1E)
+neo-6m;GY-NEO6MV2 GPS module;Sensors;1;SENNEP V2;unknown;16.66;DKK;16.66;AliExpress;2025-12;u-blox NEO-6M;neo-6m.pdf;;UART 9600 baud. To be included (decided)
+ina219;INA219 current/voltage monitor;Sensors;1;SENNEP V2;unknown;14.52;DKK;14.52;AliExpress;2025-12;INA219;ina219.pdf;;Battery monitoring. Max 26 V
+tsl2561;TSL2561 light sensor;Sensors;1;SENNEP V2;unknown;4.16;GBP;36.07;Hobby Components;2025-04-18;TSL2561;tsl2561.pdf;;
+ds3231;DS3231 RTC module (ZS-042);Sensors;1;SENNEP V2;unknown;45;DKK;45.00;Ardustore;2024-05-14;DS3231;ds3231.pdf;;The ZS-042 has a charging circuit for CR2032. Remove the diode/resistor with a non-rechargeable cell
+mic-module;Microphone module with adjustment;Sensors;5;SENNEP V2;unknown;75;DKK;75.00;Ardustore;2024-05-14;LM393;lm393-microphone-module.pdf;;Digital output via comparator + analog output. Level only, no direction
+vs1838b;VS1838B IR receiver 38 kHz;Sensors;10;SENNEP V2;unknown;4.00;EUR;29.84;Bot'n Roll;2025-05-01;VS1838B;vs1838b-ir-receiver.pdf;;Dock beacon (receiver)
+door-switch;Magnetic door switch MC-38 (NC);Sensors;1;SENNEP V2;unknown;25;DKK;25.00;Ardustore;2024-05-14;;;;
+lidar-ld19;LDROBOT LD19 / STL-19P LiDAR (sold as youyeetoo FHL-LD19);Sensors;1;SENNEP V2;unknown;;;;unknown;2025-05;LD19;ld19-stl-19p-datasheet.pdf ld19-development-manual.pdf;;No receipt. UART 230400 baud, 3.3 V logic. Test app in Lidar Test Enviornment/
+pi-ai-camera;Raspberry Pi AI Camera (IMX500, 12 MP);Sensors;1;SENNEP V2;unknown;84.90;EUR;633.35;Bot'n Roll;2025-05-01;Sony IMX500;pi-ai-camera.pdf;https://www.raspberrypi.com/documentation/accessories/ai-camera.html;
+nrf24l01;NRF24L01 2.4 GHz radio module;Communication;3;SENNEP V2;unknown;60;DKK;60.00;Ardustore;2024-05-14;nRF24L01+;nrf24l01.pdf;;3.3 V supply (5 V-tolerant pins). Manual control / RF joystick
+esp-01;ESP8266 ESP-01 WiFi module;Communication;1;SENNEP V2;unknown;25;DKK;25.00;Ardustore;2024-05-14;ESP8266EX;esp8266ex.pdf esp8266-at-commands.pdf;esp-01/README.md;Probably never used. 3.3 V ONLY: do not use the Mega's 3V3 pin. Pinout, diagram and code in esp-01/
+tca9548a;TCA9548A I²C multiplexer (8 channels);Communication;5;SENNEP V2;unknown;34.83;DKK;34.83;AliExpress;2025-12;TCA9548A;tca9548a.pdf;;Solves all 8 VL53L0X sharing one address. I²C 0x70-0x77
+level-converter;4-channel logic level converter 3.3 V <-> 5 V;Communication;1;SENNEP V2;unknown;11.35;DKK;11.35;AliExpress;2025-12;BSS138;bss138-level-converter.pdf;;Bidirectional (BSS138). Fine for I²C and UART
+screen-7;"7"" HDMI LCD (C) 1024×600 IPS, touch (Waveshare)";UI;1;SENNEP V2;unknown;64.90;EUR;484.15;Bot'n Roll;2025-05-01;;;https://www.waveshare.com/wiki/7inch_HDMI_LCD_(C);Mounting holes did not match in the laser-cut test
+lcd-20x4;20×4 LCD, white;UI;2;SENNEP V2;unknown;160;DKK;160.00;Ardustore;2024-05-14;HD44780;hd44780-lcd.pdf;;
+lcd-16x2;16×2 LCD, white;UI;4;SENNEP V2;unknown;240;DKK;240.00;Ardustore;2024-05-14;HD44780;hd44780-lcd.pdf;;
+i2c-lcd-adapter;I²C adapter for LCD (backpack);UI;6;SENNEP V2;unknown;120;DKK;120.00;Ardustore;2024-05-14;PCF8574;pcf8574-i2c-lcd-adapter.pdf;;I²C 0x27 (PCF8574) or 0x3F (PCF8574A)
+keypad-3x4;Membrane keypad 3×4;UI;1;SENNEP V2;unknown;15;DKK;15.00;Ardustore;2024-05-14;;;;
+voltmeter-display;"0.28"" voltmeter display 0–30 V";UI;1;SENNEP V2;unknown;9.46;DKK;9.46;AliExpress;2025-12;;;;
+dfplayer;DFPlayer Mini MP3 player;Sound;2;SENNEP V2;unknown;60;DKK;60.00;Ardustore;2024-05-14;FN-M16P;dfplayer-mini.pdf;;UART 9600 baud. Use 1 kΩ in series on RX with 5 V logic
+dfplayer-2;DFPlayer Mini MP3 player;Sound;1;SENNEP V2;unknown;9.90;EUR;73.85;Bot'n Roll;2025-05-01;FN-M16P;dfplayer-mini.pdf;;3 in total together with dfplayer
+speaker-1w;Speaker 1 W 8 Ω with adhesive gasket;Sound;8;SENNEP V2;unknown;5.53;GBP;47.95;Hobby Components;2025-04-18;;;;
+pam8403;PAM8403 mini amplifier 2×3 W (5 pcs);Sound;5;SENNEP V2;unknown;11.87;DKK;11.87;AliExpress;2025-12;PAM8403;pam8403.pdf;;5 V supply
+ws2812b;WS2812B LED strip 5 m, 30 LED/m;Lighting;1;SENNEP V2;unknown;52.30;DKK;52.30;AliExpress;2025-12;WS2812B;ws2812b.pdf;;150 LEDs -> up to ~9 A at full white. 5 V
+led-3w;3 W LED module;Lighting;4;SENNEP V2;unknown;11.80;EUR;88.03;Bot'n Roll;2025-05-01;;;;Head-lights. Need current limiting
+ir-led-940;IR LED 940 nm;Lighting;10;SENNEP V2;unknown;6.00;EUR;44.76;Bot'n Roll;2025-05-01;;;;Dock beacon (transmitter)
+joystick-ky023;KY-023 analog joystick (XY + button);Control;4;SENNEP V2;unknown;60;DKK;60.00;Ardustore;2024-05-14;;;;
+potentiometer;Potentiometer, horizontal;Control;5;SENNEP V2;unknown;10;DKK;10.00;Ardustore;2024-05-14;;;;
+key-switch;Key switch S1203 12 mm on/off;Connectors;1;SENNEP V2;unknown;18;DKK;18.00;Ardustore;2024-05-14;;;;
+toggle-mts103;Toggle switch MTS-103 on-off-on 6 A;Connectors;1;SENNEP V2;unknown;7;DKK;7.00;Ardustore;2024-05-14;;;;
+pushbutton-red;Push button PBS-110 red;Connectors;1;SENNEP V2;unknown;5;DKK;5.00;Ardustore;2024-05-14;;;;
+screw-terminal-3p;Screw terminal 3-pole 5.0 mm, blue (10 per pack);Connectors;3;SENNEP V2;unknown;3.28;GBP;28.44;Hobby Components;2025-04-18;;;;3 packs = 30 pcs
+jst-ph-2;JST PH 2.0 mm connector, 2-pole;Connectors;5;SENNEP V2;unknown;1.00;EUR;7.46;Bot'n Roll;2025-05-01;;;;
+jst-ph-3;JST PH 2.0 mm connector, 3-pole;Connectors;5;SENNEP V2;unknown;1.00;EUR;7.46;Bot'n Roll;2025-05-01;;;;
+9v-clip;DC plug for 9 V battery clip;Connectors;2;SENNEP V2;unknown;0.75;GBP;6.50;Hobby Components;2025-04-18;;;;
+cable-10awg;Silicone cable 10 AWG, 2 m;Cables;3;SENNEP V2;unknown;114.75;DKK;114.75;AliExpress;2025-12;;;;
+cable-16awg;Cable 16 AWG, 10 m;Cables;1;SENNEP V2;unknown;59.96;DKK;59.96;AliExpress;2025-12;;;;
+cable-22awg;Cable 22 AWG, 50 m (5×10 m);Cables;1;SENNEP V2;unknown;74.01;DKK;74.01;AliExpress;2025-12;;;;
+alligator-leads;Alligator clip leads, 10 pcs;Cables;1;SENNEP V2;unknown;3.90;EUR;29.09;Bot'n Roll;2025-05-01;;;;
+ceramic-kit;Ceramic capacitors, 300 pcs (2 pF–0.1 µF);Passives;1;SENNEP V2;unknown;1.99;GBP;17.25;Hobby Components;2025-04-18;;;;
+electrolytic-kit;Electrolytic capacitors, 120 pcs;Passives;1;SENNEP V2;unknown;3.09;GBP;26.79;Hobby Components;2025-04-18;;;;
+smd-diodes;SMD diodes, 70 pcs;Passives;1;SENNEP V2;unknown;1.49;GBP;12.92;Hobby Components;2025-04-18;;;;
+fan-40mm;Fan 40×40 mm brushless DC;Mechanical;4;SENNEP V2;unknown;2.63;GBP;22.80;Hobby Components;2025-04-18;;;;Voltage not stated on the invoice
+protoboard-12x18;Protoboard double-sided 12×18 cm;Mechanical;4;SENNEP V2;unknown;6.43;GBP;55.75;Hobby Components;2025-04-18;;;;
+solderable-breadboard;Solderable breadboard, 400 holes;Mechanical;1;SENNEP V2;unknown;10.16;DKK;10.16;AliExpress;2025-12;;;;
+hex-screw-assortment;Stainless hex socket screws, 290-piece assortment;Mechanical;1;SENNEP V2;unknown;63.62;DKK;63.62;AliExpress;2025-12;;;;Sizes unknown
+insert-m3;Brass threaded inserts M3, 100 pcs;Mechanical;1;SENNEP V2;unknown;41.52;DKK;41.52;AliExpress;2025-12;;;;Melted in with the soldering iron
+petg;PETG filament (kg);Consumables;15;SENNEP V2;unknown;;;;unknown;;;;;15 kg was the stock in 2025
+solder;Solder 1.0 mm, 100 g;Consumables;1;SENNEP V2;unknown;95;DKK;95.00;Ardustore;2024-05-14;;;;
+thermal-paste;Silicone thermal paste, 30 g;Consumables;1;SENNEP V2;unknown;75;DKK;75.00;Ardustore;2024-05-14;;;;
+side-cutters;Side cutters 125 mm;Tools;1;SENNEP V2;unknown;45;DKK;45.00;Ardustore;2024-05-14;;;;

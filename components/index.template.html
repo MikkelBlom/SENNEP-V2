@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="da">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SENNEP V2 komponenter</title>
+<title>SENNEP V2 parts</title>
 <style>
   :root {
     --bg: #f6f5f1; --panel: #fff; --ink: #1c1c1a; --muted: #6b6a64; --line: #e3e1da;
@@ -52,21 +52,23 @@
 </head>
 <body>
 <header>
-  <h1>SENNEP V2 — komponenter</h1>
+  <h1>SENNEP V2 — parts</h1>
   <div class="sub" id="summary"></div>
 </header>
 <div class="controls">
-  <input type="search" id="q" placeholder="Søg: navn, chip, butik, note …  (fx “3,3 V”, “I²C”, “esp”)" autofocus>
+  <input type="search" id="q" placeholder="Search: name, chip, store, note …  (e.g. “3.3 V”, “I²C”, “esp”)" autofocus>
   <div class="chips" id="chips"></div>
+  <div class="chips" id="srcchips"></div>
 </div>
 <main>
   <div class="count" id="count"></div>
   <div class="wrap">
     <table>
       <thead><tr>
-        <th data-k="navn">Komponent</th><th data-k="kategori">Kategori</th><th data-k="antal">Antal</th>
-        <th data-k="dkk">≈ DKK</th><th data-k="butik">Butik</th><th data-k="dato">Dato</th>
-        <th>Datablad / links</th><th>Noter</th>
+        <th data-k="name">Part</th><th data-k="category">Category</th><th data-k="qty">Qty</th>
+        <th data-k="source">Source</th><th data-k="condition">Condition</th>
+        <th data-k="dkk">≈ DKK</th><th data-k="store">Store</th><th data-k="date">Date</th>
+        <th>Datasheet / links</th><th>Notes</th>
       </tr></thead>
       <tbody id="rows"></tbody>
     </table>
@@ -76,53 +78,64 @@
 const DATA = /*DATA*/[];
 const CATEGORIES = /*CATEGORIES*/[];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const kr = v => Math.round(v).toLocaleString("da-DK") + " kr";
-let activeCat = null, sortKey = null, sortDir = 1;
+const kr = v => Math.round(v).toLocaleString("en-GB") + " kr";
+let activeCat = null, activeSrc = null, sortKey = null, sortDir = 1;
 
 function load(key, fallback) { try { return localStorage.getItem(key) ?? fallback; } catch { return fallback; } }
 function save(key, value) { try { localStorage.setItem(key, value); } catch {} }
 
 const total = DATA.reduce((s, r) => s + (r.dkk ? +r.dkk : 0), 0);
 document.getElementById("summary").textContent =
-  `${DATA.length} komponenter · ≈ ${kr(total)} med kendte priser (ekskl. fragt) · kilde: inventory.csv`;
+  `${DATA.length} parts · ≈ ${kr(total)} with known prices (excl. shipping) · source: inventory.csv`;
 
 function renderChips() {
   const el = document.getElementById("chips");
   const all = [null, ...CATEGORIES];
   el.innerHTML = all.map(c => {
-    const n = c ? DATA.filter(r => r.kategori === c).length : DATA.length;
-    return `<button class="chip" data-c="${esc(c ?? "")}" aria-pressed="${c === activeCat}">${esc(c ?? "Alle")}<small>${n}</small></button>`;
+    const n = c ? DATA.filter(r => r.category === c).length : DATA.length;
+    return `<button class="chip" data-c="${esc(c ?? "")}" aria-pressed="${c === activeCat}">${esc(c ?? "All")}<small>${n}</small></button>`;
   }).join("");
   el.querySelectorAll(".chip").forEach(b => b.onclick = () => {
     activeCat = b.dataset.c || null; save("cat", activeCat ?? ""); renderChips(); render();
   });
+  const src = document.getElementById("srcchips");
+  const sources = [null, ...new Set(DATA.map(r => r.source))];
+  src.innerHTML = sources.map(s => {
+    const n = s ? DATA.filter(r => r.source === s).length : DATA.length;
+    return `<button class="chip" data-s="${esc(s ?? "")}" aria-pressed="${s === activeSrc}">${esc(s ?? "Any source")}<small>${n}</small></button>`;
+  }).join("");
+  src.querySelectorAll(".chip").forEach(b => b.onclick = () => {
+    activeSrc = b.dataset.s || null; renderChips(); render();
+  });
 }
 
 function links(r) {
-  const docs = r.datablade.split(/\s+/).filter(Boolean).map(f => `<a href="datasheets/${esc(f)}" target="_blank">📄 ${esc(f.replace(/\.pdf$/, ""))}</a>`);
-  const web = r.links.split(/\s+/).filter(Boolean).map(u => `<a href="${esc(u)}" target="_blank">${u.startsWith("http") ? "🔗 web" : "📝 noter"}</a>`);
+  const docs = r.datasheets.split(/\s+/).filter(Boolean).map(f => `<a href="datasheets/${esc(f)}" target="_blank">📄 ${esc(f.replace(/\.pdf$/, ""))}</a>`);
+  const web = r.links.split(/\s+/).filter(Boolean).map(u => `<a href="${esc(u)}" target="_blank">${u.startsWith("http") ? "🔗 web" : "📝 notes"}</a>`);
   return docs.concat(web).join("");
 }
 
 function render() {
   const q = document.getElementById("q").value.trim().toLowerCase();
-  let rows = DATA.filter(r => (!activeCat || r.kategori === activeCat) &&
+  let rows = DATA.filter(r => (!activeCat || r.category === activeCat) && (!activeSrc || r.source === activeSrc) &&
     (!q || Object.values(r).join(" ").toLowerCase().includes(q)));
   if (sortKey) rows = [...rows].sort((a, b) => {
     const x = a[sortKey], y = b[sortKey];
     const nx = parseFloat(x), ny = parseFloat(y);
-    return (isNaN(nx) || isNaN(ny) ? String(x).localeCompare(String(y), "da") : nx - ny) * sortDir;
+    return (isNaN(nx) || isNaN(ny) ? String(x).localeCompare(String(y), "en") : nx - ny) * sortDir;
   });
-  document.getElementById("count").textContent = `${rows.length} vist`;
+  document.getElementById("count").textContent = `${rows.length} shown`;
   document.getElementById("rows").innerHTML = rows.map(r => `<tr>
-    <td><div class="name">${esc(r.navn)}</div><code>${esc(r.id)}</code>${r.chip ? ` <span class="chipname">· ${esc(r.chip)}</span>` : ""}</td>
-    <td class="cat">${esc(r.kategori)}</td>
-    <td class="num">${esc(r.antal)}</td>
+    <td><div class="name">${esc(r.name)}</div><code>${esc(r.id)}</code>${r.chip ? ` <span class="chipname">· ${esc(r.chip)}</span>` : ""}</td>
+    <td class="cat">${esc(r.category)}</td>
+    <td class="num">${esc(r.qty)}</td>
+    <td class="cat">${esc(r.source)}</td>
+    <td class="cat">${esc(r.condition)}</td>
     <td class="num">${r.dkk ? kr(+r.dkk) : "?"}</td>
-    <td>${esc(r.butik)}</td>
-    <td>${esc(r.dato)}</td>
+    <td>${esc(r.store)}</td>
+    <td>${esc(r.date)}</td>
     <td class="docs">${links(r)}</td>
-    <td class="notes">${esc(r.noter)}</td></tr>`).join("");
+    <td class="notes">${esc(r.notes)}</td></tr>`).join("");
 }
 
 document.querySelectorAll("th[data-k]").forEach(th => th.onclick = () => {
