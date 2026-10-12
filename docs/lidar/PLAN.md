@@ -238,6 +238,8 @@ på Pi'en end man skulle tro — men det ændrer ikke valget, fordi Rust også e
 
 ## 10. Status efter v1 (2026-10-12)
 
+![UI på 7" skærm (simulator)](ui-sim-7inch.png)
+
 Målt i skyen (x86, ~1,5–2,5× hurtigere pr. kerne end Pi 5) — fuld tabel i `BENCHMARK.md`:
 
 | Mål (§3) | Krav | Målt |
