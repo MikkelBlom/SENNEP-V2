@@ -206,3 +206,30 @@ Ulempen er læringskurven. C-kernen fra Mega-linket kan bruges som den er via FF
 **Ærlig note om kamera-AI:** Raspberry Pi AI Camera (IMX500) kører det neurale netværk *på selve
 kamerasensoren*; Pi'en modtager kun resultaterne. Ansigtsgenkendelse koster derfor langt mindre CPU
 på Pi'en end man skulle tro — men det ændrer ikke valget, fordi Rust også er det bedste til resten.
+
+### Runde 2 (2026-10-12) — plan godkendt
+- **Sprog: Rust** for hele Pi-applikationen (Mega-linkets C99-kerne kan bruges via FFI eller porteres).
+- **Hindringer:** Pi'en sender "nærmeste afstand pr. sektor" til Megaen (~20–50 Hz); Megaen begrænser
+  fart/stopper sammen med ToF (refleks-arkitekturen i `docs/electronics/PI_MEGA_LINK.md`, branch
+  `claude/stoic-cray-tsomgg`). I v1 ligger zonerne bag et interface; selve link-indkodningen laves, når linket er bygget.
+- **Rækkefølge godkendt:** (1) parser + scan-samling + simulator + tests → (2) web-UI med stabilt
+  live-billede → (3) sikkerhedszoner → (4) LiDAR-odometri + kort der holder når robotten kører.
+- **Tilslutning:** USB-adapteren fra kittet (CP2102), fundet via `/dev/serial/by-id/…`; porten er en indstilling.
+
+## 9. Endelig arkitektur (v1)
+
+Én Rust-binær `sennep-lidar` (mappe `lidar/`), ingen runtime-afhængigheder:
+
+| Modul | Ansvar |
+|---|---|
+| `protocol` | Streaming-parser for LD19-pakker: resync, CRC8, vinkel-wrap, ingen allokering pr. pakke |
+| `source` | `ByteSource`-trait: `SerialSource`, `ReplaySource` (rå `.ldr` + gamle `.jsonl`, genindkodet til pakker), `SimSource` |
+| `clock` | Afbilder LiDAR'ens ms-ur (wrap 30000) til værtens monotone tid |
+| `scan` | Scan-samler på punkt-niveau (split ved 360→0), robotramme (x frem, y venstre, mod uret), tid pr. punkt |
+| `filter` | Rækkevidde, LDROBOT-lignende near-filter, maske for robottens egen krop |
+| `zones` | Sektorafstande fra robottens kant (rektangel), opdateret **pr. pakke** |
+| `odom` | Scan-til-lokalt-kort: konstant-hastigheds-prædiktion → de-skew → punkt-til-linje ICP (Gauss-Newton, Huber) mod keyframes |
+| `grid` | Log-odds occupancy grid (5 cm), ray-casting, beskidte fliser sendes inkrementelt |
+| `sim` | Syntetisk rum + bane + støj fra databladet → **rå LD19-bytes** (tester hele kæden) |
+| `server` | HTTP (én statisk side) + WebSocket med binære frames; klienter får altid nyeste frame (ingen kø) |
+| `bench` | Afspiller optagelser + sim, måler latens, CPU, RSS, jitter, drift, kort-IoU → `docs/lidar/BENCHMARK.md` |
