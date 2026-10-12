@@ -120,11 +120,7 @@ impl ScanAssembler {
     fn finish(&mut self) -> Option<Scan> {
         let mut scan = std::mem::take(&mut self.cur);
         self.cur.points = Vec::with_capacity(scan.points.capacity().max(600));
-        let rev_hz = if self.speed_n > 0 {
-            self.speed_sum / self.speed_n as f32 / 360.0
-        } else {
-            0.0
-        };
+        let rev_hz = if self.speed_n > 0 { self.speed_sum / self.speed_n as f32 / 360.0 } else { 0.0 };
         self.speed_sum = 0.0;
         self.speed_n = 0;
         if !self.seen_wrap {

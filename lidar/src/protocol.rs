@@ -22,11 +22,7 @@ const fn make_crc_table() -> [u8; 256] {
         let mut crc = i as u8;
         let mut bit = 0;
         while bit < 8 {
-            crc = if crc & 0x80 != 0 {
-                (crc << 1) ^ 0x4D
-            } else {
-                crc << 1
-            };
+            crc = if crc & 0x80 != 0 { (crc << 1) ^ 0x4D } else { crc << 1 };
             bit += 1;
         }
         table[i] = crc;
@@ -38,8 +34,7 @@ const fn make_crc_table() -> [u8; 256] {
 static CRC_TABLE: [u8; 256] = make_crc_table();
 
 pub fn crc8(data: &[u8]) -> u8 {
-    data.iter()
-        .fold(0u8, |crc, &b| CRC_TABLE[(crc ^ b) as usize])
+    data.iter().fold(0u8, |crc, &b| CRC_TABLE[(crc ^ b) as usize])
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -81,10 +76,7 @@ impl Packet {
         let mut points = [RawPoint::default(); POINTS_PER_PACKET];
         for (i, p) in points.iter_mut().enumerate() {
             let o = 6 + i * 3;
-            *p = RawPoint {
-                dist_mm: u16le(o),
-                intensity: bytes[o + 2],
-            };
+            *p = RawPoint { dist_mm: u16le(o), intensity: bytes[o + 2] };
         }
         Packet {
             speed_dps: u16le(2),
@@ -138,11 +130,7 @@ impl Default for Parser {
 
 impl Parser {
     pub fn new() -> Self {
-        Parser {
-            buf: [0; PACKET_LEN],
-            fill: 0,
-            stats: ParserStats::default(),
-        }
+        Parser { buf: [0; PACKET_LEN], fill: 0, stats: ParserStats::default() }
     }
 
     pub fn push(&mut self, bytes: &[u8], host_us: u64, out: &mut impl FnMut(Packet)) {
@@ -210,19 +198,15 @@ mod tests {
 
     /// Example packet from the LD19 development manual §3.3.
     const MANUAL_EXAMPLE: [u8; PACKET_LEN] = [
-        0x54, 0x2C, 0x68, 0x08, 0xAB, 0x7E, 0xE0, 0x00, 0xE4, 0xDC, 0x00, 0xE2, 0xD9, 0x00, 0xE5,
-        0xD5, 0x00, 0xE3, 0xD3, 0x00, 0xE4, 0xD0, 0x00, 0xE9, 0xCD, 0x00, 0xE4, 0xCA, 0x00, 0xE2,
-        0xC7, 0x00, 0xE9, 0xC5, 0x00, 0xE5, 0xC2, 0x00, 0xE5, 0xC0, 0x00, 0xE5, 0xBE, 0x82, 0x3A,
-        0x1A, 0x50,
+        0x54, 0x2C, 0x68, 0x08, 0xAB, 0x7E, 0xE0, 0x00, 0xE4, 0xDC, 0x00, 0xE2, 0xD9, 0x00, 0xE5, 0xD5, 0x00,
+        0xE3, 0xD3, 0x00, 0xE4, 0xD0, 0x00, 0xE9, 0xCD, 0x00, 0xE4, 0xCA, 0x00, 0xE2, 0xC7, 0x00, 0xE9, 0xC5,
+        0x00, 0xE5, 0xC2, 0x00, 0xE5, 0xC0, 0x00, 0xE5, 0xBE, 0x82, 0x3A, 0x1A, 0x50,
     ];
 
     #[test]
     fn crc_table_matches_manual() {
         // First entries of the table printed in the manual.
-        assert_eq!(
-            &CRC_TABLE[..8],
-            &[0x00, 0x4d, 0x9a, 0xd7, 0x79, 0x34, 0xe3, 0xae]
-        );
+        assert_eq!(&CRC_TABLE[..8], &[0x00, 0x4d, 0x9a, 0xd7, 0x79, 0x34, 0xe3, 0xae]);
         assert_eq!(CRC_TABLE[255], 0xa8);
     }
 
@@ -233,20 +217,8 @@ mod tests {
         assert_eq!(p.speed_dps, 2152);
         assert_eq!(p.start_cdeg, 32427);
         assert_eq!(p.end_cdeg, 33470);
-        assert_eq!(
-            p.points[0],
-            RawPoint {
-                dist_mm: 224,
-                intensity: 228
-            }
-        );
-        assert_eq!(
-            p.points[1],
-            RawPoint {
-                dist_mm: 220,
-                intensity: 226
-            }
-        );
+        assert_eq!(p.points[0], RawPoint { dist_mm: 224, intensity: 228 });
+        assert_eq!(p.points[1], RawPoint { dist_mm: 220, intensity: 226 });
         assert_eq!(p.points[11].dist_mm, 192);
         assert_eq!(p.timestamp_ms, 0x1A3A);
         assert!((p.angle_deg(0) - 324.27).abs() < 1e-3);

@@ -21,14 +21,7 @@ pub struct GridConfig {
 
 impl Default for GridConfig {
     fn default() -> Self {
-        GridConfig {
-            resolution: 0.05,
-            size: 40.0,
-            hit: 18,
-            miss: -5,
-            clamp: 100,
-            max_hit_range: 8.0,
-        }
+        GridConfig { resolution: 0.05, size: 40.0, hit: 18, miss: -5, clamp: 100, max_hit_range: 8.0 }
     }
 }
 
@@ -104,11 +97,7 @@ impl Grid {
             let (wx, wy) = pose.apply(px as f64, py as f64);
             if let Some((cx, cy)) = self.cell_of(wx as f32, wy as f32) {
                 let i = cy * self.dim + cx;
-                let undo_miss = if self.stamp[i] == self.sweep_id {
-                    -(self.cfg.miss as i16)
-                } else {
-                    0
-                };
+                let undo_miss = if self.stamp[i] == self.sweep_id { -(self.cfg.miss as i16) } else { 0 };
                 self.stamp[i] = self.sweep_id.wrapping_add(1 << 31); // hit marker: don't hit twice
                 let v = self.cells[i] as i16 + self.cfg.hit as i16 + undo_miss;
                 self.set(i, cx, cy, v);
@@ -136,41 +125,20 @@ impl Grid {
         if len < 1e-6 {
             return;
         }
-        let (step_x, step_y) = (
-            if dx >= 0.0 { 1i64 } else { -1 },
-            if dy >= 0.0 { 1i64 } else { -1 },
-        );
+        let (step_x, step_y) = (if dx >= 0.0 { 1i64 } else { -1 }, if dy >= 0.0 { 1i64 } else { -1 });
         let next_bx = self.origin.0 + (cx as f32 + if dx >= 0.0 { 1.0 } else { 0.0 }) * res;
         let next_by = self.origin.1 + (cy as f32 + if dy >= 0.0 { 1.0 } else { 0.0 }) * res;
-        let mut t_max_x = if dx.abs() > 1e-9 {
-            (next_bx - x0) / dx
-        } else {
-            f32::INFINITY
-        };
-        let mut t_max_y = if dy.abs() > 1e-9 {
-            (next_by - y0) / dy
-        } else {
-            f32::INFINITY
-        };
-        let t_dx = if dx.abs() > 1e-9 {
-            res / dx.abs()
-        } else {
-            f32::INFINITY
-        };
-        let t_dy = if dy.abs() > 1e-9 {
-            res / dy.abs()
-        } else {
-            f32::INFINITY
-        };
+        let mut t_max_x = if dx.abs() > 1e-9 { (next_bx - x0) / dx } else { f32::INFINITY };
+        let mut t_max_y = if dy.abs() > 1e-9 { (next_by - y0) / dy } else { f32::INFINITY };
+        let t_dx = if dx.abs() > 1e-9 { res / dx.abs() } else { f32::INFINITY };
+        let t_dy = if dy.abs() > 1e-9 { res / dy.abs() } else { f32::INFINITY };
         let max_steps = (len / res) as usize * 2 + 2;
         for _ in 0..max_steps {
             if Some((cx, cy)) == end {
                 return;
             }
             let i = cy * self.dim + cx;
-            if self.stamp[i] != self.sweep_id
-                && self.stamp[i] != self.sweep_id.wrapping_add(1 << 31)
-            {
+            if self.stamp[i] != self.sweep_id && self.stamp[i] != self.sweep_id.wrapping_add(1 << 31) {
                 self.stamp[i] = self.sweep_id;
                 let v = self.cells[i] as i16 + self.cfg.miss as i16;
                 self.set(i, cx, cy, v);

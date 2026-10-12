@@ -12,10 +12,7 @@ pub struct Footprint {
 
 impl Default for Footprint {
     fn default() -> Self {
-        Footprint {
-            length: 0.80,
-            width: 0.65,
-        }
+        Footprint { length: 0.80, width: 0.65 }
     }
 }
 
@@ -99,14 +96,7 @@ mod tests {
 
     fn pt(a_deg: f32, r: f32, intensity: u8) -> ScanPoint {
         let a = a_deg.to_radians();
-        ScanPoint {
-            x: r * a.cos(),
-            y: r * a.sin(),
-            r,
-            a,
-            intensity,
-            t: 0.0,
-        }
+        ScanPoint { x: r * a.cos(), y: r * a.sin(), r, a, intensity, t: 0.0 }
     }
 
     #[test]
@@ -123,10 +113,7 @@ mod tests {
 
     #[test]
     fn clearance_to_outline() {
-        let f = Footprint {
-            length: 0.8,
-            width: 0.6,
-        };
+        let f = Footprint { length: 0.8, width: 0.6 };
         assert!((f.clearance(1.4, 0.0) - 1.0).abs() < 1e-6);
         assert!((f.clearance(0.0, -0.8) - 0.5).abs() < 1e-6);
         assert!((f.clearance(0.7, 0.7) - 0.5).abs() < 1e-6);

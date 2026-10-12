@@ -57,15 +57,8 @@ pub struct Mover {
 impl Mover {
     pub fn at(&self, t: f64) -> (f64, f64) {
         let phase = (t / self.period_s).fract();
-        let k = if phase < 0.5 {
-            phase * 2.0
-        } else {
-            2.0 - phase * 2.0
-        };
-        (
-            self.from.0 + (self.to.0 - self.from.0) * k,
-            self.from.1 + (self.to.1 - self.from.1) * k,
-        )
+        let k = if phase < 0.5 { phase * 2.0 } else { 2.0 - phase * 2.0 };
+        (self.from.0 + (self.to.0 - self.from.0) * k, self.from.1 + (self.to.1 - self.from.1) * k)
     }
 }
 
@@ -140,22 +133,10 @@ impl World {
     }
 
     fn rect(segs: &mut Vec<Segment>, x0: f64, y0: f64, x1: f64, y1: f64) {
-        segs.push(Segment {
-            a: (x0, y0),
-            b: (x1, y0),
-        });
-        segs.push(Segment {
-            a: (x1, y0),
-            b: (x1, y1),
-        });
-        segs.push(Segment {
-            a: (x1, y1),
-            b: (x0, y1),
-        });
-        segs.push(Segment {
-            a: (x0, y1),
-            b: (x0, y0),
-        });
+        segs.push(Segment { a: (x0, y0), b: (x1, y0) });
+        segs.push(Segment { a: (x1, y0), b: (x1, y1) });
+        segs.push(Segment { a: (x1, y1), b: (x0, y1) });
+        segs.push(Segment { a: (x0, y1), b: (x0, y0) });
     }
 
     /// An 8 x 5 m room split by a partition wall with a doorway, furniture, table legs.
@@ -172,33 +153,18 @@ impl World {
         Self::rect(&mut s, 2.6, -2.4, 3.9, -2.0);
         Self::rect(&mut s, 3.2, 0.9, 3.9, 1.9);
         // a slanted wall corner
-        s.push(Segment {
-            a: (-4.0, -1.5),
-            b: (-3.0, -2.5),
-        });
+        s.push(Segment { a: (-4.0, -1.5), b: (-3.0, -2.5) });
         let mut circles = Vec::new();
         for (x, y) in [(-3.5, -0.3), (-2.9, -0.3), (-3.5, 0.3), (-2.9, 0.3)] {
             circles.push(Circle { c: (x, y), r: 0.02 }); // table legs
         }
-        circles.push(Circle {
-            c: (2.0, 1.5),
-            r: 0.15,
-        }); // plant pot
-        World {
-            segments: s,
-            circles,
-            movers: Vec::new(),
-        }
+        circles.push(Circle { c: (2.0, 1.5), r: 0.15 }); // plant pot
+        World { segments: s, circles, movers: Vec::new() }
     }
 
     pub fn with_person(mut self) -> World {
         // Walks across the lower part of the left room, in view most of the tour but never into the robot.
-        self.movers.push(Mover {
-            from: (-1.8, -2.0),
-            to: (-0.3, -1.8),
-            r: 0.18,
-            period_s: 8.0,
-        });
+        self.movers.push(Mover { from: (-1.8, -2.0), to: (-0.3, -1.8), r: 0.18, period_s: 8.0 });
         self
     }
 }
@@ -235,90 +201,40 @@ impl Trajectory {
     }
 
     pub fn stationary(p: Pose2, dur_s: f64) -> Trajectory {
-        Self::from_legs(
-            p,
-            &[Leg {
-                dur_s,
-                vx: 0.0,
-                vy: 0.0,
-                w: 0.0,
-            }],
-        )
+        Self::from_legs(p, &[Leg { dur_s, vx: 0.0, vy: 0.0, w: 0.0 }])
     }
 
     /// A tour through both rooms: forward, rotate, strafe, diagonal, through the doorway and back.
     /// Speeds are what a 50 kg mecanum robot indoors would do (0.4 m/s, 60 °/s).
     pub fn tour() -> Trajectory {
+        Self::from_legs(Self::TOUR_START, &Self::tour_legs())
+    }
+
+    /// The tour and then the same legs backwards, ending exactly where it started (seamless loop).
+    pub fn tour_round_trip() -> Trajectory {
+        let fwd = Self::tour_legs();
+        let back = fwd.iter().rev().map(|l| Leg { dur_s: l.dur_s, vx: -l.vx, vy: -l.vy, w: -l.w });
+        let legs: Vec<Leg> = fwd.iter().copied().chain(back).collect();
+        Self::from_legs(Self::TOUR_START, &legs)
+    }
+
+    const TOUR_START: Pose2 = Pose2 { x: -2.5, y: -0.8, th: 0.0 };
+
+    fn tour_legs() -> Vec<Leg> {
         let r = 60f64.to_radians();
-        let legs = [
-            Leg {
-                dur_s: 1.0,
-                vx: 0.0,
-                vy: 0.0,
-                w: 0.0,
-            },
-            Leg {
-                dur_s: 4.0,
-                vx: 0.4,
-                vy: 0.0,
-                w: 0.0,
-            },
-            Leg {
-                dur_s: 1.5,
-                vx: 0.0,
-                vy: 0.0,
-                w: r,
-            },
-            Leg {
-                dur_s: 3.0,
-                vx: 0.0,
-                vy: -0.3,
-                w: 0.0,
-            },
-            Leg {
-                dur_s: 3.0,
-                vx: 0.3,
-                vy: 0.0,
-                w: 0.2,
-            },
-            Leg {
-                dur_s: 3.0,
-                vx: 0.25,
-                vy: 0.15,
-                w: -0.3,
-            },
-            Leg {
-                dur_s: 1.5,
-                vx: 0.0,
-                vy: 0.0,
-                w: -r,
-            },
-            Leg {
-                dur_s: 5.0,
-                vx: 0.4,
-                vy: 0.0,
-                w: 0.0,
-            },
-            Leg {
-                dur_s: 3.0,
-                vx: 0.0,
-                vy: 0.0,
-                w: r,
-            },
-            Leg {
-                dur_s: 6.0,
-                vx: 0.4,
-                vy: 0.0,
-                w: 0.05,
-            },
-            Leg {
-                dur_s: 1.0,
-                vx: 0.0,
-                vy: 0.0,
-                w: 0.0,
-            },
-        ];
-        Self::from_legs(Pose2::new(-2.5, -0.8, 0.0), &legs)
+        vec![
+            Leg { dur_s: 1.0, vx: 0.0, vy: 0.0, w: 0.0 },
+            Leg { dur_s: 4.0, vx: 0.4, vy: 0.0, w: 0.0 },
+            Leg { dur_s: 1.5, vx: 0.0, vy: 0.0, w: r },
+            Leg { dur_s: 3.0, vx: 0.0, vy: -0.3, w: 0.0 },
+            Leg { dur_s: 3.0, vx: 0.3, vy: 0.0, w: 0.2 },
+            Leg { dur_s: 3.0, vx: 0.25, vy: 0.15, w: -0.3 },
+            Leg { dur_s: 1.5, vx: 0.0, vy: 0.0, w: -r },
+            Leg { dur_s: 5.0, vx: 0.4, vy: 0.0, w: 0.0 },
+            Leg { dur_s: 3.0, vx: 0.0, vy: 0.0, w: r },
+            Leg { dur_s: 6.0, vx: 0.4, vy: 0.0, w: 0.05 },
+            Leg { dur_s: 1.0, vx: 0.0, vy: 0.0, w: 0.0 },
+        ]
     }
 
     pub fn duration(&self) -> f64 {
@@ -326,9 +242,7 @@ impl Trajectory {
     }
 
     pub fn at(&self, t: f64) -> Pose2 {
-        let i = (t / self.dt)
-            .floor()
-            .clamp(0.0, (self.poses.len() - 1) as f64) as usize;
+        let i = (t / self.dt).floor().clamp(0.0, (self.poses.len() - 1) as f64) as usize;
         let j = (i + 1).min(self.poses.len() - 1);
         let k = (t / self.dt - i as f64).clamp(0.0, 1.0);
         let (a, b) = (self.poses[i], self.poses[j]);
@@ -403,13 +317,7 @@ pub struct Simulator {
 impl Simulator {
     pub fn new(world: World, traj: Trajectory, cfg: SimConfig) -> Simulator {
         let rng = Rng::new(cfg.seed);
-        Simulator {
-            world,
-            traj,
-            cfg,
-            rng,
-            sample: 0,
-        }
+        Simulator { world, traj, cfg, rng, sample: 0 }
     }
 
     pub fn sample_time(&self, n: u64) -> f64 {
@@ -435,22 +343,12 @@ impl Simulator {
             let sensor = self.traj.at(t).compose(&self.cfg.mount);
             let a = sensor.th - self.sensor_angle(n).to_radians();
             let d = (a.cos(), a.sin());
-            let hit = self
-                .world
-                .cast((sensor.x, sensor.y), d, t)
-                .filter(|&r| (0.03..12.0).contains(&r));
+            let hit = self.world.cast((sensor.x, sensor.y), d, t).filter(|&r| (0.03..12.0).contains(&r));
             *p = match hit {
                 Some(r) if !(self.cfg.noise && self.rng.uniform() < self.cfg.dropout) => {
-                    let r = if self.cfg.noise {
-                        r + self.rng.gauss() * range_sigma(r)
-                    } else {
-                        r
-                    };
+                    let r = if self.cfg.noise { r + self.rng.gauss() * range_sigma(r) } else { r };
                     let intensity = (230.0 - 12.0 * r).clamp(40.0, 255.0) as u8;
-                    RawPoint {
-                        dist_mm: (r * 1000.0).round().clamp(1.0, 65_535.0) as u16,
-                        intensity,
-                    }
+                    RawPoint { dist_mm: (r * 1000.0).round().clamp(1.0, 65_535.0) as u16, intensity }
                 }
                 _ => RawPoint::default(),
             };
@@ -475,9 +373,7 @@ impl Simulator {
     pub fn wire_bytes(&mut self, p: &Packet, out: &mut Vec<u8>) {
         let bytes = p.encode();
         for &b in &bytes {
-            let b = if self.cfg.byte_error_rate > 0.0
-                && self.rng.uniform() < self.cfg.byte_error_rate
-            {
+            let b = if self.cfg.byte_error_rate > 0.0 && self.rng.uniform() < self.cfg.byte_error_rate {
                 b ^ (1 << (self.rng.next_u64() % 8))
             } else {
                 b

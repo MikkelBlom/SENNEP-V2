@@ -29,37 +29,21 @@ pub fn run(src: &mut dyn ByteSource, cfg: PipelineConfig) -> Run {
             Output::Zones(z) => zones.push(z.clone()),
         });
     }
-    Run {
-        poses,
-        accepted,
-        scans,
-        zones,
-        pipeline: p,
-    }
+    Run { poses, accepted, scans, zones, pipeline: p }
 }
 
 /// The old recordings were made with the LiDAR on a desk, not on the robot: no body mask.
 pub fn bench_config() -> PipelineConfig {
     let mut cfg = PipelineConfig::default();
-    cfg.filter = FilterConfig {
-        self_mask: None,
-        ..FilterConfig::default()
-    };
-    cfg.zones.footprint = Footprint {
-        length: 0.0,
-        width: 0.0,
-    };
+    cfg.filter = FilterConfig { self_mask: None, ..FilterConfig::default() };
+    cfg.zones.footprint = Footprint { length: 0.0, width: 0.0 };
     cfg.zones.self_margin = -1.0;
     cfg
 }
 
 pub fn recordings() -> Vec<PathBuf> {
-    let dir =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../Lidar Test Enviornment/recordings");
-    let mut v: Vec<PathBuf> = std::fs::read_dir(dir)
-        .unwrap()
-        .map(|e| e.unwrap().path())
-        .collect();
+    let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../Lidar Test Enviornment/recordings");
+    let mut v: Vec<PathBuf> = std::fs::read_dir(dir).unwrap().map(|e| e.unwrap().path()).collect();
     v.retain(|p| p.extension().is_some_and(|e| e == "jsonl"));
     v.sort();
     assert!(!v.is_empty());

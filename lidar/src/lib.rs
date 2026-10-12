@@ -8,6 +8,8 @@ pub mod odom;
 pub mod pipeline;
 pub mod protocol;
 pub mod scan;
+pub mod server;
 pub mod sim;
 pub mod source;
+pub mod sys;
 pub mod zones;

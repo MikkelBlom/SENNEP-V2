@@ -38,10 +38,7 @@ impl SerialSource {
             .timeout(Duration::from_millis(100))
             .open()
             .map_err(|e| io::Error::other(format!("{path}: {e}")))?;
-        Ok(SerialSource {
-            port,
-            path: path.to_string(),
-        })
+        Ok(SerialSource { port, path: path.to_string() })
     }
 }
 
@@ -112,29 +109,11 @@ impl ReplaySource {
         } else {
             load_ldr(path)?
         };
-        Ok(Self::from_chunks(
-            chunks,
-            realtime,
-            looped,
-            path.display().to_string(),
-        ))
+        Ok(Self::from_chunks(chunks, realtime, looped, path.display().to_string()))
     }
 
-    pub fn from_chunks(
-        chunks: Vec<(u64, Vec<u8>)>,
-        realtime: bool,
-        looped: bool,
-        name: String,
-    ) -> Self {
-        ReplaySource {
-            chunks,
-            next: 0,
-            realtime,
-            looped,
-            started: None,
-            name,
-            loop_shift_us: 0,
-        }
+    pub fn from_chunks(chunks: Vec<(u64, Vec<u8>)>, realtime: bool, looped: bool, name: String) -> Self {
+        ReplaySource { chunks, next: 0, realtime, looped, started: None, name, loop_shift_us: 0 }
     }
 
     pub fn total_bytes(&self) -> usize {
@@ -177,10 +156,7 @@ pub fn load_ldr(path: &Path) -> io::Result<Vec<(u64, Vec<u8>)>> {
     let mut data = Vec::new();
     File::open(path)?.read_to_end(&mut data)?;
     if !data.starts_with(LDR_MAGIC) {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "not a SENNEPLDR1 file",
-        ));
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "not a SENNEPLDR1 file"));
     }
     let mut chunks = Vec::new();
     let mut i = LDR_MAGIC.len();
@@ -208,8 +184,8 @@ pub fn load_legacy_jsonl(path: &Path) -> io::Result<Vec<(u64, Vec<u8>)>> {
         if line.trim().is_empty() {
             continue;
         }
-        let v: serde_json::Value = serde_json::from_str(&line)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        let v: serde_json::Value =
+            serde_json::from_str(&line).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
         let Some(sweep) = v["sweep"].as_array() else {
             continue;
         };
@@ -220,10 +196,8 @@ pub fn load_legacy_jsonl(path: &Path) -> io::Result<Vec<(u64, Vec<u8>)>> {
             let f = |p: &serde_json::Value, k: &str| p[k].as_f64().unwrap_or(0.0);
             let mut points = [RawPoint::default(); POINTS_PER_PACKET];
             for (i, p) in pkt.iter().enumerate() {
-                points[i] = RawPoint {
-                    dist_mm: f(p, "distance") as u16,
-                    intensity: f(p, "confidence") as u8,
-                };
+                points[i] =
+                    RawPoint { dist_mm: f(p, "distance") as u16, intensity: f(p, "confidence") as u8 };
             }
             let cdeg = |a: f64| ((a * 100.0).round() as i64).rem_euclid(36_000) as u16;
             let ts = f(&pkt[0], "timestamp") as u16;
@@ -262,14 +236,7 @@ pub struct SimSource {
 
 impl SimSource {
     pub fn new(sim: Simulator, realtime: bool) -> Self {
-        SimSource {
-            sim,
-            realtime,
-            started: None,
-            pending: Vec::new(),
-            pending_t: 0.0,
-            done: false,
-        }
+        SimSource { sim, realtime, started: None, pending: Vec::new(), pending_t: 0.0, done: false }
     }
 }
 

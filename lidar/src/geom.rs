@@ -18,37 +18,21 @@ pub fn wrap_angle(a: f64) -> f64 {
 }
 
 impl Pose2 {
-    pub const IDENTITY: Pose2 = Pose2 {
-        x: 0.0,
-        y: 0.0,
-        th: 0.0,
-    };
+    pub const IDENTITY: Pose2 = Pose2 { x: 0.0, y: 0.0, th: 0.0 };
 
     pub fn new(x: f64, y: f64, th: f64) -> Self {
-        Pose2 {
-            x,
-            y,
-            th: wrap_angle(th),
-        }
+        Pose2 { x, y, th: wrap_angle(th) }
     }
 
     /// `self ∘ other`: apply `other` in the frame of `self`.
     pub fn compose(&self, o: &Pose2) -> Pose2 {
         let (s, c) = self.th.sin_cos();
-        Pose2::new(
-            self.x + c * o.x - s * o.y,
-            self.y + s * o.x + c * o.y,
-            self.th + o.th,
-        )
+        Pose2::new(self.x + c * o.x - s * o.y, self.y + s * o.x + c * o.y, self.th + o.th)
     }
 
     pub fn inverse(&self) -> Pose2 {
         let (s, c) = self.th.sin_cos();
-        Pose2::new(
-            -(c * self.x + s * self.y),
-            s * self.x - c * self.y,
-            -self.th,
-        )
+        Pose2::new(-(c * self.x + s * self.y), s * self.x - c * self.y, -self.th)
     }
 
     /// Pose of `o` expressed in the frame of `self`.

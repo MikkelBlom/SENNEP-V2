@@ -60,11 +60,7 @@ impl ZoneReport {
         let mut b = Vec::with_capacity(9 + 2 * self.clearance.len());
         b.extend_from_slice(&((self.t * 1000.0) as u64 as u32).to_le_bytes());
         b.push(self.clearance.len() as u8);
-        let mask = self
-            .stale
-            .iter()
-            .enumerate()
-            .fold(0u32, |m, (i, &s)| m | ((s as u32) << i));
+        let mask = self.stale.iter().enumerate().fold(0u32, |m, (i, &s)| m | ((s as u32) << i));
         b.extend_from_slice(&mask.to_le_bytes());
         for &c in &self.clearance {
             b.extend_from_slice(&((c * 1000.0).round().clamp(0.0, 65_535.0) as u16).to_le_bytes());
@@ -91,11 +87,7 @@ pub struct Zones {
 
 impl Zones {
     pub fn new(cfg: ZoneConfig) -> Self {
-        Zones {
-            cfg,
-            bin_clear: [f32::INFINITY; BINS],
-            bin_time: [f64::NEG_INFINITY; BINS],
-        }
+        Zones { cfg, bin_clear: [f32::INFINITY; BINS], bin_time: [f64::NEG_INFINITY; BINS] }
     }
 
     fn bin_of(a: f32) -> usize {
@@ -159,11 +151,7 @@ impl Zones {
             }
             clearance[s] = clearance[s].min(self.bin_clear[b]);
         }
-        ZoneReport {
-            t: now,
-            clearance,
-            stale,
-        }
+        ZoneReport { t: now, clearance, stale }
     }
 }
 
@@ -172,25 +160,14 @@ mod tests {
     use super::*;
 
     fn pt(x: f32, y: f32, t: f64) -> ScanPoint {
-        ScanPoint {
-            x,
-            y,
-            r: x.hypot(y),
-            a: y.atan2(x),
-            intensity: 200,
-            t,
-        }
+        ScanPoint { x, y, r: x.hypot(y), a: y.atan2(x), intensity: 200, t }
     }
 
     #[test]
     fn sectors_and_staleness() {
         let mut z = Zones::new(ZoneConfig::default());
         // Full sweep with an obstacle 0.5 m in front of the bumper and one on the left.
-        z.update(
-            &[pt(0.9, 0.0, 1.0), pt(0.0, 1.0, 1.0)],
-            Some((TAU - 0.001, 0.0)),
-            1.0,
-        );
+        z.update(&[pt(0.9, 0.0, 1.0), pt(0.0, 1.0, 1.0)], Some((TAU - 0.001, 0.0)), 1.0);
         let r = z.report(1.05);
         assert!((r.clearance[0] - 0.5).abs() < 1e-5);
         assert!((r.clearance[4] - (1.0 - 0.325)).abs() < 1e-5);

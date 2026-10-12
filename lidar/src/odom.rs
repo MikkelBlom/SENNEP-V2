@@ -88,10 +88,7 @@ impl LocalMap {
             cells.insert((pts[i].0, pts[i].1), (i as u32, (j - i) as u32));
             i = j;
         }
-        LocalMap {
-            points: pts.into_iter().map(|p| p.2).collect(),
-            cells,
-        }
+        LocalMap { points: pts.into_iter().map(|p| p.2).collect(), cells }
     }
 
     fn nearest(&self, x: f32, y: f32, max_d: f32) -> Option<&MapPoint> {
@@ -124,8 +121,7 @@ fn with_normals(points: &[(f32, f32)], origin: (f32, f32)) -> Vec<MapPoint> {
     let mut out = Vec::with_capacity(n);
     for i in 0..n {
         let (px, py) = points[i];
-        let (mut sx, mut sy, mut sxx, mut sxy, mut syy, mut k) =
-            (0f32, 0f32, 0f32, 0f32, 0f32, 0f32);
+        let (mut sx, mut sy, mut sxx, mut sxy, mut syy, mut k) = (0f32, 0f32, 0f32, 0f32, 0f32, 0f32);
         for o in -3i32..=3 {
             let j = (i as i32 + o).rem_euclid(n as i32) as usize;
             let (qx, qy) = points[j];
@@ -166,12 +162,7 @@ fn with_normals(points: &[(f32, f32)], origin: (f32, f32)) -> Vec<MapPoint> {
             nx = -nx;
             ny = -ny;
         }
-        out.push(MapPoint {
-            x: px,
-            y: py,
-            nx,
-            ny,
-        });
+        out.push(MapPoint { x: px, y: py, nx, ny });
     }
     out
 }
@@ -296,10 +287,8 @@ impl Odometry {
                 (wx as f32, wy as f32)
             })
             .collect();
-        self.keyframes.push_back(Keyframe {
-            pose,
-            points: with_normals(&world, (pose.x as f32, pose.y as f32)),
-        });
+        self.keyframes
+            .push_back(Keyframe { pose, points: with_normals(&world, (pose.x as f32, pose.y as f32)) });
         while self.keyframes.len() > self.cfg.max_keyframes {
             self.keyframes.pop_front();
         }
@@ -339,15 +328,8 @@ impl Odometry {
                 let j = [nx, ny, nx * -(qy - t.y) + ny * (qx - t.x)];
                 // Maximum-likelihood weighting: far returns are noisier (datasheet: 4 mm STD < 2 m,
                 // 15 mm beyond), then Huber to tame wrong correspondences.
-                let w_noise = (0.004 / range_sigma((bx * bx + by * by).sqrt()))
-                    .powi(2)
-                    .min(1.0);
-                let w = w_noise
-                    * if e.abs() <= self.cfg.huber {
-                        1.0
-                    } else {
-                        self.cfg.huber / e.abs()
-                    };
+                let w_noise = (0.004 / range_sigma((bx * bx + by * by).sqrt())).powi(2).min(1.0);
+                let w = w_noise * if e.abs() <= self.cfg.huber { 1.0 } else { self.cfg.huber / e.abs() };
                 for r in 0..3 {
                     g[r] += w * j[r] * e;
                     for col in 0..3 {
@@ -369,11 +351,7 @@ impl Odometry {
             t = Pose2::new(t.x + delta[0], t.y + delta[1], t.th + delta[2]);
             info.iterations = it as u32 + 1;
             info.inlier_ratio = inl as f64 / n;
-            info.rms = if inl > 0 {
-                (sq / inl as f64).sqrt()
-            } else {
-                f64::INFINITY
-            };
+            info.rms = if inl > 0 { (sq / inl as f64).sqrt() } else { f64::INFINITY };
             if it >= 8 && delta[0].abs() < 1e-5 && delta[1].abs() < 1e-5 && delta[2].abs() < 1e-5 {
                 break;
             }
@@ -390,8 +368,7 @@ impl Odometry {
 
 fn solve3(a: &[[f64; 3]; 3], b: &[f64; 3]) -> Option<[f64; 3]> {
     let det = |m: &[[f64; 3]; 3]| {
-        m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
-            - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+        m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
             + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0])
     };
     let d = det(a);

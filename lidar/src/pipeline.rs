@@ -45,11 +45,7 @@ pub struct Window {
 
 impl Window {
     pub fn new(n: usize) -> Self {
-        Window {
-            buf: vec![0; n],
-            next: 0,
-            full: false,
-        }
+        Window { buf: vec![0; n], next: 0, full: false }
     }
     pub fn push(&mut self, v: u32) {
         self.buf[self.next] = v;
@@ -122,6 +118,12 @@ impl Pipeline {
         }
     }
 
+    /// Forgets the map and starts odometry again from the origin.
+    pub fn reset_map(&mut self) {
+        self.odom = Odometry::new(self.cfg.odom.clone());
+        self.grid = self.cfg.grid.clone().map(Grid::new);
+    }
+
     pub fn feed(&mut self, bytes: &[u8], host_us: u64, out: &mut impl FnMut(Output)) {
         // The parser hands packets to a closure; collect them first so `self` is free afterwards.
         let mut packets: [Option<Packet>; 64] = [None; 64];
@@ -150,8 +152,7 @@ impl Pipeline {
         let half_step = 0.5f32.to_radians();
         let a_first = yaw - p.angle_deg(0).to_radians() + half_step;
         let a_last = yaw - p.angle_deg(POINTS_PER_PACKET - 1).to_radians() - half_step;
-        self.zones
-            .update(&self.pkt_points, Some((a_first, a_last)), t_pkt);
+        self.zones.update(&self.pkt_points, Some((a_first, a_last)), t_pkt);
         self.packet_us.push(t0.elapsed().as_micros() as u32);
         if t_pkt - self.last_zone_t >= 1.0 / self.cfg.zone_rate_hz {
             self.last_zone_t = t_pkt;
@@ -165,10 +166,7 @@ impl Pipeline {
     }
 
     fn assembler_last_time(&self) -> f64 {
-        self.pkt_points
-            .last()
-            .map(|p| p.t)
-            .unwrap_or(self.last_zone_t.max(0.0))
+        self.pkt_points.last().map(|p| p.t).unwrap_or(self.last_zone_t.max(0.0))
     }
 
     pub fn process_scan(&mut self, scan: Scan) -> ScanResult {

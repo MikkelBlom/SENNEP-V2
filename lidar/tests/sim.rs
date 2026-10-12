@@ -35,11 +35,8 @@ fn score(run: &Run, traj: &Trajectory, world: &World) -> Score {
         last = (e.dist(), wrap_angle(rel_true.th - rel_est.th).abs());
     }
     let accepted = run.accepted.iter().filter(|a| **a).count() as f64 / run.accepted.len() as f64;
-    let (map_precision, map_recall) = run
-        .pipeline
-        .grid
-        .as_ref()
-        .map_or((0.0, 0.0), |g| map_quality(g, &first.1, &truth0, world));
+    let (map_precision, map_recall) =
+        run.pipeline.grid.as_ref().map_or((0.0, 0.0), |g| map_quality(g, &first.1, &truth0, world));
     Score {
         ate_rms: (sq / run.poses.len() as f64).sqrt(),
         final_pos_err: last.0,
@@ -88,18 +85,12 @@ fn map_quality(g: &Grid, est0: &Pose2, true0: &Pose2, world: &World) -> (f64, f6
                 continue; // never observed (behind furniture, outside view)
             }
             seen += 1;
-            if occupied
-                .iter()
-                .any(|&(ox, oy)| (ox as f64 - mx).hypot(oy as f64 - my) < 0.10)
-            {
+            if occupied.iter().any(|&(ox, oy)| (ox as f64 - mx).hypot(oy as f64 - my) < 0.10) {
                 found += 1;
             }
         }
     }
-    (
-        good as f64 / total.max(1) as f64,
-        found as f64 / seen.max(1) as f64,
-    )
+    (good as f64 / total.max(1) as f64, found as f64 / seen.max(1) as f64)
 }
 
 fn simulate(world: World, traj: Trajectory, cfg: SimConfig) -> (Run, Score) {
@@ -127,19 +118,10 @@ fn simulate(world: World, traj: Trajectory, cfg: SimConfig) -> (Run, Score) {
 fn stationary_robot_does_not_drift() {
     let traj = Trajectory::stationary(Pose2::new(-2.0, -1.0, 0.4), 10.0);
     let (run, s) = simulate(World::apartment(), traj, SimConfig::default());
-    let max = run
-        .poses
-        .iter()
-        .map(|p| run.poses[0].1.between(&p.1).dist())
-        .fold(0.0, f64::max);
+    let max = run.poses.iter().map(|p| run.poses[0].1.between(&p.1).dist()).fold(0.0, f64::max);
     let xs: Vec<f64> = run.poses.iter().map(|p| p.1.x).collect();
     let ys: Vec<f64> = run.poses.iter().map(|p| p.1.y).collect();
-    println!(
-        "static: std x {:.2} mm y {:.2} mm, max {:.2} mm",
-        std(&xs) * 1e3,
-        std(&ys) * 1e3,
-        max * 1e3
-    );
+    println!("static: std x {:.2} mm y {:.2} mm, max {:.2} mm", std(&xs) * 1e3, std(&ys) * 1e3, max * 1e3);
     assert!(std(&xs) < 0.002 && std(&ys) < 0.002);
     assert!(max < 0.008, "max deviation {max}");
     assert!(s.final_th_err.to_degrees() < 0.1);
@@ -150,39 +132,22 @@ fn stationary_robot_does_not_drift() {
 fn tour_odometry_and_map_hold() {
     let (_, s) = simulate(World::apartment(), Trajectory::tour(), SimConfig::default());
     assert!(s.accepted > 0.98, "accepted {}", s.accepted);
-    assert!(
-        s.final_pos_err / s.path_len < 0.02,
-        "drift {} m over {} m",
-        s.final_pos_err,
-        s.path_len
-    );
-    assert!(
-        s.final_th_err.to_degrees() < 1.5,
-        "heading error {}",
-        s.final_th_err.to_degrees()
-    );
+    assert!(s.final_pos_err / s.path_len < 0.02, "drift {} m over {} m", s.final_pos_err, s.path_len);
+    assert!(s.final_th_err.to_degrees() < 1.5, "heading error {}", s.final_th_err.to_degrees());
     assert!(s.map_precision > 0.90, "precision {}", s.map_precision);
     assert!(s.map_recall > 0.80, "recall {}", s.map_recall);
 }
 
 #[test]
 fn tour_with_walking_person_and_wire_errors() {
-    let cfg = SimConfig {
-        byte_error_rate: 1e-4,
-        seed: 7,
-        ..SimConfig::default()
-    };
+    let cfg = SimConfig { byte_error_rate: 1e-4, seed: 7, ..SimConfig::default() };
     let (run, s) = simulate(World::apartment().with_person(), Trajectory::tour(), cfg);
     let st = run.pipeline.parser.stats;
     println!("parser {st:?}");
     assert!(st.crc_errors > 0, "errors were injected");
     assert!(s.accepted > 0.95);
     assert!(s.final_pos_err / s.path_len < 0.03);
-    assert!(
-        s.map_precision > 0.85,
-        "person must not leave a trail: precision {}",
-        s.map_precision
-    );
+    assert!(s.map_precision > 0.85, "person must not leave a trail: precision {}", s.map_precision);
 }
 
 #[test]
@@ -196,11 +161,7 @@ fn without_deskew_it_is_worse() {
     cfg.odom.deskew = false;
     let run = run(&mut SimSource::new(sim, false), cfg);
     let without = score(&run, &traj, &world);
-    println!(
-        "ATE with de-skew {:.1} mm, without {:.1} mm",
-        with.ate_rms * 1e3,
-        without.ate_rms * 1e3
-    );
+    println!("ATE with de-skew {:.1} mm, without {:.1} mm", with.ate_rms * 1e3, without.ate_rms * 1e3);
     assert!(with.ate_rms < without.ate_rms);
 }
 
@@ -229,14 +190,8 @@ fn zones_match_ground_truth() {
         for k in 0..3600 {
             let a = k as f64 * 0.1f64.to_radians();
             let dir = (pose.th + a).sin_cos();
-            if let Some(r) = visible
-                .cast((pose.x, pose.y), (dir.1, dir.0), t)
-                .filter(|&r| r < 12.0)
-            {
-                let c = cfg
-                    .footprint
-                    .clearance((r * a.cos()) as f32, (r * a.sin()) as f32)
-                    as f64;
+            if let Some(r) = visible.cast((pose.x, pose.y), (dir.1, dir.0), t).filter(|&r| r < 12.0) {
+                let c = cfg.footprint.clearance((r * a.cos()) as f32, (r * a.sin()) as f32) as f64;
                 let deg = a.to_degrees();
                 for s in 0..n {
                     // signed distance (deg) from the ray to the sector's edges, positive inside
@@ -254,15 +209,10 @@ fn zones_match_ground_truth() {
         // A sector holds the latest pass over it, i.e. something from the last revolution
         // (100 ms). So the honest truth is the range of values over that window.
         let t = z.t - EPOCH;
-        let turn = wrap_angle(traj.at(t).th - traj.at(t - 0.1).th)
-            .abs()
-            .to_degrees();
+        let turn = wrap_angle(traj.at(t).th - traj.at(t - 0.1).th).abs().to_degrees();
         let snaps: Vec<f64> = (0..=4).map(|i| t - 0.025 * i as f64).collect();
         let lo_w: Vec<Vec<f64>> = snaps.iter().map(|&ts| truth_at(ts, true, hw)).collect();
-        let hi_w: Vec<Vec<f64>> = snaps
-            .iter()
-            .map(|&ts| truth_at(ts, false, -(hw + turn)))
-            .collect();
+        let hi_w: Vec<Vec<f64>> = snaps.iter().map(|&ts| truth_at(ts, false, -(hw + turn))).collect();
         for s in 0..n {
             let lo = lo_w.iter().map(|w| w[s]).fold(f64::INFINITY, f64::min);
             let hi = hi_w.iter().map(|w| w[s]).fold(0.0, f64::max);
@@ -273,9 +223,7 @@ fn zones_match_ground_truth() {
             let optimistic = (v - hi - tol).max(0.0); // more room than there is: dangerous
             let conservative = (lo - v - tol).max(0.0); // less room than there is: safe, but bounded
             if optimistic > 0.0 || conservative > 0.0 {
-                println!(
-                    "t {t:.2} sector {s}: reported {v:.3}, truth over last rev {lo:.3}..{hi:.3}"
-                );
+                println!("t {t:.2} sector {s}: reported {v:.3}, truth over last rev {lo:.3}..{hi:.3}");
             }
             worst_opt = worst_opt.max(optimistic);
             worst_cons = worst_cons.max(conservative);

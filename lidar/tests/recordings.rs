@@ -14,10 +14,7 @@ fn every_revolution_is_whole_and_unique() {
         assert!(run.scans.len() >= 20, "{path:?}: {} scans", run.scans.len());
         for (i, s) in run.scans.iter().enumerate() {
             // Old app: 492/504 alternating with overlap. Now: one point per sample slot, no overlap.
-            let mut angles: Vec<f32> = s
-                .iter()
-                .map(|p| p.a.rem_euclid(std::f32::consts::TAU))
-                .collect();
+            let mut angles: Vec<f32> = s.iter().map(|p| p.a.rem_euclid(std::f32::consts::TAU)).collect();
             angles.sort_by(f32::total_cmp);
             let gaps = angles.windows(2).map(|w| w[1] - w[0]).fold(0f32, f32::max);
             let wrap = std::f32::consts::TAU - angles.last().unwrap() + angles[0];
@@ -28,18 +25,10 @@ fn every_revolution_is_whole_and_unique() {
             );
             // The seam: last point of the revolution must sit exactly one step before the first
             // (bearings decrease as the sensor turns clockwise). The old app overlapped here.
-            let seam = (s.last().unwrap().a - s[0].a)
-                .rem_euclid(std::f32::consts::TAU)
-                .to_degrees();
-            assert!(
-                seam > 0.0 && seam < 3.0,
-                "{path:?} scan {i}: seam {seam} deg"
-            );
+            let seam = (s.last().unwrap().a - s[0].a).rem_euclid(std::f32::consts::TAU).to_degrees();
+            assert!(seam > 0.0 && seam < 3.0, "{path:?} scan {i}: seam {seam} deg");
             // Elsewhere the sensor itself occasionally overlaps two packets by a fraction of a degree.
-            let dup = angles
-                .windows(2)
-                .filter(|w| (w[1] - w[0]).to_degrees() < 0.3)
-                .count();
+            let dup = angles.windows(2).filter(|w| (w[1] - w[0]).to_degrees() < 0.3).count();
             assert!(dup <= 3, "{path:?} scan {i}: {dup} overlapping points");
         }
     }
@@ -63,10 +52,7 @@ fn static_pose_is_rock_steady() {
             max_dev * 1e3,
             run.pipeline.odom.keyframe_count()
         );
-        assert!(
-            run.accepted.iter().filter(|a| **a).count() >= run.accepted.len() - 1,
-            "{path:?}"
-        );
+        assert!(run.accepted.iter().filter(|a| **a).count() >= run.accepted.len() - 1, "{path:?}");
         assert!(std(&xs) < 0.005 && std(&ys) < 0.005, "{path:?}");
         assert!(std(&ths).to_degrees() < 0.2, "{path:?}");
         assert!(max_dev < 0.02, "{path:?}");
