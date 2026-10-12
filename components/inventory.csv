@@ -10,8 +10,9 @@ l298n;L298N dual H-bridge module;Drivetrain;2;SENNEP V2;unknown;80;DKK;80.00;Ard
 h-bridge-43a;High-power H-bridge motor driver (probably BTS7960, 43 A);Drivetrain;5;SENNEP V2;unknown;182.25;DKK;182.25;AliExpress;2025-12;BTS7960 (assumed);bts7960.pdf;;Item name truncated in the order mail, so the chip is not confirmed. 4 in use + 1 spare
 motor-rs834;RS PRO 834-7641 gear motor 12 V, 49:1 (975D series);Drivetrain;4;SENNEP V1;unknown;2400;DKK;2400.00;RS / school (V1);2020-2023;;rs-pro-834-7641-motor.pdf;;Approximate price for all 4. 8 mm shaft, 143 rpm, 41 W. Radial load < 5 kgf -> pillow blocks carry the weight
 kfl003;KFL003 pillow block bearing, 17 mm (2 per pack);Mechanical;6;SENNEP V2;unknown;130.91;DKK;130.91;AliExpress;2025-12;;;;3 packs = 6 bearings. Self-aligning
-18650-35e;Samsung INR18650-35E Li-ion 3400 mAh;Power;20;SENNEP V2;unknown;118.00;EUR;880.28;Bot'n Roll;2025-05-01;;samsung-inr18650-35e.pdf;;18 built as 3S6P (10.8 V nom / 12.6 V full, ~20 Ah). Series connections not made yet
-18650-holder;18650 holder 1×2 with spacer;Power;20;SENNEP V2;unknown;6.00;EUR;44.76;Bot'n Roll;2025-05-01;;;;
+18650-35e;Samsung INR18650-35E Li-ion 3400 mAh;Power;20;SENNEP V2;unknown;118.00;EUR;880.28;Bot'n Roll;2025-05-01;;samsung-inr18650-35e.pdf;;Planned 3S6P (10.8 V nom / 12.6 V full, ~20 Ah). Only clicked into holders, no connections at all (Oct 2026). Plan: docs/electronics/BATTERY_PLAN.md
+18650-holder;18650 holder 1×2 with spacer;Power;20;SENNEP V2;unknown;6.00;EUR;44.76;Bot'n Roll;2025-05-01;;;;Click-together plastic, no metal contacts
+nickel-strip;Pure nickel strip 0.15 × 27 mm (2H, 19 mm pitch);Power;1;SENNEP V2;unknown;;;;unknown;2025-05;;;;Quantity unknown. Pieces too small to cover a row: must be cut and welded. See docs/electronics/BATTERY_PLAN.md
 bms-3s;3S 40 A BMS with balancing;Power;2;SENNEP V2;unknown;9.80;EUR;73.11;Bot'n Roll;2025-05-01;;;;
 charger-3s;3S Li-ion charger 12.6 V 2 A (EU plug);Power;1;SENNEP V2;unknown;11.95;EUR;89.15;Bot'n Roll;2025-05-01;;;;
 buck-5a;DC-DC step-down 5 A;Power;2;SENNEP V2;unknown;6.98;GBP;60.52;Hobby Components;2025-04-18;unknown (often XL4015);;;Meant for the Pi 5 (5 V / 5 A)
