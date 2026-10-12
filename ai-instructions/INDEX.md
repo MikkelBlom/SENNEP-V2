@@ -12,6 +12,7 @@ Read in this order: `/CLAUDE.md` → this file → `FEATURES.md` → `WORKING_NO
 | `SESSIONS.md` | Log of every session (Danish before 2026-10-12) | End of every session |
 | `archive/PROJECT_OVERVIEW_2026-10-12.md` | Frozen deep reference (Danish): every detail up to 2026-10-12 | Never |
 | `archive/HANDOFF_CHASSIS.md` | Frozen prompt that started the skeleton chat | Never |
+| `HANDOFF_NEXT.md` | **Start here**: state of every workstream, how Mikkel works, open ends (2026-10-12) | End of a session that changes the big picture |
 | `PLAN_PI_MEGA_LINK.md` | Pi ↔ Mega link: decisions, safety rules, next steps, test checklist | Link work |
 | `archive/HANDOFF_*.md`, `archive/DOCS_PLAN.md` | Frozen handoffs from the 6 parallel sessions of 2026-10-12 (Danish/English) | Never |
 

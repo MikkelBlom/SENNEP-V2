@@ -3,9 +3,9 @@
 ## What this is
 SENNEP V2 is Mikkel's hobby robot: a holonomic (mecanum) mobile robot, about 800 × 650 mm, that drives itself with a 360° LiDAR and can be driven by hand over an RF joystick. It is a rebuild "for fun and learning" of S.E.N.N.E.P. (V1), a high-school (HTX) project in laser-cut acrylic.
 
-Almost everything is 3D-printed in PETG on a Bambu X1C. Wheels, axles, corner housings and frame come from parametric Python generators that run inside Autodesk Fusion (`fusion/`). Compute: Raspberry Pi 5 (high level: LiDAR, camera, screen, most sensors; Python written from scratch, no ROS 2) talks to an Arduino Mega (main link) and a Nano (low level: motors, collision backup, RF override). Power comes from a 3S6P 18650 pack.
+Almost everything is 3D-printed in PETG on a Bambu X1C. Wheels, axles, corner housings and frame come from parametric Python generators that run inside Autodesk Fusion (`fusion/`). Compute: Raspberry Pi 5 (high level: LiDAR, camera, screen, GPS; **Rust**, written from scratch, no ROS 2, no Python) talks over GPIO UART to an Arduino Mega (real-time hub in **Arduino C++**: motors, safety stops, IMU, close-range sensors, RF override). A Nano/Uno drives only the LED strip. Power comes from a 3S6P 18650 pack.
 
-Status (Oct 2026): the wheel and corner housing are at the test-print stage, the frame and body are modelled, and there is no robot code yet. The only software is the LiDAR test app (`Lidar Test Enviornment/`).
+Status (Oct 2026): the wheel and corner housing are at the test-print stage, the frame and body are modelled. The LiDAR stack (`lidar/`, Rust) runs on the real LiDAR; the Pi ↔ Mega protocol + Mega firmware skeleton exist (`protocol/`, `firmware/`); the battery is measured and waiting for spot-welding. **Start with `ai-instructions/HANDOFF_NEXT.md`.**
 
 ## Read first
 `ai-instructions/INDEX.md` maps every file. Then read `FEATURES.md` (what is in progress) and `WORKING_NOTES.md` (open concerns and decisions). Parts: `components/inventory.csv`. Tasks, shopping, ideas, links and notes: `hub/` (plain CSV/Markdown that Mikkel edits through `hub/index.html`; re-read before editing, and keep the `;` CSV format).

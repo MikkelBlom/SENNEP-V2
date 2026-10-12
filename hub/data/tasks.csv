@@ -22,3 +22,4 @@ t22;Print + test wheel v3.1, assembly ring, housing v2, frame joint test;Mechani
 t23;Measure holder cell pitch (centre to centre) and nickel strip hole pitch with calipers;Battery;done;Mikkel;high;;Holder pitch 20.2 mm (measured), strip 19 mm. Use the 2P as is, spots on the rails; tell the welder
 t24;LiDAR: record more scenes (several people, a pet, carrying the LiDAR around);LiDAR;todo;Mikkel;medium;;Just run sennep-lidar.exe --serial COMx --no-body: it records by itself. Press Keep recording… on the page for the good ones, then commit lidar/recordings/
 t25;LiDAR on the Pi 5 (aarch64 build, by-id serial name, 7" screen kiosk);LiDAR;todo;both;medium;;lidar/README.md
+t26;Delete the 6 old claude/* branches on GitHub (all merged into main);Docs;todo;Mikkel;low;;GitHub → Branches. The cloud session could not delete them
