@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>SENNEP LiDAR</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='none' stroke='%2358a6ff' stroke-width='2'/%3E%3Ccircle cx='8' cy='8' r='2' fill='%2358a6ff'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #30363d; --text: #e6edf3; --muted: #8b949e;
+    --point: #58a6ff; --robot: #f0f6fc; --trail: #d29922;
+    --ok: #3fb950; --warn: #d29922; --stop: #f85149; --stale: #6e7681;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f6f8fa; --panel: #ffffff; --line: #d0d7de; --text: #1f2328; --muted: #656d76;
+      --point: #0969da; --robot: #1f2328; --trail: #9a6700;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  #map { position: fixed; inset: 0; width: 100%; height: 100%; touch-action: none; display: block; }
+  .bar { position: fixed; left: 12px; right: 12px; top: 12px; display: flex; gap: 8px; flex-wrap: wrap;
+    align-items: center; pointer-events: none; }
+  .bar > * { pointer-events: auto; }
+  .chip { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px;
+    font-variant-numeric: tabular-nums; }
+  .chip b { font-weight: 600; }
+  button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+    padding: 8px 12px; font: inherit; cursor: pointer; min-height: 40px; }
+  button[aria-pressed="true"] { border-color: var(--point); color: var(--point); }
+  #status.ok { color: var(--ok); } #status.bad { color: var(--stop); }
+  #diag { position: fixed; right: 12px; bottom: 12px; max-width: min(360px, calc(100% - 24px));
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+    font-variant-numeric: tabular-nums; font-size: 12.5px; }
+  #diag[hidden] { display: none; }
+  #diag table { border-collapse: collapse; width: 100%; }
+  #diag td { padding: 1px 0; } #diag td:last-child { text-align: right; padding-left: 16px; }
+  #diag .h { color: var(--muted); padding-top: 6px; }
+  .legend { color: var(--muted); font-size: 12px; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
+</style>
+</head>
+<body>
+<canvas id="map"></canvas>
+<div class="bar">
+  <span class="chip" id="status">forbinder…</span>
+  <span class="chip">nærmest <b id="nearest">–</b></span>
+  <button id="follow" aria-pressed="true">Følg robot</button>
+  <button id="layers" aria-pressed="true">Kort</button>
+  <button id="center">Centrér</button>
+  <button id="reset" title="Nulstil kort og position">Nyt kort</button>
+  <button id="diagbtn" aria-pressed="true">Diagnostik</button>
+  <span class="legend"><span class="sw" style="background:var(--ok)"></span>&gt; 1 m<span class="sw" style="background:var(--warn)"></span>0,3–1 m<span class="sw" style="background:var(--stop)"></span>&lt; 0,3 m<span class="sw" style="background:var(--stale)"></span>for gammel</span>
+</div>
+<div id="diag"><table id="diagt"></table></div>
+<script>
+"use strict";
+const cv = document.getElementById("map");
+const ctx = cv.getContext("2d");
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let colors = {};
+function readColors() {
+  for (const k of ["bg","point","robot","trail","ok","warn","stop","stale","line","muted","text"]) colors[k] = css("--" + k);
+}
+readColors();
+matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { readColors(); repaintGrid(); dirty = true; });
+
+// ---- state
+let scan = null, zones = null, stats = null, trail = [];
+let grid = null;            // {res, ox, oy, tile, tps, dim, canvas, ctx, img}
+let follow = true, showGrid = true;
+let view = { cx: 0, cy: 0, scale: 120 };   // world metres at screen centre, px per metre
+let dirty = true;
+
+// ---- websocket
+let ws;
+function connect() {
+  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.binaryType = "arraybuffer";
+  const st = document.getElementById("status");
+  ws.onopen = () => { st.textContent = "forbundet"; st.className = "chip ok"; };
+  ws.onclose = () => { st.textContent = "afbrudt – prøver igen"; st.className = "chip bad"; setTimeout(connect, 1000); };
+  ws.onmessage = (ev) => {
+    if (typeof ev.data === "string") { stats = JSON.parse(ev.data); renderDiag(); return; }
+    const dv = new DataView(ev.data);
+    const type = dv.getUint8(0);
+    if (type === 1) onScan(dv); else if (type === 2) onZones(dv); else if (type === 3) onTiles(dv);
+    dirty = true;
+  };
+}
+connect();
+
+function onScan(dv) {
+  const accepted = dv.getUint8(1) === 1, n = dv.getUint16(2, true), seq = dv.getUint32(4, true);
+  const t = dv.getFloat64(8, true);
+  const x = dv.getFloat32(16, true), y = dv.getFloat32(20, true), th = dv.getFloat32(24, true);
+  const pts = new Float32Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    pts[2 * i] = dv.getInt16(28 + 4 * i, true) / 1000;
+    pts[2 * i + 1] = dv.getInt16(30 + 4 * i, true) / 1000;
+  }
+  if (scan && seq < scan.seq) trail = [];      // source restarted
+  scan = { accepted, seq, t, x, y, th, pts };
+  const last = trail[trail.length - 1];
+  if (!last || Math.hypot(last[0] - x, last[1] - y) > 0.02) trail.push([x, y]);
+  if (trail.length > 5000) trail.shift();
+  if (follow) { view.cx = x; view.cy = y; }
+}
+
+function onZones(dv) {
+  const n = dv.getUint8(1), mask = dv.getUint32(4, true);
+  const c = [];
+  for (let i = 0; i < n; i++) c.push(dv.getUint16(16 + 2 * i, true) / 1000);
+  zones = { c, stale: (i) => (mask >>> i) & 1 };
+  const m = Math.min(...c);
+  document.getElementById("nearest").textContent = m.toFixed(2) + " m";
+}
+
+function onTiles(dv) {
+  const count = dv.getUint16(2, true);
+  const res = dv.getFloat32(4, true), ox = dv.getFloat32(8, true), oy = dv.getFloat32(12, true);
+  const tile = dv.getUint16(16, true), tps = dv.getUint16(18, true);
+  if (!grid || grid.tps !== tps || grid.res !== res) {
+    const dim = tile * tps;
+    const c = document.createElement("canvas");
+    c.width = dim; c.height = dim;
+    grid = { res, ox, oy, tile, tps, dim, canvas: c, ctx: c.getContext("2d"), cells: new Int8Array(dim * dim) };
+  }
+  if (count === 0) return;
+  const img = grid.ctx.createImageData(tile, tile);
+  let o = 20;
+  for (let k = 0; k < count; k++) {
+    const tx = dv.getUint16(o, true), ty = dv.getUint16(o + 2, true); o += 4;
+    for (let r = 0; r < tile; r++) for (let c = 0; c < tile; c++) {
+      grid.cells[(ty * tile + r) * grid.dim + tx * tile + c] = dv.getInt8(o + r * tile + c);
+    }
+    paintTile(tx, ty, img);
+    o += tile * tile;
+  }
+}
+
+function cellColor(v) {
+  // log-odds -> grey: unknown = transparent, free = faint, occupied = strong
+  if (v === 0) return null;
+  const dark = !matchMedia("(prefers-color-scheme: light)").matches;
+  const p = 1 / (1 + Math.exp(-v / 20));
+  if (p < 0.5) return dark ? [33, 38, 45, 255] : [255, 255, 255, 255];
+  const k = Math.min(1, (p - 0.5) * 2.2);
+  return dark ? [Math.round(33 + k * 180), Math.round(38 + k * 180), Math.round(45 + k * 180), 255]
+              : [Math.round(255 - k * 220), Math.round(255 - k * 220), Math.round(255 - k * 215), 255];
+}
+
+function paintTile(tx, ty, img) {
+  const t = grid.tile;
+  for (let r = 0; r < t; r++) for (let c = 0; c < t; c++) {
+    // grid row 0 is the lowest y; canvas row 0 is the top -> flip vertically
+    const v = grid.cells[(ty * t + r) * grid.dim + tx * t + c];
+    const col = cellColor(v);
+    const i = ((t - 1 - r) * t + c) * 4;
+    if (col) { img.data[i] = col[0]; img.data[i + 1] = col[1]; img.data[i + 2] = col[2]; img.data[i + 3] = col[3]; }
+    else img.data[i + 3] = 0;
+  }
+  grid.ctx.putImageData(img, tx * t, grid.dim - (ty + 1) * t);
+}
+
+function repaintGrid() {
+  if (!grid) return;
+  const img = grid.ctx.createImageData(grid.tile, grid.tile);
+  for (let ty = 0; ty < grid.tps; ty++) for (let tx = 0; tx < grid.tps; tx++) paintTile(tx, ty, img);
+}
+
+// ---- drawing
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(innerWidth * dpr); cv.height = Math.round(innerHeight * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  dirty = true;
+}
+addEventListener("resize", resize); resize();
+
+// world (x forward/east, y left/north) -> screen
+function wx(x) { return innerWidth / 2 + (x - view.cx) * view.scale; }
+function wy(y) { return innerHeight / 2 - (y - view.cy) * view.scale; }
+
+function draw() {
+  requestAnimationFrame(draw);
+  if (!dirty) return;            // only repaint when something changed: cheap on the Pi's screen
+  dirty = false;
+  ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, innerWidth, innerHeight);
+
+  // metre grid
+  ctx.strokeStyle = colors.line; ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+  const step = view.scale > 60 ? 1 : 5;
+  const x0 = Math.floor((view.cx - innerWidth / 2 / view.scale) / step) * step;
+  const y0 = Math.floor((view.cy - innerHeight / 2 / view.scale) / step) * step;
+  ctx.beginPath();
+  for (let x = x0; x < view.cx + innerWidth / 2 / view.scale; x += step) { ctx.moveTo(wx(x), 0); ctx.lineTo(wx(x), innerHeight); }
+  for (let y = y0; y < view.cy + innerHeight / 2 / view.scale; y += step) { ctx.moveTo(0, wy(y)); ctx.lineTo(innerWidth, wy(y)); }
+  ctx.stroke(); ctx.globalAlpha = 1;
+
+  if (grid && showGrid) {
+    ctx.imageSmoothingEnabled = false;
+    const size = grid.dim * grid.res * view.scale;
+    ctx.drawImage(grid.canvas, wx(grid.ox), wy(grid.oy + grid.dim * grid.res), size, size);
+  }
+
+  // trail
+  if (trail.length > 1) {
+    ctx.strokeStyle = colors.trail; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(wx(trail[0][0]), wy(trail[0][1]));
+    for (const p of trail) ctx.lineTo(wx(p[0]), wy(p[1]));
+    ctx.stroke();
+  }
+  if (!scan) return;
+  const c = Math.cos(scan.th), s = Math.sin(scan.th);
+
+  // zones as wedges around the robot (robot frame -> world)
+  const fp = stats && stats.footprint ? stats.footprint : [0.8, 0.65];
+  if (zones) {
+    const n = zones.c.length, w = 2 * Math.PI / n;
+    for (let i = 0; i < n; i++) {
+      const clr = zones.c[i];
+      const col = zones.stale(i) ? colors.stale : clr < 0.3 ? colors.stop : clr < 1 ? colors.warn : colors.ok;
+      const r = Math.min(clr, 2) + Math.hypot(fp[0], fp[1]) / 2;
+      const a0 = scan.th + i * w - w / 2, a1 = a0 + w;
+      ctx.fillStyle = col; ctx.globalAlpha = 0.16;
+      ctx.beginPath(); ctx.moveTo(wx(scan.x), wy(scan.y));
+      // screen y is flipped, so angles go clockwise on screen
+      ctx.arc(wx(scan.x), wy(scan.y), r * view.scale, -a1, -a0);
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 0.9; ctx.strokeStyle = col; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(wx(scan.x), wy(scan.y), r * view.scale, -a1 + 0.02, -a0 - 0.02); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // points
+  ctx.fillStyle = colors.point;
+  const ps = Math.max(1.5, Math.min(3, view.scale / 60));
+  ctx.beginPath();
+  for (let i = 0; i < scan.pts.length; i += 2) {
+    const px = scan.pts[i], py = scan.pts[i + 1];
+    ctx.rect(wx(scan.x + c * px - s * py) - ps / 2, wy(scan.y + s * px + c * py) - ps / 2, ps, ps);
+  }
+  ctx.fill();
+
+  // robot outline + heading
+  ctx.strokeStyle = scan.accepted ? colors.robot : colors.stop; ctx.lineWidth = 2;
+  const L = fp[0] / 2, W = fp[1] / 2;
+  ctx.beginPath();
+  [[L, W], [-L, W], [-L, -W], [L, -W], [L, W]].forEach(([px, py], k) => {
+    const X = wx(scan.x + c * px - s * py), Y = wy(scan.y + s * px + c * py);
+    k ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+  });
+  ctx.moveTo(wx(scan.x), wy(scan.y)); ctx.lineTo(wx(scan.x + c * L), wy(scan.y + s * L));
+  ctx.stroke();
+}
+requestAnimationFrame(draw);
+
+// ---- diagnostics
+function renderDiag() {
+  const s = stats, f = (v, d = 1) => v == null ? "–" : Number(v).toFixed(d);
+  const rows = [
+    ["Kilde", s.source],
+    ["Omdrejning", f(s.rev_hz, 2) + " Hz"],
+    ["Punkter / omgang", s.points],
+    ["Position", `${f(s.pose[0], 2)}, ${f(s.pose[1], 2)} m · ${f(s.pose[2] * 180 / Math.PI, 1)}°`],
+    ["Match", `${s.accepted ? "ok" : "AFVIST"} · ${f(s.inliers * 100, 0)} % inliers · ${s.keyframes} keyframes`],
+    ["h", "Tid pr. pakke (zoner)"],
+    ["median / p99 / max", `${s.packet_us[0]} / ${s.packet_us[1]} / ${s.packet_us[2]} µs`],
+    ["h", "Tid pr. omgang (filter + odometri + kort)"],
+    ["median / p99 / max", `${f(s.scan_us[0] / 1000, 2)} / ${f(s.scan_us[1] / 1000, 2)} / ${f(s.scan_us[2] / 1000, 2)} ms`],
+    ["h", "Proces"],
+    ["CPU (af én kerne)", s.cpu_pct == null ? "–" : f(s.cpu_pct) + " %"],
+    ["RAM", s.rss_mb == null ? "–" : f(s.rss_mb) + " MB"],
+    ["Seriel", `${s.parser.packets} pakker · ${s.parser.crc_errors} CRC-fejl`],
+    ["Seere", s.clients],
+  ];
+  document.getElementById("diagt").innerHTML = rows.map(([k, v]) =>
+    k === "h" ? `<tr><td class="h" colspan="2">${v}</td></tr>` : `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+}
+
+// ---- interaction: drag to pan, wheel / pinch to zoom
+const pointers = new Map();
+let pinch0 = null;
+cv.addEventListener("pointerdown", (e) => { cv.setPointerCapture(e.pointerId); pointers.set(e.pointerId, [e.clientX, e.clientY]); });
+cv.addEventListener("pointerup", (e) => { pointers.delete(e.pointerId); pinch0 = null; });
+cv.addEventListener("pointercancel", (e) => { pointers.delete(e.pointerId); pinch0 = null; });
+cv.addEventListener("pointermove", (e) => {
+  if (!pointers.has(e.pointerId)) return;
+  const prev = pointers.get(e.pointerId);
+  pointers.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pointers.size === 1) {
+    setFollow(false);
+    view.cx -= (e.clientX - prev[0]) / view.scale; view.cy += (e.clientY - prev[1]) / view.scale;
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinch0) zoom(d / pinch0);
+    pinch0 = d;
+  }
+  dirty = true;
+});
+cv.addEventListener("wheel", (e) => { e.preventDefault(); zoom(Math.exp(-e.deltaY * 0.0015)); }, { passive: false });
+function zoom(k) { view.scale = Math.max(10, Math.min(800, view.scale * k)); dirty = true; }
+function setFollow(v) { follow = v; document.getElementById("follow").setAttribute("aria-pressed", v); }
+
+document.getElementById("follow").onclick = () => { setFollow(!follow); if (follow && scan) { view.cx = scan.x; view.cy = scan.y; } dirty = true; };
+document.getElementById("center").onclick = () => { if (scan) { view.cx = scan.x; view.cy = scan.y; } view.scale = 120; dirty = true; };
+document.getElementById("layers").onclick = (e) => { showGrid = !showGrid; e.target.setAttribute("aria-pressed", showGrid); dirty = true; };
+document.getElementById("reset").onclick = () => {
+  if (ws && ws.readyState === 1 && confirm("Nulstil kort og position?")) { ws.send("reset"); trail = []; grid = null; }
+};
+if (innerWidth < 700) {   // phones: map first, diagnostics on demand
+  document.getElementById("diag").hidden = true;
+  document.getElementById("diagbtn").setAttribute("aria-pressed", "false");
+}
+document.getElementById("diagbtn").onclick = (e) => {
+  const d = document.getElementById("diag"); d.hidden = !d.hidden; e.target.setAttribute("aria-pressed", !d.hidden);
+};
+</script>
+</body>
+</html>

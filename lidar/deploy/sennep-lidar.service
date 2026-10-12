@@ -1,0 +1,20 @@
+# systemd unit for the Raspberry Pi. Install:
+#   sudo cp sennep-lidar /usr/local/bin/ && sudo cp sennep-lidar.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now sennep-lidar
+# Logs: journalctl -u sennep-lidar -f
+[Unit]
+Description=SENNEP LiDAR stack (zones, odometry, map, web UI on :8080)
+After=network.target
+
+[Service]
+User=sennep
+Group=dialout
+# Replace with the adapter's stable name: ls /dev/serial/by-id/
+ExecStart=/usr/local/bin/sennep-lidar --serial /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0 --http 0.0.0.0:8080
+Restart=always
+RestartSec=1
+# Keep the stack responsive when the camera/AI loads the CPU.
+Nice=-5
+
+[Install]
+WantedBy=multi-user.target

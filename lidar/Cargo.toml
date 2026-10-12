@@ -1,0 +1,22 @@
+[package]
+name = "sennep-lidar"
+version = "0.1.0"
+edition = "2021"
+description = "LiDAR stack for SENNEP V2 (LDROBOT STL-19P / LD19): parser, safety zones, odometry, occupancy grid, web UI"
+publish = false
+
+[dependencies]
+# Serial without libudev: the adapter is opened by path (/dev/serial/by-id/...), no enumeration needed.
+serialport = { version = "4", default-features = false }
+tungstenite = { version = "0.24", default-features = false, features = ["handshake"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+debug = 1          # line tables for profiling with perf on the Pi
+panic = "abort"
+
+[profile.test]
+opt-level = 2      # sim-based tests run whole drives
