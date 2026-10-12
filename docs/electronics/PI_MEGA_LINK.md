@@ -20,6 +20,14 @@ ejes af kredsløbsopgaven i `docs/electronics/`. Hvor der står **[kredsløb]**,
 - **Kode nu:** Mega-firmware-skelet + sprog-neutral C99-protokolkerne + host-tests med Python som testmodpart. Pi-applikationens sprog vælges senere.
 - **Sikkerhedsreglerne i §4 er godkendt som skrevet** (eksplicit ARM, 200 ms watchdog → rampe til stop + nyt ARM, lokal blokering ved kant/forhindring, hardware-nødstop på relæet).
 
+## 0c. Runde 3 (2026-10-12): Rust
+
+- **Mikkel: "fuld Rust for systemet".** Pi-siden bliver Rust. Python-værktøjet (`tools/sennep_link.py`) erstattes af en Rust-CLI.
+- **Åbent:** skal Megaen også køre Rust (avr-hal), eller beholde Arduino-C++? Mikkel har kun brugt Arduino IDE og bad om en forklaring
+  (givet i chatten 2026-10-12). Anbefaling: Rust på Pi, Arduino-C++ på Megaen indtil videre; vil man have Rust på en mikrocontroller,
+  er en RP2040 (Pico) et bedre mål end AVR. Protokol og sikkerhedsregler er de samme uanset valget.
+- Status nu: C-kernen + Mega-skitsen kompilerer (17 KB flash, 1,6 KB RAM), og 12.071 host-tests er grønne. Intet er testet på hardware.
+
 ## 1. Udgangspunkt
 
 ### Hvad der findes (fra `components/INVENTORY.md`)
