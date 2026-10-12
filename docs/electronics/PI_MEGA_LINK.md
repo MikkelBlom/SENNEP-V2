@@ -1,6 +1,6 @@
 # Pi 5 ↔ Arduino Mega — forbindelse og protokol
 
-Status: **UDKAST, ikke godkendt af Mikkel endnu.** Oprettet 2026-10-12. Runde 1 med Mikkel: se §0.
+Status: **GODKENDT 2026-10-12** (runde 2, §0b). Kode: `firmware/`, `protocol/`, `tools/`, `tests/` — se `firmware/README.md`.
 
 ## 0. Mikkels svar, runde 1 (2026-10-12)
 
@@ -12,6 +12,13 @@ Status: **UDKAST, ikke godkendt af Mikkel endnu.** Oprettet 2026-10-12. Runde 1 
 - **Sensorfordeling:** "hvad der er bedst design", så længe latensen prioriteres → forslaget i §5 står.
 Ejerskab: dette dokument ejer protokol og software. Den fysiske ledningsføring (stik, niveauskift, stel, nødstop-kredsløb)
 ejes af kredsløbsopgaven i `docs/electronics/`. Hvor der står **[kredsløb]**, skal det afstemmes dér.
+
+## 0b. Mikkels svar, runde 2 (2026-10-12) — GODKENDT
+
+- **Arkitektur:** én Mega som real-tids-hub + en Nano/Uno til LED-strippen. **Krav: plads til udvidelse** — V1 løb tør for pins. → §4d.
+- **Forbindelse:** GPIO-UART (Mega Serial1 ↔ Pi GPIO14/15 via BSS138). **ESP-01 droppes.** Flash fra Pi'en via **reset-ledning** (3. kanal på converteren).
+- **Kode nu:** Mega-firmware-skelet + sprog-neutral C99-protokolkerne + host-tests med Python som testmodpart. Pi-applikationens sprog vælges senere.
+- **Sikkerhedsreglerne i §4 er godkendt som skrevet** (eksplicit ARM, 200 ms watchdog → rampe til stop + nyt ARM, lokal blokering ved kant/forhindring, hardware-nødstop på relæet).
 
 ## 1. Udgangspunkt
 
@@ -112,7 +119,7 @@ Megaens USB (Serial0) er fri til debug fra en laptop. Pris: 3 ledninger + conver
 - **CRC-16/CCITT-FALSE** (poly 0x1021, init 0xFFFF) over type+seq+payload. Fanger alle 1–2-bit-fejl og alle burst ≤ 16 bit.
 - **seq** tæller pr. retning (0–255) → modtageren tæller tabte frames.
 - Alle tal er **little-endian, faste heltal** (ingen float på ledningen undtagen parametre): mm/s, mrad/s, mV, mA, µs.
-- Maks frame 52 bytes rå → Megaen har en fast buffer, ingen `malloc`, ingen `String`.
+- Maks payload 60 bytes (plads til en indpakket node-frame) → Megaen har faste buffere, ingen `malloc`, ingen `String`.
 
 ### Baudrate
 
@@ -195,6 +202,24 @@ Det passer på én Mega med plads til mere. En Nano (20 I/O) kan ikke klare det 
 (slår interrupts fra). Uno = samme chip som Nano (ATmega328P), bare større print. Hvis Megaens `loop()`-tid senere bliver for høj
 (STATUS-beskeden måler maks. loop-tid), kan sensorer flyttes ud på en Nano — protokollen og Pi'en mærker ikke forskel.
 
+### 4d. Plads til udvidelse (så V1's pin-mangel ikke gentager sig)
+
+Fem udvidelsesveje, i den rækkefølge de bør bruges:
+
+1. **I²C-bussen er hovedvejen for sensorer.** 2 pins, op til ~100 adresser. Fem TCA9548A giver op til 40 ekstra kanaler til sensorer med
+   samme adresse. Regel: nye langsomme sensorer (temperatur, lys, ekstra ToF) går på I²C, ikke på egne pins.
+2. **I²C-portudvidere: du har dem allerede.** De 6 LCD-adaptere (`i2c-lcd-adapter`) er PCF8574-chips = 8 digitale I/O hver.
+   De er gode til lys, relæer, knapper og langsomme inputs, men ikke til PWM eller hurtige signaler. Kan loddes af LCD'en, eller
+   man kan bruge en ekstra.
+3. **Udvidelsesporte: Megaens Serial2 og Serial3** taler *samme* COBS-protokol til en Nano/Uno-"node" (5 V ↔ 5 V, 3 ledninger, intet
+   niveauskift). Megaen sender nodens frames uændret videre til Pi'en i en `NODE_FRAME`-besked, og frames fra Pi'en går den modsatte vej
+   (`NODE_SEND`). Megaen behøver altså ikke ny firmware for at få en ny node. LED-Nano'en er node #3 (Serial3), og Serial2 er fri til node #2.
+   Uno'erne og Nano'erne bliver dermed byggeklodser.
+4. **Pi'ens egne porte** til det, der ikke er real-tid: GPS (egen UART), LiDAR (USB/UART), lyd, kamera, USB-enheder.
+5. **Pin-reserve på Megaen:** målet er mindst 15 frie pins inkl. 2 PWM og 4 analoge efter første opbygning. `pins.h` fører regnskab.
+
+Med det her bliver pin-mangel et spørgsmål om "hvilken vej?", ikke "nyt design".
+
 ### Failsafe-lag
 
 1. **Hardware-nødstop** bryder relæet. Megaen læser nødstoppets tilstand på en input-pin og melder det **[kredsløb]**.
@@ -246,13 +271,15 @@ Princip: **alt sikkerhedskritisk og alt med hård timing → Mega. Alt med tung 
 | GY-NEO6MV2 GPS | **Pi** (egen UART, 3,3 V direkte) | 1 Hz, ikke tidskritisk, `gpsd`/NMEA-parsing er lettere på Pi. Alternativt Mega Serial2 + videresend |
 | LiDAR LD19 | **Pi** (USB-adapter eller UART) | 230400 baud, tung databehandling |
 | Kamera, 7" skærm, lyd, WiFi | **Pi** | — |
-| ESP-01 | **Spørgsmål** | Pi har WiFi. Mulig rolle: nød-fjernbetjening via WiFi uden Pi. Ellers droppes den |
-| WS2812B | **Spørgsmål** | Se faldgrube ovenfor |
+| ESP-01 | **Droppet** (runde 2) | Pi har WiFi; converter-kanalerne bruges til Pi-link + reset |
+| WS2812B | **Nano/Uno-node på Mega Serial3** (runde 2) | Slår interrupts fra; må ikke ligge på Megaen |
 | DFPlayer | Pi (lyd kan Pi'en selv) eller Mega Serial3 | — |
 
-Megaens UART'er med UART-forslaget: Serial0 = USB (flash/debug), Serial1 = Pi, Serial2 = GPS (hvis den alligevel skal på Mega), Serial3 = DFPlayer/fri.
+Megaens UART'er (godkendt): Serial0 = USB (flash/debug), Serial1 = Pi, Serial2 = udvidelsesnode #2 (fri), Serial3 = LED-node (Nano/Uno). GPS og DFPlayer/lyd på Pi'en.
 
 ## 6. Beskedliste — udkast v0
+
+> **Kilden er nu `protocol/messages.json`** (genererer `protocol/MESSAGES.md`, C-header og Python-modul). Tabellen her er det oprindelige udkast; ved uenighed gælder `MESSAGES.md`.
 
 Pi → Mega (type 0x01–0x3F):
 
