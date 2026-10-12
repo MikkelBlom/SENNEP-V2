@@ -12,6 +12,7 @@ Read in this order: `/CLAUDE.md` → this file → `FEATURES.md` → `WORKING_NO
 | `SESSIONS.md` | Log of every session (Danish before 2026-10-12) | End of every session |
 | `archive/PROJECT_OVERVIEW_2026-10-12.md` | Frozen deep reference (Danish): every detail up to 2026-10-12 | Never |
 | `archive/HANDOFF_CHASSIS.md` | Frozen prompt that started the skeleton chat | Never |
+| `HANDOFF_DOCS_SESSION.md` | Full context of the 2026-10-12 docs/parts-list session for the consolidation session | Archive after consolidation |
 
 ## Polished docs (`docs/`)
 `README.md` (overview and status) · `requirements.md` · `wheel.md` · `chassis.md` · `motor-and-power.md` · `printing-lessons.md` · `fusion-scripting.md` · `history.md`. Also: `skelet_udkast_v1.html` (first skeleton sketch), `skelet/*.png` (Fusion screenshots), `DOCS_PLAN.md` (plan for this restructure).
