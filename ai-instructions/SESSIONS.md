@@ -109,3 +109,7 @@
 **Summary:** Projektet er nu et git-repo (lokalt, `main`, ikke pushet endnu; `.gitignore` udelader node_modules/.next/.env). Seks opgave-chips oprettet til separate sessioner, alle med "status → research → plan → AskUserQuestion med Mikkel → først derefter byg": ny LiDAR-stack fra bunden (den gamle Gemini-app kun som inspiration), Pi↔Mega-link, breadboard-kredsløb, PCB (først efter breadboard), dokumentation + komplet komponentliste (inkl. dele fra andre projekter), 3S6P-batteriet med eksisterende materialer.
 **Note:** Fusion kan ikke nås fra cloud-sessioner (MCP kører på 127.0.0.1:27182); en tunnel frarådes (fjernkørsel af vilkårlig Python uden auth).
 - (forts.) Offentligt repo: https://github.com/MikkelBlom/SENNEP-V2 (HTTPS). Før push: fakturaer, Gemini-PDF'er, `gpttxt.txt` og `botnroll.txt` holdes lokalt (`.gitignore`: `/*.pdf` i roden), hjemadresse og ordrenumre fjernet fra noter og `inventory.csv` (kolonnen `ordre` er tømt), historikken squashet til ét rent commit. Git-identitet bruger GitHub-noreply-mail. Datablade (90 MB, producenternes PDF'er) ligger i repoet.
+
+## 2026-10-12 (forts. 4) — Claude Code (Opus 5.5), PCB-chat
+**Summary:** PCB-opgaven er stoppet ved forudsætningstjekket: `docs/electronics/` og `BREADBOARD_PLAN.md` findes ikke på nogen branch, og der er ingen aftalt breadboard-opstilling. Intet PCB-arbejde lavet.
+**Next:** Kør breadboard-opgaven først (plan → aftale med Mikkel → bygget og testet). Start derefter PCB-chatten igen.
