@@ -1,3 +1,5 @@
+> **Archived 2026-10-12, frozen — do not edit.** Current truth lives in `docs/` and `ai-instructions/` (start at `ai-instructions/INDEX.md`). Kept verbatim (Danish) so nothing is lost.
+
 # SENNEP V2 — Projektoverblik
 
 Rekonstrueret 2026-10-04 ud fra: Gemini-samtalen "Robot Redesign: From Box to Beauty" (17. juli 2025, `Samtale.pdf` / share-link),

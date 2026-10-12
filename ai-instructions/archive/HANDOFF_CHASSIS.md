@@ -1,3 +1,5 @@
+> **Archived 2026-10-12, frozen — do not edit.** Current truth lives in `docs/` and `ai-instructions/` (start at `ai-instructions/INDEX.md`). Kept verbatim (Danish) so nothing is lost.
+
 # Prompt til ny chat: SENNEP V2 — skelet, stel og motorophæng
 
 > Kopiér alt under stregen ind i en ny Claude Code-chat i mappen `SENNEP V2`.

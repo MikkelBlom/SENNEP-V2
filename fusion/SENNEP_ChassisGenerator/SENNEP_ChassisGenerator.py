@@ -6,7 +6,7 @@ Two builds (run them in separate MCP calls - one build per call):
 - build_chassis(): "20 Chassis" = the rolling skeleton in robot coordinates: 4 pods, floor trays,
                    end trays (front/rear) + display copies of wheels, motors and bearings.
 
-Rules (see ai-instructions/HANDOFF_CHASSIS.md):
+Rules (see ai-instructions/archive/HANDOFF_CHASSIS.md, docs/printing-lessons.md):
 - never touches Wheel_*, Axle_*, Spacer_*, Motor_* parameters or the wheel components (reads them).
 - own parameters: Chassis_*, Brg_*, Mot_* (created on first run, edit in Change Parameters).
 - pod frame = wheel frame: X = wheel axis (+X towards the motor), wheel centre at origin, Z up.
