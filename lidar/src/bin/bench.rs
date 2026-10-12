@@ -197,7 +197,8 @@ fn main() {
                Run `bench` on the Pi for the real numbers (see `lidar/README.md`).\n\n";
     }
     md += "All sources are replayed as fast as possible; only the pipeline (parser → zones → scan assembly → filter → odometry → map) is timed.\n";
-    md += "*CPU* = CPU time / data duration, i.e. how large a share of one core the stack uses in real time.\n";
+    md +=
+        "*CPU* = CPU time / data duration, i.e. how large a share of one core the stack uses in real time.\n";
     md += "*Per packet* = parser + zone update for 12 points (what the safety zones wait for). *Per revolution* = filter + odometry + map, after the revolution's last point.\n\n";
     md += "## Performance\n\n| Scenario | Data | Revs | Packets | CPU (1 core) | Per packet µs (median/p99/max) | Per revolution ms (median/p99/max) | ΔRAM |\n|---|---:|---:|---:|---:|---:|---:|---:|\n";
     for r in &results {

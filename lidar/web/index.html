@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="da">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -8,13 +8,13 @@
 <style>
   :root {
     --bg: #0d1117; --panel: #161b22; --line: #30363d; --text: #e6edf3; --muted: #8b949e;
-    --point: #58a6ff; --robot: #f0f6fc; --trail: #d29922;
+    --point: #58a6ff; --robot: #f0f6fc; --trail: #d29922; --wall: #e6edf3; --object: #d29922; --mover: #ff7b72;
     --ok: #3fb950; --warn: #d29922; --stop: #f85149; --stale: #6e7681;
   }
   @media (prefers-color-scheme: light) {
     :root:not([data-theme="dark"]) {
       --bg: #f6f8fa; --panel: #ffffff; --line: #d0d7de; --text: #1f2328; --muted: #656d76;
-      --point: #0969da; --robot: #1f2328; --trail: #9a6700;
+      --point: #0969da; --robot: #1f2328; --trail: #9a6700; --wall: #1f2328; --object: #9a6700; --mover: #cf222e;
     }
   }
   * { box-sizing: border-box; }
@@ -45,14 +45,19 @@
 <body>
 <canvas id="map"></canvas>
 <div class="bar">
-  <span class="chip" id="status">forbinder…</span>
-  <span class="chip">nærmest <b id="nearest">–</b></span>
-  <button id="follow" aria-pressed="true">Følg robot</button>
-  <button id="layers" aria-pressed="true">Kort</button>
-  <button id="center">Centrér</button>
-  <button id="reset" title="Nulstil kort og position">Nyt kort</button>
-  <button id="diagbtn" aria-pressed="true">Diagnostik</button>
-  <span class="legend"><span class="sw" style="background:var(--ok)"></span>&gt; 1 m<span class="sw" style="background:var(--warn)"></span>0,3–1 m<span class="sw" style="background:var(--stop)"></span>&lt; 0,3 m<span class="sw" style="background:var(--stale)"></span>for gammel</span>
+  <span class="chip" id="status">connecting…</span>
+  <span class="chip">nearest <b id="nearest">–</b></span>
+  <span class="chip">movers <b id="movers">0</b></span>
+  <button id="follow" aria-pressed="true">Follow robot</button>
+  <button id="center">Centre</button>
+  <button class="layer" data-layer="walls" aria-pressed="true">Walls</button>
+  <button class="layer" data-layer="objects" aria-pressed="true">Objects</button>
+  <button class="layer" data-layer="motion" aria-pressed="true">Movement</button>
+  <button class="layer" data-layer="points" aria-pressed="true">Points</button>
+  <button class="layer" data-layer="pixels" aria-pressed="true">Map pixels</button>
+  <button id="reset" title="Forget the map and start again from here">New map</button>
+  <button id="diagbtn" aria-pressed="true">Diagnostics</button>
+  <span class="legend"><span class="sw" style="background:var(--ok)"></span>&gt; 1 m<span class="sw" style="background:var(--warn)"></span>0.3–1 m<span class="sw" style="background:var(--stop)"></span>&lt; 0.3 m<span class="sw" style="background:var(--stale)"></span>stale</span>
 </div>
 <div id="diag"><table id="diagt"></table></div>
 <script>
@@ -62,7 +67,7 @@ const ctx = cv.getContext("2d");
 const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 let colors = {};
 function readColors() {
-  for (const k of ["bg","point","robot","trail","ok","warn","stop","stale","line","muted","text"]) colors[k] = css("--" + k);
+  for (const k of ["bg","point","robot","trail","ok","warn","stop","stale","line","muted","text","wall","object","mover"]) colors[k] = css("--" + k);
 }
 readColors();
 matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { readColors(); repaintGrid(); dirty = true; });
@@ -70,7 +75,13 @@ matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { r
 // ---- state
 let scan = null, zones = null, stats = null, trail = [];
 let grid = null;            // {res, ox, oy, tile, tps, dim, canvas, ctx, img}
-let follow = true, showGrid = true;
+let follow = true;
+const layers = { walls: true, objects: true, motion: true, points: true, pixels: true };
+try { Object.assign(layers, JSON.parse(localStorage.lidarLayers || "{}")); } catch (e) {}
+// walls: id -> {a, b, ta, tb}: drawn ends glide towards the targets ta/tb
+let walls = new Map(), objects = [];
+// movers: id -> {x, y, vx, vy, coasting, trail: [[t, x, y], ...]}; moving = this scan's moving points
+let movers = new Map(), moving = new Float32Array(0), motionT = 0;
 let view = { cx: 0, cy: 0, scale: 120 };   // world metres at screen centre, px per metre
 let dirty = true;
 
@@ -80,13 +91,14 @@ function connect() {
   ws = new WebSocket(`ws://${location.host}/ws`);
   ws.binaryType = "arraybuffer";
   const st = document.getElementById("status");
-  ws.onopen = () => { st.textContent = "forbundet"; st.className = "chip ok"; };
-  ws.onclose = () => { st.textContent = "afbrudt – prøver igen"; st.className = "chip bad"; setTimeout(connect, 1000); };
+  ws.onopen = () => { st.textContent = "connected"; st.className = "chip ok"; };
+  ws.onclose = () => { st.textContent = "disconnected – retrying"; st.className = "chip bad"; setTimeout(connect, 1000); };
   ws.onmessage = (ev) => {
     if (typeof ev.data === "string") { stats = JSON.parse(ev.data); renderDiag(); return; }
     const dv = new DataView(ev.data);
     const type = dv.getUint8(0);
     if (type === 1) onScan(dv); else if (type === 2) onZones(dv); else if (type === 3) onTiles(dv);
+    else if (type === 4) onWalls(dv); else if (type === 5) onMotion(dv);
     dirty = true;
   };
 }
@@ -118,6 +130,50 @@ function onZones(dv) {
   document.getElementById("nearest").textContent = m.toFixed(2) + " m";
 }
 
+function onWalls(dv) {
+  const nw = dv.getUint16(2, true), no = dv.getUint16(4, true);
+  let o = 8;
+  const next = new Map();
+  for (let i = 0; i < nw; i++) {
+    const id = dv.getUint32(o, true);
+    const ta = [dv.getFloat32(o + 4, true), dv.getFloat32(o + 8, true)];
+    const tb = [dv.getFloat32(o + 12, true), dv.getFloat32(o + 16, true)];
+    o += 20;
+    const old = walls.get(id);
+    next.set(id, old ? { a: old.a, b: old.b, ta, tb } : { a: ta.slice(), b: tb.slice(), ta, tb });
+  }
+  walls = next;
+  objects = [];
+  for (let i = 0; i < no; i++) {
+    const n = dv.getUint16(o, true); o += 2;
+    const poly = [];
+    for (let k = 0; k < n; k++) { poly.push([dv.getFloat32(o, true), dv.getFloat32(o + 4, true)]); o += 8; }
+    objects.push(poly);
+  }
+}
+function onMotion(dv) {
+  const nt = dv.getUint16(2, true), np = dv.getUint16(4, true), t = dv.getFloat64(8, true);
+  if (t < motionT) movers.clear();          // source restarted
+  motionT = t;
+  let o = 16;
+  const alive = new Set();
+  for (let i = 0; i < nt; i++) {
+    const id = dv.getUint32(o, true), coasting = dv.getUint8(o + 4) === 1;
+    const x = dv.getFloat32(o + 8, true), y = dv.getFloat32(o + 12, true);
+    const vx = dv.getFloat32(o + 16, true), vy = dv.getFloat32(o + 20, true);
+    o += 24;
+    alive.add(id);
+    const m = movers.get(id) || { trail: [] };
+    Object.assign(m, { x, y, vx, vy, coasting });
+    if (!coasting) m.trail.push([t, x, y]);
+    while (m.trail.length && t - m.trail[0][0] > 4) m.trail.shift();
+    movers.set(id, m);
+  }
+  for (const id of [...movers.keys()]) if (!alive.has(id)) movers.delete(id);
+  moving = new Float32Array(np * 2);
+  for (let i = 0; i < np * 2; i++) { moving[i] = dv.getFloat32(o, true); o += 4; }
+  document.getElementById("movers").textContent = movers.size;
+}
 function onTiles(dv) {
   const count = dv.getUint16(2, true);
   const res = dv.getFloat32(4, true), ox = dv.getFloat32(8, true), oy = dv.getFloat32(12, true);
@@ -200,11 +256,42 @@ function draw() {
   for (let y = y0; y < view.cy + innerHeight / 2 / view.scale; y += step) { ctx.moveTo(0, wy(y)); ctx.lineTo(innerWidth, wy(y)); }
   ctx.stroke(); ctx.globalAlpha = 1;
 
-  if (grid && showGrid) {
+  if (grid && layers.pixels) {
     ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = layers.walls || layers.objects ? 0.45 : 1;
     const size = grid.dim * grid.res * view.scale;
     ctx.drawImage(grid.canvas, wx(grid.ox), wy(grid.oy + grid.dim * grid.res), size, size);
+    ctx.globalAlpha = 1;
   }
+  // objects: everything solid that is not a wall
+  if (layers.objects && objects.length) {
+    ctx.fillStyle = colors.object; ctx.strokeStyle = colors.object; ctx.lineWidth = 1.5;
+    for (const poly of objects) {
+      ctx.beginPath();
+      poly.forEach(([x, y], k) => k ? ctx.lineTo(wx(x), wy(y)) : ctx.moveTo(wx(x), wy(y)));
+      ctx.closePath();
+      ctx.globalAlpha = 0.25; ctx.fill(); ctx.globalAlpha = 0.9; ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // walls: solid lines; ends glide to their new positions instead of jumping
+  if (layers.walls && walls.size) {
+    let gliding = false;
+    ctx.strokeStyle = colors.wall; ctx.lineCap = "round";
+    ctx.lineWidth = Math.max(3, Math.min(7, view.scale * 0.04));
+    ctx.beginPath();
+    for (const w of walls.values()) {
+      for (const [p, q] of [[w.a, w.ta], [w.b, w.tb]]) {
+        const dx = q[0] - p[0], dy = q[1] - p[1];
+        if (Math.abs(dx) + Math.abs(dy) > 0.002) { p[0] += dx * 0.25; p[1] += dy * 0.25; gliding = true; }
+        else { p[0] = q[0]; p[1] = q[1]; }
+      }
+      ctx.moveTo(wx(w.a[0]), wy(w.a[1])); ctx.lineTo(wx(w.b[0]), wy(w.b[1]));
+    }
+    ctx.stroke(); ctx.lineCap = "butt";
+    if (gliding) dirty = true;
+  }
+
 
   // trail
   if (trail.length > 1) {
@@ -240,12 +327,48 @@ function draw() {
   ctx.fillStyle = colors.point;
   const ps = Math.max(1.5, Math.min(3, view.scale / 60));
   ctx.beginPath();
-  for (let i = 0; i < scan.pts.length; i += 2) {
+  for (let i = 0; layers.points && i < scan.pts.length; i += 2) {
     const px = scan.pts[i], py = scan.pts[i + 1];
     ctx.rect(wx(scan.x + c * px - s * py) - ps / 2, wy(scan.y + s * px + c * py) - ps / 2, ps, ps);
   }
   ctx.fill();
 
+  // moving things: their points, a trail, and where they will be in 1 s
+  if (layers.motion) {
+    ctx.fillStyle = colors.mover;
+    const mp = Math.max(2.5, Math.min(4, view.scale / 40));
+    ctx.beginPath();
+    for (let i = 0; i < moving.length; i += 2) ctx.rect(wx(moving[i]) - mp / 2, wy(moving[i + 1]) - mp / 2, mp, mp);
+    ctx.fill();
+    for (const [id, m] of movers) {
+      ctx.globalAlpha = m.coasting ? 0.45 : 1;
+      ctx.strokeStyle = colors.mover; ctx.lineWidth = 2;
+      if (m.trail.length > 1) {
+        ctx.beginPath();
+        m.trail.forEach(([, x, y], k) => k ? ctx.lineTo(wx(x), wy(y)) : ctx.moveTo(wx(x), wy(y)));
+        ctx.stroke();
+      }
+      const r = Math.max(8, 0.25 * view.scale);
+      ctx.setLineDash(m.coasting ? [6, 5] : []);
+      ctx.beginPath(); ctx.arc(wx(m.x), wy(m.y), r, 0, 2 * Math.PI); ctx.stroke();
+      const speed = Math.hypot(m.vx, m.vy);
+      if (speed > 0.1) {   // arrow to the predicted position in 1 s
+        const ex = m.x + m.vx, ey = m.y + m.vy;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(wx(m.x), wy(m.y)); ctx.lineTo(wx(ex), wy(ey)); ctx.stroke();
+        ctx.setLineDash([]);
+        const ang = Math.atan2(wy(ey) - wy(m.y), wx(ex) - wx(m.x)), h = 9;
+        ctx.beginPath();
+        ctx.moveTo(wx(ex), wy(ey)); ctx.lineTo(wx(ex) - h * Math.cos(ang - 0.4), wy(ey) - h * Math.sin(ang - 0.4));
+        ctx.moveTo(wx(ex), wy(ey)); ctx.lineTo(wx(ex) - h * Math.cos(ang + 0.4), wy(ey) - h * Math.sin(ang + 0.4));
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.fillStyle = colors.mover; ctx.font = "600 12px system-ui, sans-serif";
+      ctx.fillText(`#${id} ${speed.toFixed(1)} m/s${m.coasting ? " (lost)" : ""}`, wx(m.x) + r + 4, wy(m.y) - 4);
+      ctx.globalAlpha = 1;
+    }
+  }
   // robot outline + heading
   ctx.strokeStyle = scan.accepted ? colors.robot : colors.stop; ctx.lineWidth = 2;
   const L = fp[0] / 2, W = fp[1] / 2;
@@ -263,20 +386,21 @@ requestAnimationFrame(draw);
 function renderDiag() {
   const s = stats, f = (v, d = 1) => v == null ? "–" : Number(v).toFixed(d);
   const rows = [
-    ["Kilde", s.source],
-    ["Omdrejning", f(s.rev_hz, 2) + " Hz"],
-    ["Punkter / omgang", s.points],
+    ["Source", s.source],
+    ["Rotation", f(s.rev_hz, 2) + " Hz"],
+    ["Points / revolution", s.points],
     ["Position", `${f(s.pose[0], 2)}, ${f(s.pose[1], 2)} m · ${f(s.pose[2] * 180 / Math.PI, 1)}°`],
-    ["Match", `${s.accepted ? "ok" : "AFVIST"} · ${f(s.inliers * 100, 0)} % inliers · ${s.keyframes} keyframes`],
-    ["h", "Tid pr. pakke (zoner)"],
+    ["Match", `${s.accepted ? "ok" : "REJECTED"} · ${f(s.inliers * 100, 0)} % inliers · ${s.keyframes} keyframes`],
+    ["Map", `${s.walls} walls · ${s.objects} objects · ${s.movers} moving`],
+    ["h", "Time per packet (zones)"],
     ["median / p99 / max", `${s.packet_us[0]} / ${s.packet_us[1]} / ${s.packet_us[2]} µs`],
-    ["h", "Tid pr. omgang (filter + odometri + kort)"],
+    ["h", "Time per revolution (filter + odometry + motion + map + walls)"],
     ["median / p99 / max", `${f(s.scan_us[0] / 1000, 2)} / ${f(s.scan_us[1] / 1000, 2)} / ${f(s.scan_us[2] / 1000, 2)} ms`],
-    ["h", "Proces"],
-    ["CPU (af én kerne)", s.cpu_pct == null ? "–" : f(s.cpu_pct) + " %"],
+    ["h", "Process"],
+    ["CPU (of one core)", s.cpu_pct == null ? "–" : f(s.cpu_pct) + " %"],
     ["RAM", s.rss_mb == null ? "–" : f(s.rss_mb) + " MB"],
-    ["Seriel", `${s.parser.packets} pakker · ${s.parser.crc_errors} CRC-fejl`],
-    ["Seere", s.clients],
+    ["Serial", `${s.parser.packets} packets · ${s.parser.crc_errors} CRC errors`],
+    ["Viewers", s.clients],
   ];
   document.getElementById("diagt").innerHTML = rows.map(([k, v]) =>
     k === "h" ? `<tr><td class="h" colspan="2">${v}</td></tr>` : `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
@@ -309,9 +433,18 @@ function setFollow(v) { follow = v; document.getElementById("follow").setAttribu
 
 document.getElementById("follow").onclick = () => { setFollow(!follow); if (follow && scan) { view.cx = scan.x; view.cy = scan.y; } dirty = true; };
 document.getElementById("center").onclick = () => { if (scan) { view.cx = scan.x; view.cy = scan.y; } view.scale = 120; dirty = true; };
-document.getElementById("layers").onclick = (e) => { showGrid = !showGrid; e.target.setAttribute("aria-pressed", showGrid); dirty = true; };
+for (const b of document.querySelectorAll("button.layer")) {
+  const k = b.dataset.layer;
+  b.setAttribute("aria-pressed", layers[k]);
+  b.onclick = () => {
+    layers[k] = !layers[k]; b.setAttribute("aria-pressed", layers[k]); dirty = true;
+    try { localStorage.lidarLayers = JSON.stringify(layers); } catch (e) {}
+  };
+}
 document.getElementById("reset").onclick = () => {
-  if (ws && ws.readyState === 1 && confirm("Nulstil kort og position?")) { ws.send("reset"); trail = []; grid = null; }
+  if (ws && ws.readyState === 1 && confirm("Forget the map and start again from here?")) {
+    ws.send("reset"); trail = []; grid = null; walls = new Map(); objects = []; movers.clear(); moving = new Float32Array(0);
+  }
 };
 if (innerWidth < 700) {   // phones: map first, diagnostics on demand
   document.getElementById("diag").hidden = true;

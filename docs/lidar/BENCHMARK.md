@@ -12,14 +12,13 @@ All sources are replayed as fast as possible; only the pipeline (parser → zone
 
 | Scenario | Data | Revs | Packets | CPU (1 core) | Per packet µs (median/p99/max) | Per revolution ms (median/p99/max) | ΔRAM |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Recording 2026-04-10T02-26-33 | 4.7 s | 46 | 1955 | 2.1 % | 0 / 1 / 13 | 2.15 / 4.74 / 4.74 | 0.5 MB |
-| Recording 2026-04-10T12-28-47 | 2.6 s | 25 | 1081 | 2.3 % | 0 / 1 / 20 | 2.13 / 2.28 / 2.28 | 0.7 MB |
-| Recording 2026-04-10T13-22-13 | 4.9 s | 48 | 2038 | 2.2 % | 0 / 1 / 5 | 2.16 / 4.77 / 4.77 | 6.6 MB |
-| Sim: standing still 30 s | 30.0 s | 299 | 12500 | 1.5 % | 0 / 1 / 75 | 1.33 / 2.77 / 3.40 | 0.3 MB |
-| Sim: trip 8.7 m | 32.0 s | 319 | 13333 | 3.4 % | 0 / 2 / 131 | 2.76 / 11.89 / 12.88 | 4.0 MB |
-| Sim: trip + person + noise on the wire | 32.0 s | 319 | 13266 (66 CRC errors) | 3.2 % | 0 / 2 / 254 | 2.75 / 7.26 / 8.09 | 0.0 MB |
-| Sim: trip there and back | 64.0 s | 639 | 26666 | 3.3 % | 0 / 2 / 184 | 2.91 / 6.97 / 8.77 | 0.0 MB |
-| Sim: 10 trips there and back | 640.0 s | 6399 | 266666 | 3.4 % | 0 / 2 / 572 | 2.87 / 7.19 / 12.63 | 0.0 MB |
+| Recording 2026-04-10T02-26-33 | 4.7 s | 46 | 1955 | 2.6 % | 0 / 2 / 24 | 2.38 / 6.57 / 6.57 | 0.5 MB |
+| Recording 2026-04-10T12-28-47 | 2.6 s | 25 | 1081 | 1.9 % | 0 / 2 / 50 | 2.15 / 3.21 / 3.21 | 0.6 MB |
+| Recording 2026-04-10T13-22-13 | 4.9 s | 48 | 2038 | 2.7 % | 0 / 3 / 39 | 2.52 / 6.23 / 6.23 | 6.6 MB |
+| Sim: standing still 30 s | 30.0 s | 299 | 12500 | 1.5 % | 0 / 2 / 79 | 1.25 / 2.54 / 3.71 | 0.4 MB |
+| Sim: trip 8.7 m | 32.0 s | 319 | 13333 | 4.3 % | 0 / 3 / 536 | 3.86 / 9.70 / 11.28 | 3.8 MB |
+| Sim: trip + person + noise on the wire | 32.0 s | 319 | 13266 (66 CRC errors) | 4.1 % | 0 / 4 / 367 | 3.77 / 7.51 / 10.50 | 0.0 MB |
+| Sim: trip there and back | 64.0 s | 639 | 26666 | 3.7 % | 0 / 3 / 1694 | 3.30 / 8.22 / 8.72 | 0.0 MB |
 
 ## Stability when the robot stands still
 
@@ -36,8 +35,7 @@ All sources are replayed as fast as possible; only the pipeline (parser → zone
 |---|---:|---:|---:|---:|---:|---:|---:|
 | Sim: standing still 30 s | 0.0 m | 100.0 % | 2.9 mm | 3.2 mm | 0.00° | 100.0 % | 100.0 % |
 | Sim: trip 8.7 m | 8.7 m | 100.0 % | 8.5 mm | 1.7 mm (0.02 %) | 0.18° | 99.2 % | 98.4 % |
-| Sim: trip + person + noise on the wire | 8.7 m | 100.0 % | 9.8 mm | 4.2 mm (0.05 %) | 0.04° | 99.0 % | 98.1 % |
-| Sim: trip there and back | 17.3 m | 100.0 % | 11.9 mm | 6.8 mm (0.04 %) | 0.10° | 97.2 % | 98.5 % |
-| Sim: 10 trips there and back | 173.5 m | 100.0 % | 11.0 mm | 2.6 mm (0.00 %) | 0.01° | 92.0 % | 98.4 % |
+| Sim: trip + person + noise on the wire | 8.7 m | 100.0 % | 9.8 mm | 4.2 mm (0.05 %) | 0.04° | 99.4 % | 98.1 % |
+| Sim: trip there and back | 17.3 m | 100.0 % | 11.9 mm | 6.8 mm (0.04 %) | 0.10° | 98.2 % | 98.5 % |
 
 Map precision = share of occupied cells less than 10 cm from a real wall. Map coverage = share of the seen walls that are in the map.

@@ -8,3 +8,6 @@ Sound direction;—;someday;The microphone modules only give level/threshold. Re
 Ride-on strength;2026-10-05;someday;A child standing on it was a party joke. It would need steel pins and SLS PA12 rims, not FDM PETG.
 Laser-cut parts;2026-10-04;someday;The library has a free laser cutter. 100 % print is preferred.
 Second bearing per wheel;2026-10-05;someday;Plan B if the self-aligning KFL003 lets the moment reach the motor shaft
+Collision prediction with moving things;2026-10-12;next;LiDAR tracks give position + velocity. Compare a mover's path with the robot's planned path and move aside before the person has to (Mikkel).
+Camera + LiDAR person following;2026-10-12;someday;The front AI camera says which person to follow; the LiDAR keeps that track 360° and guesses where the person went when they leave the camera's view (e.g. behind the robot).
+Movement draws attention;2026-10-12;someday;Turn screen/camera towards a new moving track.
