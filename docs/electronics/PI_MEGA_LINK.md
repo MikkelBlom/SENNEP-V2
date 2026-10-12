@@ -1,6 +1,6 @@
 # Pi 5 ↔ Arduino Mega — forbindelse og protokol
 
-Status: **GODKENDT 2026-10-12** (runde 2, §0b). Kode: `firmware/`, `protocol/`, `tools/`, `tests/` — se `firmware/README.md`.
+Status: **GODKENDT 2026-10-12** (runde 2, §0b). Samlet plan + næste skridt: `ai-instructions/PLAN_PI_MEGA_LINK.md`. Kode: `firmware/`, `protocol/`, `tools/`, `tests/`.
 
 ## 0. Mikkels svar, runde 1 (2026-10-12)
 
