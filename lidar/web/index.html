@@ -50,6 +50,31 @@
   #rec .sub { color: var(--muted); font-size: 12px; display: block; }
   #rec button { min-height: 34px; padding: 5px 10px; }
   @media (prefers-reduced-motion: reduce) { #rec.on .dot { animation: none; } }
+  #player { position: fixed; left: 12px; right: 12px; bottom: 12px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 10px; font-variant-numeric: tabular-nums; }
+  #player[hidden], #files[hidden] { display: none; }
+  body.playing #diag { bottom: 150px; max-height: calc(100% - 230px); overflow: auto; }
+  #player .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #player button, #player select, #player input[type=text] { min-height: 36px; }
+  #player select, #player input[type=text] { background: var(--panel); color: var(--text); border: 1px solid var(--line);
+    border-radius: 8px; padding: 4px 8px; font: inherit; }
+  #pp { min-width: 48px; font-size: 16px; }
+  #ptime { font-weight: 600; min-width: 8.5em; }
+  #pname { color: var(--muted); font-size: 12px; margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%; }
+  .ptrack { position: relative; margin: 8px 4px 2px; height: 22px; }
+  .ptrack input { width: 100%; margin: 0; position: absolute; top: 3px; accent-color: var(--point); }
+  .ptick { position: absolute; top: 0; width: 3px; height: 22px; margin-left: -1px; background: var(--warn);
+    border-radius: 2px; cursor: pointer; pointer-events: auto; z-index: 1; }
+  #pmarklist { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  #pmarklist button { min-height: 28px; padding: 2px 8px; font-size: 12px; border-color: var(--warn); }
+  #files { position: fixed; left: 12px; top: 64px; width: min(460px, calc(100% - 24px)); max-height: calc(100% - 160px);
+    overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; z-index: 5; }
+  #files h3 { margin: 0 0 6px; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+  #files .f { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); }
+  #files .f b { font-weight: 600; word-break: break-all; }
+  #files .f span { color: var(--muted); font-size: 12px; display: block; }
+  #files .f button { margin-left: auto; min-height: 34px; }
+  #files .grp { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; margin-top: 8px; }
   .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: -1px; }
 </style>
 </head>
@@ -66,11 +91,27 @@
   <button class="layer" data-layer="motion" aria-pressed="true">Movement</button>
   <button class="layer" data-layer="points" aria-pressed="true">Points</button>
   <button class="layer" data-layer="pixels" aria-pressed="true">Map pixels</button>
+  <button id="filesbtn" aria-pressed="false">Recordings</button>
   <button id="reset" title="Forget the map and start again from here">New map</button>
   <button id="diagbtn" aria-pressed="true">Diagnostics</button>
   <span class="legend"><span class="sw" style="background:var(--ok)"></span>&gt; 1 m<span class="sw" style="background:var(--warn)"></span>0.3–1 m<span class="sw" style="background:var(--stop)"></span>&lt; 0.3 m<span class="sw" style="background:var(--stale)"></span>stale</span>
 </div>
 <div id="diag"><table id="diagt"></table></div>
+<div id="files" hidden><h3>Recordings <button id="filesclose" aria-label="Close">✕</button></h3><div id="filelist"></div></div>
+<div id="player" hidden>
+  <div class="row">
+    <button id="pp" title="Play / pause (space)">▶</button>
+    <button id="pback" title="Back 5 s">−5 s</button>
+    <button id="pfwd" title="Forward 5 s">+5 s</button>
+    <span id="ptime">0:00 / 0:00</span>
+    <input type="text" id="pjump" size="5" placeholder="1:32" title="Jump to a time (mm:ss), Enter">
+    <select id="pspeed" title="Speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select>
+    <button id="plive">Back to live</button>
+    <span id="pname"></span>
+  </div>
+  <div class="ptrack"><input type="range" id="pslider" min="0" max="1000" step="any" value="0"><div id="pticks"></div></div>
+  <div id="pmarklist"></div>
+</div>
 <div id="rec" hidden>
   <span class="dot"></span>
   <span class="info"><b id="rectxt">not recording</b><span class="sub" id="recsub"></span></span>
@@ -430,8 +471,110 @@ document.getElementById("reckeep").onclick = () => {
   const n = prompt("Name for this recording.\nIt is saved in lidar/recordings/ (becomes test data) and a new recording starts.", "");
   if (n) send("rec:keep " + n);
 };
+// ---- playback
+const fmt = (t) => { t = Math.max(0, t); const m = Math.floor(t / 60), s = t - m * 60; return `${m}:${s < 10 ? "0" : ""}${s.toFixed(1)}`; };
+let play = null;            // {t, dur, paused, speed, at (performance.now() of t), marksKey}
+let dragging = false;
+function playPos() {
+  if (!play) return 0;
+  return Math.min(play.dur, play.paused ? play.t : play.t + (performance.now() - play.at) / 1000 * play.speed);
+}
+function renderPlayer(p) {
+  const box = document.getElementById("player");
+  box.hidden = !p;
+  document.body.classList.toggle("playing", !!p);
+  if (!p) { play = null; return; }
+  play = { t: p.t, dur: p.dur, paused: p.paused, speed: p.speed, at: performance.now(), marks: p.marks };
+  document.getElementById("pp").textContent = p.paused ? "▶" : "❚❚";
+  document.getElementById("pname").textContent = p.file;
+  document.getElementById("plive").hidden = !(stats && stats.live_available);
+  document.getElementById("pspeed").value = String(p.speed);
+  const key = p.path + "|" + p.marks.length;
+  if (box.dataset.key !== key) {          // marks on the timeline + as buttons
+    box.dataset.key = key;
+    const ticks = document.getElementById("pticks"), list = document.getElementById("pmarklist");
+    ticks.innerHTML = ""; list.innerHTML = "";
+    for (const [t, text] of p.marks) {
+      const d = document.createElement("div");
+      d.className = "ptick"; d.style.left = (t / p.dur * 100) + "%"; d.title = `${fmt(t)}  ${text}`;
+      d.onclick = () => seek(t - 2);
+      ticks.appendChild(d);
+      const b = document.createElement("button");
+      b.textContent = `${fmt(t)} ${text}`; b.onclick = () => seek(t - 2);
+      list.appendChild(b);
+    }
+  }
+}
+function tickPlayer() {
+  requestAnimationFrame(tickPlayer);
+  if (!play) return;
+  const t = playPos();
+  document.getElementById("ptime").textContent = `${fmt(dragging ? sliderTime() : t)} / ${fmt(play.dur)}`;
+  if (!dragging) document.getElementById("pslider").value = play.dur ? t / play.dur * 1000 : 0;
+}
+requestAnimationFrame(tickPlayer);
+function sliderTime() { return play ? document.getElementById("pslider").value / 1000 * play.dur : 0; }
+function seek(t) {
+  if (!play) return;
+  t = Math.max(0, Math.min(play.dur, t));
+  send("play:seek " + t.toFixed(2));
+  play.t = t; play.at = performance.now();
+  document.getElementById("ptime").textContent = `${fmt(t)} / ${fmt(play.dur)} · loading…`;
+  trail = []; walls = new Map(); objects = []; movers.clear(); moving = new Float32Array(0); grid = null; dirty = true;
+}
+const slider = document.getElementById("pslider");
+slider.addEventListener("input", () => { dragging = true; });
+slider.addEventListener("change", () => { dragging = false; seek(sliderTime()); });
+document.getElementById("pp").onclick = () => { send("play:toggle"); if (play) { play.t = playPos(); play.at = performance.now(); play.paused = !play.paused; } };
+document.getElementById("pback").onclick = () => seek(playPos() - 5);
+document.getElementById("pfwd").onclick = () => seek(playPos() + 5);
+document.getElementById("pspeed").onchange = (e) => send("play:speed " + e.target.value);
+document.getElementById("plive").onclick = () => { send("play:live"); trail = []; walls = new Map(); objects = []; movers.clear(); grid = null; };
+document.getElementById("pjump").addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const v = e.target.value.trim().split(":").map(Number);
+  const t = v.length === 2 ? v[0] * 60 + v[1] : v[0];
+  if (Number.isFinite(t)) seek(t);
+});
+addEventListener("keydown", (e) => {
+  if (!play || e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (e.key === " ") { e.preventDefault(); document.getElementById("pp").click(); }
+  else if (e.key === "ArrowLeft") seek(playPos() - 5);
+  else if (e.key === "ArrowRight") seek(playPos() + 5);
+});
+// recordings list
+function renderFiles() {
+  const box = document.getElementById("files");
+  if (box.hidden || !stats) return;
+  const list = stats.files || [];
+  const fmtLen = (s) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+  let html = "", grp = null;
+  for (const f of list) {
+    const g = f.kept ? "Kept (test data)" : "Automatic (newest first)";
+    if (g !== grp) { html += `<div class="grp">${g}</div>`; grp = g; }
+    html += `<div class="f"><div><b></b><span>≈ ${fmtLen(f.secs)} · ${f.mb.toFixed(1)} MB${f.marks ? ` · ${f.marks} marks` : ""}</span></div><button data-path="">Play</button></div>`;
+  }
+  if (!list.length) html = `<p class="legend">No recordings yet. A live LiDAR records itself; press "Keep recording…" for good ones.</p>`;
+  const el = document.getElementById("filelist");
+  el.innerHTML = html;
+  el.querySelectorAll(".f").forEach((row, i) => {
+    row.querySelector("b").textContent = list[i].name;      // names as text, never as HTML
+    row.querySelector("button").onclick = () => {
+      send("play:open " + list[i].path);
+      box.hidden = true; document.getElementById("filesbtn").setAttribute("aria-pressed", "false");
+      trail = []; walls = new Map(); objects = []; movers.clear(); grid = null;
+    };
+  });
+}
+document.getElementById("filesbtn").onclick = (e) => {
+  const box = document.getElementById("files"); box.hidden = !box.hidden;
+  e.target.setAttribute("aria-pressed", !box.hidden); renderFiles();
+};
+document.getElementById("filesclose").onclick = () => { document.getElementById("files").hidden = true; document.getElementById("filesbtn").setAttribute("aria-pressed", "false"); };
 function renderDiag() {
   renderRec(stats.rec);
+  renderPlayer(stats.player);
+  renderFiles();
   const s = stats, f = (v, d = 1) => v == null ? "–" : Number(v).toFixed(d);
   const rows = [
     ["Source", s.source],

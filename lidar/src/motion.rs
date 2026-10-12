@@ -35,6 +35,9 @@ pub struct MotionConfig {
     /// ...and how far it must have moved from where it was first seen, metres. Map artefacts
     /// (a door frame seen from a new angle) stand still; people and pets don't.
     pub confirm_move: f32,
+    /// ...and have averaged at least this many points per detection. A person at chest height gives
+    /// 10–40; a thin furniture leg that the beams sometimes miss gives 3–7 and must not become a mover.
+    pub confirm_points: f32,
     /// How long an unconfirmed track survives without detections, s.
     pub tentative_life: f64,
     /// How long a confirmed track keeps predicting without detections, s (bending down below the
@@ -47,6 +50,21 @@ pub struct MotionConfig {
     /// A new detection this close to where a lost track was last seen (or is predicted) takes over
     /// that track's id instead of starting a new one.
     pub reacquire: f64,
+    /// A confirmed track not seen for longer than `coast` is hidden but remembered this long, s,
+    /// so someone who stood out of view (behind furniture, too close to a wall) gets their id back
+    /// when they reappear within `reacquire_dormant` metres of where they were last seen.
+    pub dormant: f64,
+    pub reacquire_dormant: f64,
+    /// A new blob this close to a person who is being tracked right now is part of that person
+    /// (an arm, a bag), not a new mover.
+    pub satellite: f64,
+    /// Clutter: small blobs (≤ `clutter_max_points`) that keep appearing in the same `clutter_cell`
+    /// (a glass kettle, a glass cabinet door: the laser goes partly through glass) are ignored there
+    /// once the spot has scored `clutter_limit` (each such blob +1, halving every `clutter_half_life` s).
+    pub clutter_cell: f32,
+    pub clutter_max_points: usize,
+    pub clutter_limit: f32,
+    pub clutter_half_life: f64,
     /// Kalman noise: acceleration (m/s²) and measurement (m), 1 σ.
     pub accel_sigma: f64,
     pub meas_sigma: f64,
@@ -66,11 +84,19 @@ impl Default for MotionConfig {
             gate_per_speed: 0.3,
             confirm_hits: 3,
             confirm_move: 0.25,
+            confirm_points: 6.0,
             tentative_life: 0.35,
             coast: 3.0,
             coast_tau: 0.5,
             coast_max: 1.0,
             reacquire: 1.2,
+            dormant: 10.0,
+            reacquire_dormant: 1.5,
+            satellite: 0.7,
+            clutter_cell: 0.15,
+            clutter_max_points: 5,
+            clutter_limit: 6.0,
+            clutter_half_life: 30.0,
             accel_sigma: 5.0,
             meas_sigma: 0.08,
             history_s: 4.0,
@@ -111,6 +137,8 @@ pub struct Track {
     /// Where it was first seen, and the farthest it has been from there.
     pub origin: (f32, f32),
     pub travelled: f32,
+    /// Sum of points over all detections (for the average).
+    pub point_sum: usize,
     pub last_seen: f64,
     /// Position of the last detection.
     pub seen_pos: (f64, f64),
@@ -175,14 +203,47 @@ pub struct Blob {
 
 pub struct Tracker {
     pub cfg: MotionConfig,
+    /// Includes tentative and dormant tracks; what to show is `visible()`.
     pub tracks: Vec<Track>,
+    clutter: std::collections::HashMap<(i32, i32), (f32, f64)>,
     next_id: u32,
     last_t: Option<f64>,
 }
 
 impl Tracker {
     pub fn new(cfg: MotionConfig) -> Self {
-        Tracker { cfg, tracks: Vec::new(), next_id: 1, last_t: None }
+        Tracker { cfg, tracks: Vec::new(), clutter: Default::default(), next_id: 1, last_t: None }
+    }
+
+    /// Confirmed tracks seen within the last `coast` seconds: what the UI and the robot should use.
+    pub fn visible(&self) -> impl Iterator<Item = &Track> {
+        self.tracks.iter().filter(|k| k.confirmed && k.t - k.last_seen <= self.cfg.coast)
+    }
+
+    /// Spots that keep producing small flickering blobs. Returns true if this blob is clutter.
+    fn clutter(&mut self, b: &Blob, t: f64) -> bool {
+        if b.n > self.cfg.clutter_max_points {
+            return false;
+        }
+        let c = self.cfg.clutter_cell;
+        let key = ((b.x / c).floor() as i32, (b.y / c).floor() as i32);
+        let hl = self.cfg.clutter_half_life;
+        let mut worst = 0.0f32;
+        for dx in -1..=1 {
+            for dy in -1..=1 {
+                if let Some((s, lt)) = self.clutter.get(&(key.0 + dx, key.1 + dy)) {
+                    worst = worst.max(s * 0.5f32.powf(((t - lt) / hl) as f32));
+                }
+            }
+        }
+        let e = self.clutter.entry(key).or_insert((0.0, t));
+        e.0 = e.0 * 0.5f32.powf(((t - e.1) / hl) as f32) + 1.0;
+        e.1 = t;
+        let score = e.0;
+        if self.clutter.len() > 4096 {
+            self.clutter.retain(|_, (s, lt)| *s * 0.5f32.powf(((t - *lt) / hl) as f32) > 0.5);
+        }
+        worst.max(score) > self.cfg.clutter_limit
     }
 
     /// Groups world-frame moving points into blobs.
@@ -250,10 +311,20 @@ impl Tracker {
             }
         }
         if let Some(pts) = moving {
-            let blobs = self.blobs(pts);
+            let all = self.blobs(pts);
+            let mut blobs = Vec::with_capacity(all.len());
+            for b in all {
+                if !self.clutter(&b, t) {
+                    blobs.push(b);
+                }
+            }
+            let coast = self.cfg.coast;
             // Greedy nearest-first association inside the gate.
             let mut pairs: Vec<(f64, usize, usize)> = Vec::new();
             for (ti, tr) in self.tracks.iter().enumerate() {
+                if t - tr.last_seen > coast {
+                    continue; // dormant: only re-acquired, below
+                }
                 let (px, py) = tr.pos();
                 let (vx, vy) = tr.vel();
                 let gate = self.cfg.gate as f64 + self.cfg.gate_per_speed as f64 * vx.hypot(vy);
@@ -281,22 +352,41 @@ impl Tracker {
                 tr.seen_pos = (b.x as f64, b.y as f64);
                 tr.points = b.n;
                 tr.travelled = tr.travelled.max((b.x - tr.origin.0).hypot(b.y - tr.origin.1));
-                tr.confirmed |= tr.hits >= self.cfg.confirm_hits && tr.travelled >= self.cfg.confirm_move;
+                tr.point_sum += b.n;
+                tr.confirmed |= tr.hits >= self.cfg.confirm_hits
+                    && tr.travelled >= self.cfg.confirm_move
+                    && tr.point_sum as f32 >= self.cfg.confirm_points * tr.hits as f32;
             }
             for (bi, b) in blobs.iter().enumerate() {
                 if b_used[bi] {
                     continue;
                 }
-                // Re-acquire: a lost confirmed track near here (last seen or predicted) keeps its id.
-                let near = |tr: &Track| {
-                    let (bx, by) = (b.x as f64, b.y as f64);
-                    let (px, py) = tr.pos();
-                    (bx - px).hypot(by - py).min((bx - tr.seen_pos.0).hypot(by - tr.seen_pos.1))
+                let (bx, by) = (b.x as f64, b.y as f64);
+                // Part of someone tracked right now (an arm, a bag)?
+                let satellite = (0..t_used.len()).any(|ti| {
+                    let tr = &self.tracks[ti];
+                    t_used[ti]
+                        && tr.confirmed
+                        && (bx - tr.seen_pos.0).hypot(by - tr.seen_pos.1) <= self.cfg.satellite
+                });
+                if satellite {
+                    continue;
+                }
+                // Re-acquire: a lost confirmed track near here keeps its id. Coasting tracks: near the
+                // prediction or where last seen; dormant ones: near where last seen.
+                let reach = |tr: &Track| -> Option<f64> {
+                    let ds = (bx - tr.seen_pos.0).hypot(by - tr.seen_pos.1);
+                    if t - tr.last_seen > coast {
+                        (ds <= self.cfg.reacquire_dormant).then_some(ds)
+                    } else {
+                        let (px, py) = tr.pos();
+                        let d = (bx - px).hypot(by - py).min(ds);
+                        (d <= self.cfg.reacquire).then_some(d)
+                    }
                 };
                 let lost = (0..t_used.len()) // tracks created in this loop are new, never lost
                     .filter(|&ti| !t_used[ti] && self.tracks[ti].confirmed && self.tracks[ti].coasting())
-                    .map(|ti| (near(&self.tracks[ti]), ti))
-                    .filter(|(d, _)| *d <= self.cfg.reacquire)
+                    .filter_map(|ti| reach(&self.tracks[ti]).map(|d| (d, ti)))
                     .min_by(|a, b| a.0.total_cmp(&b.0));
                 if let Some((_, ti)) = lost {
                     t_used[ti] = true;
@@ -321,6 +411,7 @@ impl Tracker {
                         first_t: t,
                         origin: (b.x, b.y),
                         travelled: 0.0,
+                        point_sum: b.n,
                         last_seen: t,
                         seen_pos: (b.x as f64, b.y as f64),
                         t,
@@ -334,7 +425,7 @@ impl Tracker {
         self.tracks.retain(|tr| {
             let unseen = t - tr.last_seen;
             if tr.confirmed {
-                unseen <= cfg.coast
+                unseen <= cfg.dormant
             } else {
                 unseen <= cfg.tentative_life
             }
@@ -350,6 +441,7 @@ impl Tracker {
 
     pub fn reset(&mut self) {
         self.tracks.clear();
+        self.clutter.clear();
         self.last_t = None;
     }
 }
@@ -388,7 +480,8 @@ mod tests {
         let mut tr = Tracker::new(MotionConfig::default());
         for k in 0..10 {
             let x = k as f32 * 0.1;
-            tr.update(k as f64 * 0.1, Some(&[(x, 0.0), (x, 0.02), (x, 0.04)]));
+            let pts: Vec<(f32, f32)> = (0..8).map(|i| (x, i as f32 * 0.02)).collect();
+            tr.update(k as f64 * 0.1, Some(&pts));
         }
         tr.update(1.5, Some(&[]));
         assert_eq!(tr.tracks.len(), 1);
@@ -396,7 +489,9 @@ mod tests {
         let p = tr.tracks[0].pos().0;
         assert!(p > 1.0 && p < 1.9 + 0.01, "kept moving while unseen, but slowing and within 1 m: {p}");
         tr.update(5.0, Some(&[]));
-        assert!(tr.tracks.is_empty());
+        assert_eq!(tr.visible().count(), 0, "hidden after the coast time");
+        tr.update(12.0, Some(&[]));
+        assert!(tr.tracks.is_empty(), "forgotten after the dormant time");
     }
 
     #[test]
@@ -404,7 +499,8 @@ mod tests {
         let mut tr = Tracker::new(MotionConfig::default());
         for k in 0..10 {
             let x = k as f32 * 0.08;
-            tr.update(k as f64 * 0.1, Some(&[(x, 0.0), (x, 0.03), (x, 0.06)]));
+            let pts: Vec<(f32, f32)> = (0..8).map(|i| (x, i as f32 * 0.03)).collect();
+            tr.update(k as f64 * 0.1, Some(&pts));
         }
         let id = tr.tracks[0].id;
         for k in 10..30 {
@@ -414,5 +510,52 @@ mod tests {
         assert_eq!(tr.tracks.len(), 1);
         assert_eq!(tr.tracks[0].id, id);
         assert!(!tr.tracks[0].coasting());
+    }
+}
+
+#[cfg(test)]
+mod clutter_tests {
+    use super::*;
+
+    #[test]
+    fn flickering_glass_is_ignored_but_a_person_passing_it_is_not() {
+        let mut tr = Tracker::new(MotionConfig::default());
+        // A glass kettle: 3 points at the same spot every other scan for 10 s.
+        for k in 0..100 {
+            let pts: &[(f32, f32)] =
+                if k % 2 == 0 { &[(1.40, 1.83), (1.41, 1.84), (1.42, 1.83)] } else { &[] };
+            tr.update(k as f64 * 0.1, Some(pts));
+        }
+        assert_eq!(tr.visible().count(), 0);
+        let before = tr.tracks.iter().filter(|k| k.hits > 3).count();
+        assert_eq!(before, 0, "the flicker never builds a track");
+        // A person (20 points) walking right past the same spot is still tracked.
+        for k in 0..20 {
+            let x = 0.6 + k as f32 * 0.08;
+            let pts: Vec<(f32, f32)> =
+                (0..20).map(|i| (x + (i % 5) as f32 * 0.03, 1.7 + (i / 5) as f32 * 0.05)).collect();
+            tr.update(10.0 + k as f64 * 0.1, Some(&pts));
+        }
+        assert_eq!(tr.visible().count(), 1);
+    }
+
+    #[test]
+    fn an_arm_next_to_a_tracked_person_is_not_a_new_mover() {
+        let mut tr = Tracker::new(MotionConfig::default());
+        for k in 0..30 {
+            let x = k as f32 * 0.06;
+            let mut pts: Vec<(f32, f32)> =
+                (0..15).map(|i| (x + (i % 5) as f32 * 0.03, (i / 5) as f32 * 0.04)).collect();
+            if k > 10 {
+                pts.extend([(x, 0.55), (x + 0.02, 0.56), (x + 0.04, 0.55)]); // 45 cm away: beyond the blob link
+            }
+            tr.update(k as f64 * 0.1, Some(&pts));
+        }
+        assert_eq!(
+            tr.tracks.iter().filter(|k| k.confirmed).count(),
+            1,
+            "{:?}",
+            tr.tracks.iter().map(|k| k.id).collect::<Vec<_>>()
+        );
     }
 }

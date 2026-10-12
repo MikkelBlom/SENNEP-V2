@@ -310,3 +310,17 @@ seen in 180/180 scans while standing still, tracker top speed 3.6 m/s (test `roo
 
 Recording is now done from the page (`recording.rs`): live LiDAR records automatically into `recordings/auto/`;
 Keep / Mark / Stop / Start buttons.
+
+### 11c. Third recording: glass kettle, a far corner, playback (2026-10-12)
+
+`lidar/recordings/2026-10-12_room_3.ldr` (+ `.txt`), Mikkel alone. With 11b's tracker he got ids 10 → 74, and
+id 129 sat on his **glass electric kettle** for 80 s. Causes: (1) he was out of view 3.5 s at the far end, longer
+than the 3 s memory; (2) a small 3–7 point blob near him got its own id, and when it vanished the id re-acquired
+the kettle's flicker 1 m away; (3) the kettle (laser partly through glass) gives a 3-point blob every 1–2 s, which
+kept that track alive. (The "curtain/plant" flicker in `room_2` was the same kettle.)
+Fixes: confirmed tracks are remembered 10 s (hidden after 3 s) for re-acquiring within 1.5 m; a track is only
+shown once it averages ≥ 6 points; small blobs in spots that keep flickering are ignored (15 cm cells, half-life
+30 s); a blob within 70 cm of a tracked person is part of that person. Result: **one id from 0:16.7 to 3:08.6**;
+the kettle never becomes a mover (test `room_3_glass_kettle_and_corner_keep_one_id`).
+
+Playback (`player.rs`) in the page: play/pause/±5 s/jump to a time/speed/marks, back to live.

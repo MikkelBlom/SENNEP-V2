@@ -30,13 +30,7 @@ fn drive(src: &mut dyn ByteSource, cfg: PipelineConfig) -> (Vec<Frame>, Pipeline
             }
         });
         for (t, pose, walls) in done {
-            let tracks = p
-                .tracker
-                .tracks
-                .iter()
-                .filter(|k| k.confirmed)
-                .map(|k| (k.id, k.pos().0, k.pos().1, k.coasting()))
-                .collect();
+            let tracks = p.tracker.visible().map(|k| (k.id, k.pos().0, k.pos().1, k.coasting())).collect();
             frames.push(Frame { t, pose, tracks, walls: walls.then(|| p.walls.output()) });
         }
     }
@@ -198,4 +192,24 @@ fn room_2_sprints_and_bending_down_keep_one_id() {
     assert_eq!(before, 0);
     assert_eq!(ids.len(), 1, "one person, one id: {ids:?}");
     assert!(seen * 100 >= n * 95, "standing still: seen in {seen} of {n}");
+}
+
+#[test]
+fn room_3_glass_kettle_and_corner_keep_one_id() {
+    // Mikkel alone (~16 s to ~189 s, back in at ~213 s). A glass electric kettle flickers all the time
+    // (laser partly through glass); a thin static thing near his path gives 3–7 point blobs; at ~81 s he
+    // is out of view for ~3.5 s and reappears 0.5 m away.
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("recordings/2026-10-12_room_3.ldr");
+    let mut src = ReplaySource::open(&path, false, false).unwrap();
+    let (frames, _) = drive(&mut src, bench_config());
+    let t0 = frames[0].t;
+    let first_visit: BTreeSet<u32> = frames
+        .iter()
+        .filter(|f| (17.0..188.0).contains(&(f.t - t0)))
+        .flat_map(|f| f.tracks.iter().map(|t| t.0))
+        .collect();
+    let all = ids(&frames);
+    println!("first visit ids {first_visit:?}, all {all:?}");
+    assert_eq!(first_visit.len(), 1, "one person, one id during the first visit");
+    assert!(all.len() <= 2, "kettle or furniture became a mover: {all:?}");
 }

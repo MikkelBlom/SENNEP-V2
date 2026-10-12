@@ -24,6 +24,12 @@ The panel bottom-left on the page: **Mark moment** (a note with the time, saved 
 **Keep recording…** (moves it to `lidar/recordings/<name>.ldr` + `.txt`, where it becomes test data, and starts a
 new one), **Stop / Start recording**. Options: `--no-record`, `--record-dir DIR`, `--record FILE.ldr`.
 
+**Playback:** the **Recordings** button lists kept and automatic recordings; **Play** opens one in the same page
+(the live LiDAR pauses, recording stops). Player bar: play/pause (space), ±5 s (arrow keys), type a time like
+`1:32` + Enter, drag the timeline, speed 0.25–4×, marks as ticks/buttons (click = jump to 2 s before),
+**Back to live**. Jumping rebuilds the map from the start of the recording, ~1 s per minute.
+`sennep-lidar --replay <file.ldr>` opens straight into playback.
+
 **Layers** (buttons on the page): Walls · Objects · Movement · Points · Map pixels. Walls are fitted to the
 map (which averages hundreds of revolutions), keep an id and only move when the map does; their ends glide on
 screen. Moving things are red: a ring, a trail (4 s) and a dashed arrow to where they will be in 1 s. "(lost)" =
@@ -55,7 +61,7 @@ set up yet. The page only draws when new data arrives, so it does not load the P
 ## Test
 
 ```bash
-cargo test --release          # 30 tests: parser, clock, filters, zones, walls, motion, recordings, simulator
+cargo test --release          # 36 tests: parser, clock, filters, zones, walls, motion, recordings, simulator
 cargo run --release --bin bench -- --long
 ```
 The tests run the old recordings through the real parser, and the simulator (known ground truth) through
@@ -75,6 +81,7 @@ the whole chain. The simulator makes **raw LD19 bytes**, incl. bit errors on the
 | `grid.rs` | Log-odds map (5 cm), free space cleared by rays, changed tiles are sent |
 | `walls.rs` | Wall segments fitted to the map (re-fit known walls first, RANSAC for new ones, sticky corners), objects = the rest |
 | `recording.rs` | Auto-recording, keep/mark/stop/start from the page |
+| `player.rs` | Playback in the page: pause, speed, jump (map rebuilt from the start), marks |
 | `motion.rs` | Moving points (hit in known-free space, ≥ 10 cm from anything solid), blobs, Kalman tracks with coasting |
 | `server.rs`, `web/index.html` | HTTP + WebSocket, one static page (no build step) |
 | `sim.rs`, `eval.rs` | Simulated flat, trips, ground truth and scoring |
@@ -105,4 +112,7 @@ The actual sending over the link is done when the link is built (the `ObstacleSi
 - Moving things within 10 cm of a wall are not flagged. Two people walking side by side (< 35 cm) are one track.
 - A "lost" track slows down and stays within 1 m of where it was last seen, for up to 3 s. Something that
   reappears within 1.2 m of it gets the same id (bending down below the scan plane, a sprinter turning at a wall).
-  Two people crossing close to each other can swap ids.
+  Two people crossing close to each other can swap ids. A hidden person is remembered for 10 s.
+- Small things (< 6 points on average) never become movers: a person far away (> ~4 m) with only a few points is
+  not shown until they come closer. Spots that keep flickering (glass: a kettle, a cabinet door) are learned
+  and ignored for small blobs. A blob within 70 cm of a tracked person is treated as part of them.

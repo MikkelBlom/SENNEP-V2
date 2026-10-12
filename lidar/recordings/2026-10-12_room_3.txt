@@ -1,0 +1,8 @@
+# Mikkel's living room, LiDAR at chest height, Mikkel alone (times since the recording started)
+00:16.7  walks in
+01:21.0  out of view ~3.5 s (far end of the room), reappears 0.5 m away
+02:43.0  a small 3-7 point blob near him for ~15 s (static thing; used to become a false mover)
+03:08.6  walks out
+03:32.9  comes back in
+03:49.1  walks out
+# The glass electric kettle flickers the whole time (laser partly through glass).

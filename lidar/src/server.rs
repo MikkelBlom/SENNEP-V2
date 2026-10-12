@@ -161,7 +161,7 @@ impl Hub {
 
     /// Confirmed tracks + this scan's moving points.
     pub fn publish_motion(&self, t: f64, tracker: &Tracker, moving: &[(f32, f32)]) {
-        let tracks: Vec<_> = tracker.tracks.iter().filter(|k| k.confirmed).collect();
+        let tracks: Vec<_> = tracker.visible().collect();
         let mut b = Vec::with_capacity(16 + tracks.len() * 24 + moving.len() * 8);
         b.extend_from_slice(&[5, 0]);
         b.extend_from_slice(&(tracks.len() as u16).to_le_bytes());
@@ -359,7 +359,9 @@ fn viewer_loop(ws: &mut tungstenite::WebSocket<TcpStream>, hub: &Hub) -> io::Res
         // Commands from the page (non-blocking).
         match ws.read() {
             Ok(Message::Text(t)) if t.trim() == "reset" => hub.reset_requested.store(true, Ordering::Relaxed),
-            Ok(Message::Text(t)) if t.starts_with("rec:") => hub.commands.lock().unwrap().push(t.to_string()),
+            Ok(Message::Text(t)) if t.starts_with("rec:") || t.starts_with("play:") => {
+                hub.commands.lock().unwrap().push(t.to_string())
+            }
             Ok(Message::Close(_)) => return Ok(()),
             Ok(_) => {}
             Err(tungstenite::Error::Io(e))
