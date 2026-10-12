@@ -223,8 +223,7 @@ fn jumping_back_in_playback_works_like_a_fresh_start() {
         let (mut scans, mut accepted) = (0, 0);
         let mut buf = Vec::new();
         let mut t0 = None;
-        loop {
-            let Some(t) = player.next_now(&mut buf) else { break };
+        while let Some(t) = player.next_now(&mut buf) {
             let t0 = *t0.get_or_insert(t);
             if (t - t0) as f64 * 1e-6 > until {
                 break;
