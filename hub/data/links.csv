@@ -1,0 +1,6 @@
+title;url;category;note
+GitHub repo;https://github.com/MikkelBlom/SENNEP-V2;Project;
+Fyns Batteri Service;https://fynsbatteriservice.dk;Battery;Spot-welding candidate, Knullen 8, Odense S
+Raspberry Pi 5 pinout;https://pinout.xyz;Reference;
+Pi 5 UART overlays;https://github.com/Felipegalind0/RPI5.pinout;Reference;
+LiDAR stack (local);http://localhost:8080;Software;Run: cargo run --release -- --sim (in lidar/)

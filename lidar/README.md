@@ -1,85 +1,85 @@
-# sennep-lidar — LiDAR-stack v2 (Rust)
+# sennep-lidar — LiDAR stack v2 (Rust)
 
-Ny LiDAR-behandling til SENNEP V2's LDROBOT STL-19P (LD19-protokol). Erstatter den gamle
-Electron-app i `Lidar Test Enviornment/` (som kun bruges som testdata). Plan og begrundelser:
-[`docs/lidar/PLAN.md`](../docs/lidar/PLAN.md). Målte tal: [`docs/lidar/BENCHMARK.md`](../docs/lidar/BENCHMARK.md).
+New LiDAR processing for SENNEP V2's LDROBOT STL-19P (LD19 protocol). Replaces the old
+Electron app in `Lidar Test Enviornment/` (which is only used as test data). Plan and reasons:
+[`docs/lidar/PLAN.md`](../docs/lidar/PLAN.md). Measured numbers: [`docs/lidar/BENCHMARK.md`](../docs/lidar/BENCHMARK.md).
 
-**Hvad den gør:** læser LiDAR'en (USB-adapteren), udregner sikkerhedszoner hver 2,4 ms, samler hele
-omdrejninger, finder robottens bevægelse (LiDAR-odometri), bygger et kort og viser det hele på en
-webside, som du åbner fra PC, mobil eller robottens 7" skærm. Ét program, én fil, ~6 MB RAM.
+**What it does:** reads the LiDAR (the USB adapter), computes safety zones every 2.4 ms, assembles whole
+revolutions, finds the robot's movement (LiDAR odometry), builds a map and shows it all on a
+web page that you open from a PC, phone or the robot's 7" screen. One program, one file, ~6 MB RAM.
 
-## Kør det på din PC (uden hardware)
+## Run it on your PC (without hardware)
 
 ```bash
 cd lidar
-cargo run --release -- --sim --person                 # simuleret lejlighed med en gående person
-cargo run --release -- --replay "../Lidar Test Enviornment/recordings/<fil>.jsonl" --loop --no-body
+cargo run --release -- --sim --person                 # simulated flat with a walking person
+cargo run --release -- --replay "../Lidar Test Enviornment/recordings/<file>.jsonl" --loop --no-body
 ```
-Åbn http://localhost:8080. `--no-body` bruges når LiDAR'en ikke sidder på robotten (de gamle optagelser
-er lavet på et skrivebord), ellers ignoreres alt inden for robottens omrids (800 × 650 mm).
+Open http://localhost:8080. `--no-body` is used when the LiDAR is not mounted on the robot (the old recordings
+were made on a desk); otherwise everything inside the robot's outline (800 × 650 mm) is ignored.
 
-## Kør det på Pi'en
+## Run it on the Pi
 
-1. Byg på PC'en (ingen krydsværktøjer nødvendige; giver én statisk fil):
+1. Build on the PC (no cross tools needed; gives one static file):
    ```bash
    rustup target add aarch64-unknown-linux-musl
    cargo build --release --target aarch64-unknown-linux-musl
    scp target/aarch64-unknown-linux-musl/release/{sennep-lidar,bench} sennep@<pi>:~
    ```
-   (Eller byg direkte på Pi'en med `cargo build --release`; det tager et par minutter.)
-2. Find adapterens faste navn: `ls /dev/serial/by-id/` (navnet ændrer sig ikke, som `/dev/ttyUSB0` kan).
-   Brugeren skal være i `dialout`: `sudo usermod -aG dialout sennep` (log ud og ind).
-3. Prøv: `./sennep-lidar --serial /dev/serial/by-id/usb-Silicon_Labs_…`, og åbn `http://<pi>:8080`.
-4. Optag til senere test: tilføj `--record tur1.ldr` (rå bytes + tid; afspilles bit for bit med `--replay tur1.ldr`).
-5. Start automatisk: `deploy/sennep-lidar.service` (vejledning øverst i filen).
-6. **Mål Pi'en:** `./bench --long --recordings "<repo>/Lidar Test Enviornment/recordings" --out BENCHMARK-pi.md`
-   og læg resultatet i `docs/lidar/`.
+   (Or build directly on the Pi with `cargo build --release`; it takes a few minutes.)
+2. Find the adapter's fixed name: `ls /dev/serial/by-id/` (the name does not change, as `/dev/ttyUSB0` can).
+   The user must be in `dialout`: `sudo usermod -aG dialout sennep` (log out and in).
+3. Try: `./sennep-lidar --serial /dev/serial/by-id/usb-Silicon_Labs_…`, and open `http://<pi>:8080`.
+4. Record for later tests: add `--record tur1.ldr` (raw bytes + time; replayed bit for bit with `--replay tur1.ldr`).
+5. Start automatically: `deploy/sennep-lidar.service` (instructions at the top of the file).
+6. **Measure the Pi:** `./bench --long --recordings "<repo>/Lidar Test Enviornment/recordings" --out BENCHMARK-pi.md`
+   and put the result in `docs/lidar/`.
 
-**7" skærm:** åbn siden i Chromium i kiosk-tilstand, fx `chromium-browser --kiosk http://localhost:8080`.
-Hvordan det autostartes afhænger af Pi OS-versionen (Wayland/labwc i nyere versioner), så det er ikke
-sat op endnu. Siden tegner kun når der kommer nye data, så den belaster ikke Pi'en meget.
+**7" screen:** open the page in Chromium in kiosk mode, e.g. `chromium-browser --kiosk http://localhost:8080`.
+How to autostart it depends on the Pi OS version (Wayland/labwc in newer versions), so it is not
+set up yet. The page only draws when new data arrives, so it does not load the Pi much.
 
 ## Test
 
 ```bash
-cargo test --release          # 17 tests: parser, ur, filtre, zoner, optagelser, simulator
+cargo test --release          # 17 tests: parser, clock, filters, zones, recordings, simulator
 cargo run --release --bin bench -- --long
 ```
-Testene kører de gamle optagelser gennem den rigtige parser og simulatoren (kendt sandhed) igennem
-hele kæden. Simulatoren laver **rå LD19-bytes**, inkl. bitfejl på ledningen og en person der går rundt.
+The tests run the old recordings through the real parser, and the simulator (known ground truth) through
+the whole chain. The simulator makes **raw LD19 bytes**, incl. bit errors on the wire and a person walking around.
 
-## Opbygning
+## Structure
 
-| Fil | Hvad |
+| File | What |
 |---|---|
-| `protocol.rs` | LD19-pakker: resync, CRC8, vinkler (testet mod manualens eksempel) |
-| `source.rs` | `ByteSource`: seriel, afspilning (`.ldr` og gamle `.jsonl`), simulator |
-| `clock.rs` | LiDAR'ens ms-ur (wrap 30 s) → Pi'ens ur |
-| `scan.rs` | Hele omdrejninger, splittet præcist ved 360°→0°, robotramme, tid pr. punkt |
-| `filter.rs` | Afstande, robottens egen krop, LDROBOT-lignende støjfilter (kun til odometri/kort) |
-| `zones.rs` | 16 sektorer: frirum fra robottens kant, opdateret pr. pakke, "for gammel"-flag |
-| `odom.rs` | Prædiktion → de-skew → punkt-til-linje ICP mod nærliggende keyframes |
-| `grid.rs` | Log-odds-kort (5 cm), fri plads ryddes af stråler, ændrede fliser sendes |
-| `server.rs`, `web/index.html` | HTTP + WebSocket, én statisk side (ingen build-trin) |
-| `sim.rs`, `eval.rs` | Simuleret lejlighed, ture, sandhed og scoring |
+| `protocol.rs` | LD19 packets: resync, CRC8, angles (tested against the manual's example) |
+| `source.rs` | `ByteSource`: serial, replay (`.ldr` and old `.jsonl`), simulator |
+| `clock.rs` | The LiDAR's ms clock (wrap 30 s) → the Pi's clock |
+| `scan.rs` | Whole revolutions, split exactly at 360°→0°, robot frame, time per point |
+| `filter.rs` | Distances, the robot's own body, LDROBOT-like noise filter (only for odometry/map) |
+| `zones.rs` | 16 sectors: free space from the robot's edge, updated per packet, "too old" flag |
+| `odom.rs` | Prediction → de-skew → point-to-line ICP against nearby keyframes |
+| `grid.rs` | Log-odds map (5 cm), free space cleared by rays, changed tiles are sent |
+| `server.rs`, `web/index.html` | HTTP + WebSocket, one static page (no build step) |
+| `sim.rs`, `eval.rs` | Simulated flat, trips, ground truth and scoring |
 
-Koordinater: x frem, y venstre, vinkler mod uret (ROS-konvention). LiDAR'ens 0° = robottens front
-(`Mount` i `scan.rs`, hvis den monteres anderledes).
+Coordinates: x forward, y left, angles counter-clockwise (ROS convention). The LiDAR's 0° = the robot's front
+(`Mount` in `scan.rs`, if it is mounted differently).
 
-## Til Megaen
+## For the Mega
 
-`ZoneReport::encode()` giver 41 bytes (tid, stale-maske, 16 × frirum i mm) — inden for linkets
-60-byte payload (`docs/electronics/PI_MEGA_LINK.md`). Sektor 0 er lige frem, sektorerne går mod uret.
-**En sektor markeret "stale" skal Megaen behandle som blokeret** (LiDAR'en er gået i stå).
-Selve link-afsendelsen laves, når linket er bygget (`ObstacleSink`-trait'et er klar til det).
+`ZoneReport::encode()` gives 41 bytes (time, stale mask, 16 × free space in mm) — within the link's
+60-byte payload (`docs/electronics/PI_MEGA_LINK.md`). Sector 0 is straight ahead, the sectors go counter-clockwise.
+**The Mega must treat a sector marked "stale" as blocked** (the LiDAR has stalled).
+The actual sending over the link is done when the link is built (the `ObstacleSink` trait is ready for it).
 
-## Kendte begrænsninger (ærligt)
+## Known limitations (honestly)
 
-- **Ikke testet på den rigtige LiDAR eller Pi'en endnu** — kun optagelser, simulator og ARM-emulering.
-- Zonerne viser den seneste passage, dvs. op til **100 ms gamle** (én omdrejning). Ved 0,4 m/s er det 4 cm.
-- **Tynde ting langt væk** (et 4 cm stoleben på 2–4 m) rammes ikke af hver omdrejning; sampleafstanden er
-  0,72°. ToF-sensorerne på Megaen dækker nærområdet.
-- LiDAR'en ser kun i én højde (~285 mm over gulvet). Lave ting (sokler, kabler) ses ikke.
-- Ingen loop closure endnu: keyframe-kortet holder positionen på steder robotten har været, men en
-  meget stor runde (andre rum, lange gange) kan stadig give drift. Gyroen (MPU-6050) er ikke flettet ind endnu.
-- Kortet gemmes ikke mellem genstarter endnu.
+- **Not tested on the real LiDAR or the Pi yet** — only recordings, simulator and ARM emulation.
+- The zones show the latest pass, i.e. up to **100 ms old** (one revolution). At 0.4 m/s that is 4 cm.
+- **Thin things far away** (a 4 cm chair leg at 2–4 m) are not hit by every revolution; the sample spacing is
+  0.72°. The ToF sensors on the Mega cover the near area.
+- The LiDAR only sees at one height (~285 mm above the floor). Low things (plinths, cables) are not seen.
+- No loop closure yet: the keyframe map holds the position in places the robot has been, but a
+  very large loop (other rooms, long corridors) can still give drift. The gyro (MPU-6050) is not fused in yet.
+- The map is not saved between restarts yet.

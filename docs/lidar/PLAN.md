@@ -1,266 +1,266 @@
-# LiDAR-stack v2 — plan
+# LiDAR stack v2 — plan
 
-Status (2026-10-12): **godkendt og v1 bygget** i Rust (`lidar/`, se `lidar/README.md`). Alle fire
-skridt fra runde 2 er lavet og testet mod optagelser + simulator; resultater i §10 og `BENCHMARK.md`.
-**Ikke** testet på den rigtige LiDAR eller Pi'en endnu.
-Gammel app (`Lidar Test Enviornment/`) bruges kun som inspiration og testdata.
+Status (2026-10-12): **approved and v1 built** in Rust (`lidar/`, see `lidar/README.md`). All four
+steps from round 2 are done and tested against recordings + simulator; results in §10 and `BENCHMARK.md`.
+**Not** tested on the real LiDAR or the Pi yet.
+The old app (`Lidar Test Enviornment/`) is only used as inspiration and test data.
 
 ---
 
-## 1. Status: hvad den gamle app gjorde, og hvorfor den hakkede
+## 1. Status: what the old app did, and why it stuttered
 
-Den gamle Electron + Next.js-app (Gemini, ~3300 linjer JS) kørte: serielparser → sweep-buffer →
+The old Electron + Next.js app (Gemini, ~3300 lines of JS) ran: serial parser → sweep buffer →
 PreFilter → Downsampler → OutlierRemoval → ICP → "SensorFusion" (stub) → WallExtractor/WallTracker →
-OccupancyGrid → MovingObjectDetector → IPC til React-canvas.
+OccupancyGrid → MovingObjectDetector → IPC to a React canvas.
 
-**Måling på optagelserne** (3 filer, 122 sweeps ≈ 12 s, alle statiske, LiDAR'en stod stille på et bord;
-median-afstand ~30 cm, maks ~2 m):
+**Measurements on the recordings** (3 files, 122 sweeps ≈ 12 s, all static, the LiDAR stood still on a table;
+median distance ~30 cm, max ~2 m):
 
-| Måling | Resultat | Betydning |
+| Measurement | Result | Meaning |
 |---|---|---|
-| Støj pr. grad over tid | median **1,5 mm** STD, p90 5 mm | Sensoren er rolig. Hakkeriet kom fra softwaren |
-| Punkter pr. sweep | skifter **492 / 504** | Sweeps er skåret på pakkegrænser → sømmen hopper |
-| Sweep-start | 7,85° → 1,52°, så 2,25° → 5,19° | Hver anden sweep dækker >360° (dobbelte punkter ved sømmen) |
-| Rate | 10,0 Hz, 3600 °/s, ~5040 pkt/s | Som databladet |
-| Fil 3 | p90-STD 409 mm i nogle vinkler | Noget bevægede sig (god test af "bevægelige objekter") |
+| Noise per degree over time | median **1.5 mm** STD, p90 5 mm | The sensor is calm. The stutter came from the software |
+| Points per sweep | alternates **492 / 504** | Sweeps are cut at packet boundaries → the seam jumps |
+| Sweep start | 7.85° → 1.52°, then 2.25° → 5.19° | Every other sweep covers >360° (duplicate points at the seam) |
+| Rate | 10.0 Hz, 3600 °/s, ~5040 pts/s | As the datasheet |
+| File 3 | p90 STD 409 mm at some angles | Something moved (good test of "moving objects") |
 
-**Rodårsager til jitter og bugs (fundet i koden):**
+**Root causes of jitter and bugs (found in the code):**
 
-1. **Ingen ordentlig scan-samling.** Ny sweep startes, når en *pakkes* startvinkel falder >50°, så
-   sweeps overlapper/mangler et par grader skiftevis. LDROBOTs eget SDK splitter på *punkt*-niveau ved 360→0.
-2. **Tidsstempler ignoreres.** Pakkens ms-timestamp (wrap ved 30000) bruges ikke; ingen modtagetid.
-   Uden tid kan man ikke de-skew'e (rette for robottens bevægelse under de 100 ms en omgang tager)
-   eller fusionere med IMU.
-3. **Kortet ignorerer positionen.** `OccupancyGrid.update()` får en pose, men bruger den ikke
-   (kommentar: "Pipeline will pre-transform" — det gør den aldrig). Så snart robotten flytter sig, bliver kortet forkert.
-4. **ICP er frame-til-frame, punkt-til-punkt, uden startgæt** (og slået fra som standard). Fejl summeres
-   op (drift), og der er ikke noget kort at matche mod.
-5. **Vægge udledes fra en polær profil i sensorens egen ramme** med EMA-udglatning → virker kun når
-   robotten står stille, og EMA giver forsinkelse/"svømmen". Derefter *endnu* et lag EMA i WallTracker.
-6. **Behandler kun hver 2. sweep** (`updateRate: 2`) og sender hele kortet som JS-objekter over IPC
-   hver gang → tungt og hakkende i UI.
-7. **Spejlvending sandsynlig:** LD19-vinkler stiger *med uret* (venstrehåndet system, manual §4), men
-   koden bruger `cos/sin(angle − 90°)` som om de steg mod uret.
-8. Mange tuning-lag (AutoTuner, CalibrationRunner) der justerer parametre mens den kører → ikke deterministisk.
-9. Electron + Next.js dev-server: ~300–500 MB RAM bare for UI'en. For tungt til Pi'en.
+1. **No proper scan assembly.** A new sweep is started when a *packet's* start angle drops >50°, so
+   sweeps alternately overlap/miss a few degrees. LDROBOT's own SDK splits at *point* level at 360→0.
+2. **Timestamps are ignored.** The packet's ms timestamp (wraps at 30000) is not used; no receive time.
+   Without time you cannot de-skew (correct for the robot's movement during the 100 ms one revolution takes)
+   or fuse with the IMU.
+3. **The map ignores the position.** `OccupancyGrid.update()` gets a pose, but does not use it
+   (comment: "Pipeline will pre-transform" — it never does). As soon as the robot moves, the map becomes wrong.
+4. **ICP is frame-to-frame, point-to-point, without an initial guess** (and off by default). Errors add
+   up (drift), and there is no map to match against.
+5. **Walls are derived from a polar profile in the sensor's own frame** with EMA smoothing → only works when
+   the robot stands still, and EMA gives lag/"swimming". Then *yet another* layer of EMA in WallTracker.
+6. **Only processes every 2nd sweep** (`updateRate: 2`) and sends the whole map as JS objects over IPC
+   every time → heavy and stuttering in the UI.
+7. **Mirroring likely:** LD19 angles increase *clockwise* (left-handed system, manual §4), but
+   the code uses `cos/sin(angle − 90°)` as if they increased counter-clockwise.
+8. Many tuning layers (AutoTuner, CalibrationRunner) that adjust parameters while running → not deterministic.
+9. Electron + Next.js dev server: ~300–500 MB RAM just for the UI. Too heavy for the Pi.
 
-**Lektioner til v2:** samle scans korrekt, stemple alt med tid, ét fælles koordinatsystem (robotramme →
-verdensramme via pose), match mod et kort (ikke kun forrige scan), ingen magiske EMA-lag, deterministisk
-og testbar, UI'en adskilt fra behandlingen.
+**Lessons for v2:** assemble scans correctly, timestamp everything, one shared coordinate system (robot frame →
+world frame via pose), match against a map (not only the previous scan), no magic EMA layers, deterministic
+and testable, the UI separate from the processing.
 
-## 2. Fakta om sensoren (datablad + manual i `components/datasheets/`)
+## 2. Facts about the sensor (datasheet + manual in `components/datasheets/`)
 
-- UART 230400 8N1, kun TX (envejs). 3,3 V logik. ~420 pakker/s × 47 B ≈ **20 kB/s** (trivielt).
-- Pakke: `0x54 0x2C`, speed (°/s), startvinkel (0,01°), 12 × (afstand mm u16, intensitet u8),
-  slutvinkel, timestamp (ms, wrap 30000), CRC8 (poly 0x4D, tabel i manualen).
-- Vinkel pr. punkt = lineær interpolation start→slut, med wrap (`(end + 36000 − start) % 36000`).
-- 10 Hz (6–13 Hz via PWM), 5000 målinger/s (STL-19P) → ~500 punkter/omgang, 0,72° opløsning.
-- Rækkevidde 0,03–12 m (hvid), 8 m (sort). Nøjagtighed: STD 2 mm < 0,5 m, 4 mm < 2 m, 15 mm > 2 m.
-- Pitch-fejl op til 2° → ved 3 m rammer strålen ±10 cm i højden (relevant for lave forhindringer).
-- Venstrehåndet: 0° = sensorens front, vinkel stiger med uret. Vi konverterer til ROS-konvention
-  (x frem, y venstre, vinkel mod uret) én gang i parseren.
-- LDROBOTs SDK har et "near filter" til LD19 (zero'er små grupper < 5 m med lav intensitet) — god idé at efterligne.
+- UART 230400 8N1, TX only (one-way). 3.3 V logic. ~420 packets/s × 47 B ≈ **20 kB/s** (trivial).
+- Packet: `0x54 0x2C`, speed (°/s), start angle (0.01°), 12 × (distance mm u16, intensity u8),
+  end angle, timestamp (ms, wraps 30000), CRC8 (poly 0x4D, table in the manual).
+- Angle per point = linear interpolation start→end, with wrap (`(end + 36000 − start) % 36000`).
+- 10 Hz (6–13 Hz via PWM), 5000 measurements/s (STL-19P) → ~500 points/revolution, 0.72° resolution.
+- Range 0.03–12 m (white), 8 m (black). Accuracy: STD 2 mm < 0.5 m, 4 mm < 2 m, 15 mm > 2 m.
+- Pitch error up to 2° → at 3 m the beam hits ±10 cm in height (relevant for low obstacles).
+- Left-handed: 0° = the sensor's front, angle increases clockwise. We convert to the ROS convention
+  (x forward, y left, angle counter-clockwise) once in the parser.
+- LDROBOT's SDK has a "near filter" for the LD19 (zeroes small groups < 5 m with low intensity) — a good idea to copy.
 
-## 3. Research — kort
+## 3. Research — short
 
-**Scan matching / odometri.** Robotten har bevidst **ingen hjul-encodere** (mecanum glider alligevel),
-så LiDAR (+ MPU-6050-gyro) er eneste kilde til odometri. Det gør scan matching til kernen.
-- *Punkt-til-punkt ICP* (gammel app): simpel, men konvergerer langsomt og fejler ved store rotationer.
-- *Punkt-til-linje ICP (PL-ICP, Censi 2008)*: konvergerer kvadratisk på indendørs vægge, standarden i CSM.
-- *Korrelativ scan matching (Olson 2009, bruges i Cartographer/Karto)*: brute-force søgning i et
-  sandsynlighedskort på grov+fin opløsning → robust mod dårligt startgæt. God til at "fange" før ICP finpudser.
-- *Scan-til-kort i stedet for scan-til-scan* (Hector SLAM-princippet): matcher mod et lokalt kort → meget mindre drift.
-- *Fuld SLAM med loop closure* (slam_toolbox, Cartographer): nødvendigt for store kort; overkill til v1 af et hjem/værksted.
-- KISS-ICP er bygget til 3D og ikke oplagt til 2D.
+**Scan matching / odometry.** The robot deliberately has **no wheel encoders** (mecanum slips anyway),
+so LiDAR (+ MPU-6050 gyro) is the only source of odometry. That makes scan matching the core.
+- *Point-to-point ICP* (old app): simple, but converges slowly and fails at large rotations.
+- *Point-to-line ICP (PL-ICP, Censi 2008)*: converges quadratically on indoor walls, the standard in CSM.
+- *Correlative scan matching (Olson 2009, used in Cartographer/Karto)*: brute-force search in a
+  probability map at coarse+fine resolution → robust against a bad initial guess. Good for "catching" before ICP refines.
+- *Scan-to-map instead of scan-to-scan* (the Hector SLAM principle): matches against a local map → much less drift.
+- *Full SLAM with loop closure* (slam_toolbox, Cartographer): needed for large maps; overkill for v1 of a home/workshop.
+- KISS-ICP is built for 3D and not an obvious fit for 2D.
 
-**Kort:** log-odds occupancy grid (int8/float32 NumPy-array, fx 5 cm celler, 20×20 m = 160 k celler = 160 kB).
-Ray-casting vektoriseret i NumPy eller via Bresenham i Numba.
+**Map:** log-odds occupancy grid (int8/float32 NumPy array, e.g. 5 cm cells, 20×20 m = 160 k cells = 160 kB).
+Ray casting vectorised in NumPy or via Bresenham in Numba.
 
-**ROS 2 eller ej:** ROS 2 Jazzy kører på Pi 5 med slam_toolbox (LDROBOT har en officiel ROS 2-driver),
-men en IEEE-sammenligning (2026, Pi 5) og forumindlæg viser at det kan køre, ikke at det er let:
-DDS, colcon, launch-filer, TF-træ, Ubuntu i stedet for Raspberry Pi OS. Projektet har allerede besluttet
-"Python fra bunden — INGEN ROS2" (PROJECT_OVERVIEW §3).
+**ROS 2 or not:** ROS 2 Jazzy runs on the Pi 5 with slam_toolbox (LDROBOT has an official ROS 2 driver),
+but an IEEE comparison (2026, Pi 5) and forum posts show that it can run, not that it is easy:
+DDS, colcon, launch files, TF tree, Ubuntu instead of Raspberry Pi OS. The project has already decided
+"Python from scratch — NO ROS2" (PROJECT_OVERVIEW §3).
 
-**Sprog:** Datamængden er lille (500 punkter × 10 Hz). Python + NumPy er rigeligt, hvis man arbejder
-på hele arrays og undgår Python-løkker pr. punkt. Måling i denne session: KD-træ (SciPy) bygget +
-opslag for 500 punkter ≈ 0,5 ms på en x86-sky-CPU; Pi 5 (Cortex-A76, ~1,5–2× Pi 4) forventes ~1–1,5 ms.
-Rust/C++ giver 10–50× på løkker, men koster byggetid og læringskurve. Begge kan kombineres: Python
-overalt, og kun en hot loop flyttes ud, hvis målinger viser behov.
+**Language:** The amount of data is small (500 points × 10 Hz). Python + NumPy is plenty if you work
+on whole arrays and avoid Python loops per point. Measurement in this session: KD tree (SciPy) built +
+lookup for 500 points ≈ 0.5 ms on an x86 cloud CPU; Pi 5 (Cortex-A76, ~1.5–2× Pi 4) expected ~1–1.5 ms.
+Rust/C++ gives 10–50× on loops, but costs build time and learning curve. Both can be combined: Python
+everywhere, and only a hot loop is moved out if measurements show the need.
 
-**Visualisering:**
-- *Egen web-UI serveret fra Pi'en* (én HTML-fil + Canvas/WebGL, WebSocket med binære frames):
-  ~0 % CPU på Pi'en udover at sende ~10 kB/frame; virker fra PC, mobil og den 7" skærm (Chromium kiosk).
-- *Foxglove* (`foxglove-sdk` 0.29, har aarch64-wheels, Python ≥ 3.10): fremragende dev-værktøj med
-  plot, 3D, optagelse til MCAP, uden ROS. Kræver Foxglove-appen på PC'en.
-- *Rerun*: lækkert til udvikling, men tungere viewer og mindre egnet til at køre på robottens skærm.
+**Visualisation:**
+- *Own web UI served from the Pi* (one HTML file + Canvas/WebGL, WebSocket with binary frames):
+  ~0 % CPU on the Pi apart from sending ~10 kB/frame; works from PC, phone and the 7" screen (Chromium kiosk).
+- *Foxglove* (`foxglove-sdk` 0.29, has aarch64 wheels, Python ≥ 3.10): excellent dev tool with
+  plots, 3D, recording to MCAP, without ROS. Needs the Foxglove app on the PC.
+- *Rerun*: lovely for development, but a heavier viewer and less suited to running on the robot's screen.
 
-**Budget på Pi 5** (4× A76 @ 2,4 GHz; RAM ukendt, 4 eller 8 GB). LiDAR-stacken skal dele maskinen
-med kamera/AI, motorkontrol-link og UI, så mål:
+**Budget on the Pi 5** (4× A76 @ 2.4 GHz; RAM unknown, 4 or 8 GB). The LiDAR stack must share the machine
+with camera/AI, the motor control link and the UI, so targets:
 
-| Mål | Krav |
+| Target | Requirement |
 |---|---|
-| Behandling pr. omgang (median / p99) | ≤ 10 ms / ≤ 25 ms (dvs. ≤ 10–25 % af én kerne) |
-| Latens: sidste punkt i omgang → resultat sendt | ≤ 30 ms p99 |
-| Hindringsdetektion pr. pakke (ikke pr. omgang) | ≤ 2 ms |
+| Processing per revolution (median / p99) | ≤ 10 ms / ≤ 25 ms (i.e. ≤ 10–25 % of one core) |
+| Latency: last point in revolution → result sent | ≤ 30 ms p99 |
+| Obstacle detection per packet (not per revolution) | ≤ 2 ms |
 | RAM (RSS) | ≤ 150 MB |
-| Stabilitet, statisk robot | pose-jitter ≤ 5 mm / 0,2°; vægge flytter sig ≤ 1 cm frame til frame |
+| Stability, static robot | pose jitter ≤ 5 mm / 0.2°; walls move ≤ 1 cm frame to frame |
 
-## 4. Arkitekturforslag
+## 4. Architecture proposal
 
-Fælles for alle: sensoren sidder bag et `ScanSource`-interface med tre implementationer —
-`SerialSource` (rigtig LiDAR), `ReplaySource` (optagelser, inkl. de gamle JSONL) og `SimSource`
-(syntetisk rum + kendt kørselsbane, genererer *rå LD19-bytes*, så parseren også testes). Ny optager
-gemmer **rå bytes + modtagetid** i et kompakt binært format, så fremtidige optagelser kan afspilles bit for bit.
+Common to all: the sensor sits behind a `ScanSource` interface with three implementations —
+`SerialSource` (real LiDAR), `ReplaySource` (recordings, incl. the old JSONL) and `SimSource`
+(synthetic room + known driving path, generates *raw LD19 bytes*, so the parser is tested too). A new recorder
+stores **raw bytes + receive time** in a compact binary format, so future recordings can be replayed bit for bit.
 
 ```
- ScanSource ──bytes──▶ Parser (CRC, vinkler, tid) ──pakker──▶ ┬─▶ Sikkerhedszoner (pr. pakke, hurtigt)
- (Serial/Replay/Sim)                                          └─▶ Scan-samler (360°, punkt-niveau, deskew)
-                                                                        │ Scan (NumPy, robotramme)
-                                                                        ▼
-                                                       Filter (near-filter, intensitet, egen krop)
-                                                                        ▼
-                                                 Odometri: korrelativ → PL-ICP mod lokalt kort (+ gyro)
-                                                                        ▼
-                                                   Occupancy grid ─▶ (senere) loop closure / lokalisering
-                                                                        ▼
-                                              Publisher ──WebSocket (binær)──▶ Web-UI / Foxglove / optager
+ ScanSource ──bytes──▶ Parser (CRC, angles, time) ──packets──▶ ┬─▶ Safety zones (per packet, fast)
+ (Serial/Replay/Sim)                                           └─▶ Scan assembler (360°, point level, deskew)
+                                                                         │ Scan (NumPy, robot frame)
+                                                                         ▼
+                                                        Filter (near filter, intensity, own body)
+                                                                         ▼
+                                                  Odometry: correlative → PL-ICP against local map (+ gyro)
+                                                                         ▼
+                                                    Occupancy grid ─▶ (later) loop closure / localisation
+                                                                         ▼
+                                               Publisher ──WebSocket (binary)──▶ Web UI / Foxglove / recorder
 ```
 
-### Mulighed A — Python + NumPy, én proces, egen web-UI (**anbefalet**)
-- `asyncio`-proces: læser seriel i en tråd, behandling i hovedløkken, `aiohttp`/`websockets` til UI.
-- Afhængigheder: `numpy`, `scipy` (KD-træ), `pyserial`, `websockets`. Valgfrit `numba` til ray-casting.
-- UI: én statisk HTML/JS-fil (ingen build-step), Canvas 2D: punkter, kort, pose, bane, zoner, diagnostik.
-- Foxglove-bro som valgfrit modul til udvikling (samme data, andre kanaler).
-- **+** Matcher projektbeslutningen (Python, ingen ROS), let at læse/ændre for Mikkel, samme kode på PC og Pi,
-  tests i `pytest`. **−** Python-løkker er langsomme → kræver disciplin (vektorisering). GIL: én kerne.
+### Option A — Python + NumPy, one process, own web UI (**recommended**)
+- `asyncio` process: reads serial in a thread, processing in the main loop, `aiohttp`/`websockets` for the UI.
+- Dependencies: `numpy`, `scipy` (KD tree), `pyserial`, `websockets`. Optional `numba` for ray casting.
+- UI: one static HTML/JS file (no build step), Canvas 2D: points, map, pose, path, zones, diagnostics.
+- Foxglove bridge as an optional module for development (same data, other channels).
+- **+** Matches the project decision (Python, no ROS), easy for Mikkel to read/change, same code on PC and Pi,
+  tests in `pytest`. **−** Python loops are slow → needs discipline (vectorisation). GIL: one core.
 
-### Mulighed B — Rust-kerne + web-UI
-- Én statisk binær (`serialport`, `nalgebra`, `tokio-tungstenite`), krydskompileret til aarch64.
-- **+** Hurtigst og mindst (≈ 5–10 MB RAM, < 2 % CPU), ingen GIL, robust.
-  **−** Ny sprogverden, længere iterationer, sværere at eksperimentere med algoritmer; resten af robotten er Python.
+### Option B — Rust core + web UI
+- One static binary (`serialport`, `nalgebra`, `tokio-tungstenite`), cross-compiled to aarch64.
+- **+** Fastest and smallest (≈ 5–10 MB RAM, < 2 % CPU), no GIL, robust.
+  **−** New language world, longer iterations, harder to experiment with algorithms; the rest of the robot is Python.
 
-### Mulighed C — ROS 2 Jazzy + ldlidar_stl_ros2 + slam_toolbox + Foxglove
-- **+** Gennemprøvet SLAM med loop closure "gratis", RViz/Foxglove, Nav2 senere.
-  **−** Strider mod den eksisterende beslutning, tungt (Ubuntu, DDS, ~1 GB+ RAM i alt), meget "magi",
-  sværere at forstå hvorfor ting går galt — og læringen ("bygget fra bunden") forsvinder.
+### Option C — ROS 2 Jazzy + ldlidar_stl_ros2 + slam_toolbox + Foxglove
+- **+** Proven SLAM with loop closure "for free", RViz/Foxglove, Nav2 later.
+  **−** Goes against the existing decision, heavy (Ubuntu, DDS, ~1 GB+ RAM in total), a lot of "magic",
+  harder to understand why things go wrong — and the learning ("built from scratch") disappears.
 
-### Anbefaling
-**A**, med klare interfaces så en hot loop kan flyttes til Numba/Rust, *hvis* benchmarks på Pi'en
-viser behov. Det er det hurtigste sted at nå "stabilt og målbart", og det passer til resten af robotten.
+### Recommendation
+**A**, with clear interfaces so a hot loop can be moved to Numba/Rust *if* benchmarks on the Pi
+show the need. It is the fastest way to reach "stable and measurable", and it fits the rest of the robot.
 
-## 5. Byggerækkefølge (milepæle, hver med tests)
+## 5. Build order (milestones, each with tests)
 
-| # | Milepæl | "Færdig" betyder |
+| # | Milestone | "Done" means |
 |---|---|---|
-| M0 | Repo-skelet, `ScanSource`, parser, CRC, binært optagelsesformat, JSONL-import, simulator | Parser-tests mod manualens eksempelpakke; sim → parser → samme punkter |
-| M1 | Scan-samler + filtre + ramme-konvertering | Altid ét scan pr. omgang, ingen overlap/huller ved sømmen; statisk jitter målt |
-| M2 | Web-UI (live punkter + diagnostik) | Kører på PC mod replay; < 5 % CPU for server-delen |
-| M3 | Sikkerhedszoner / hindringer | Latens pr. pakke målt; korrekte zoner i sim |
-| M4 | Odometri (scan-til-lokalt-kort, korrelativ + PL-ICP) | Sim: drift < 2 % af kørt distance, < 1°/omgang rundt; statisk: jitter < 5 mm |
-| M5 | Occupancy grid + kort i UI | Kort i sim matcher ground truth (IoU), stabilt i statisk replay |
-| M6 | Bevægelige objekter, gem/indlæs kort, lokalisering, loop closure | Efter Mikkels prioritering |
+| M0 | Repo skeleton, `ScanSource`, parser, CRC, binary recording format, JSONL import, simulator | Parser tests against the manual's example packet; sim → parser → same points |
+| M1 | Scan assembler + filters + frame conversion | Always one scan per revolution, no overlap/gaps at the seam; static jitter measured |
+| M2 | Web UI (live points + diagnostics) | Runs on PC against replay; < 5 % CPU for the server part |
+| M3 | Safety zones / obstacles | Latency per packet measured; correct zones in sim |
+| M4 | Odometry (scan-to-local-map, correlative + PL-ICP) | Sim: drift < 2 % of distance driven, < 1°/revolution around; static: jitter < 5 mm |
+| M5 | Occupancy grid + map in the UI | Map in sim matches ground truth (IoU), stable in static replay |
+| M6 | Moving objects, save/load map, localisation, loop closure | According to Mikkel's priorities |
 
-Benchmark-script (`bench`) kører alle optagelser + sim og rapporterer median/p99-latens, CPU-tid og RSS
-— så "hurtigt og stabilt" er målt, ikke påstået. Kan køres på Pi'en uændret.
+A benchmark script (`bench`) runs all recordings + sim and reports median/p99 latency, CPU time and RSS
+— so "fast and stable" is measured, not claimed. Can be run on the Pi unchanged.
 
-## 6. Hvad er Foxglove, og hvor passer det ind?
+## 6. What is Foxglove, and where does it fit in?
 
-Foxglove er et gratis desktop-/browserprogram til at *kigge på robotdata*: man forbinder til en
-WebSocket på robotten og får paneler med 2D/3D-visning af punktskyer og kort, grafer over tid
-(fx latens, gyro), tabeller med rå beskeder og afspilning af optagelser (MCAP-filer) med tidslinje.
-Det er lavet til ROS, men virker uden ROS: programmet på Pi'en sender bare data i Foxgloves format.
+Foxglove is a free desktop/browser program for *looking at robot data*: you connect to a
+WebSocket on the robot and get panels with 2D/3D views of point clouds and maps, graphs over time
+(e.g. latency, gyro), tables with raw messages and playback of recordings (MCAP files) with a timeline.
+It is made for ROS, but works without ROS: the program on the Pi just sends data in Foxglove's format.
 
-Her ville det være et **udviklerværktøj på PC'en**, ikke robottens UI: når scan matching opfører sig
-mærkeligt, kan man spole frem og tilbage og plotte fejl over tid uden at vi selv skal bygge de værktøjer.
-Robottens egen visning (browser + 7" skærm) bygger vi selv, let og specialiseret. Foxglove-broen er
-valgfri og kan komme senere (M2+); der findes en Rust-version af `foxglove-sdk`.
+Here it would be a **developer tool on the PC**, not the robot's UI: when scan matching behaves
+strangely, you can scrub back and forth and plot errors over time without us building those tools ourselves.
+We build the robot's own display (browser + 7" screen) ourselves, light and specialised. The Foxglove bridge is
+optional and can come later (M2+); there is a Rust version of `foxglove-sdk`.
 
-## 7. Beslutninger
+## 7. Decisions
 
-### Runde 1 (2026-10-12)
-- **Sprog:** helst **ikke Python**. Hastighed/CPU er vigtigst, fordi Pi'en også skal køre kamera/AI og andet.
-  C eller Rust foretrækkes; valget er overladt til Claude. (Mega-link-sessionen udskød Pi-sproget til
-  LiDAR-beslutningen og lavede en sprogneutral C99-protokolkerne.)
-  → Mulighed A (Python) er **fravalgt**. Ny anbefaling: **Mulighed B, Rust** (begrundelse i §8).
-- **Første funktion:** forhindringer/sikkerhedszoner.
-- **UI:** browser via WiFi + robottens 7" skærm (samme webside). Foxglove forklaret i §6.
-- **"Det virker" =** stabilt billede når robotten står stille, kort der holder når den kører,
-  og robotten kan styres ud fra det (data videre til motorstyringen).
-  Bemærk: "kort der holder" kræver odometri + occupancy grid (M4–M5), så de hører med i v1 —
-  bare efter sikkerhedszonerne.
+### Round 1 (2026-10-12)
+- **Language:** preferably **not Python**. Speed/CPU matters most, because the Pi must also run camera/AI and other things.
+  C or Rust preferred; the choice is left to Claude. (The Mega link session postponed the Pi language until
+  the LiDAR decision and made a language-neutral C99 protocol core.)
+  → Option A (Python) is **rejected**. New recommendation: **Option B, Rust** (reasons in §8).
+- **First feature:** obstacles/safety zones.
+- **UI:** browser over WiFi + the robot's 7" screen (same web page). Foxglove explained in §6.
+- **"It works" =** a stable picture when the robot stands still, a map that holds when it drives,
+  and the robot can be controlled from it (data on to the motor control).
+  Note: "a map that holds" needs odometry + occupancy grid (M4–M5), so they belong in v1 —
+  just after the safety zones.
 
-## 8. Rust frem for C — begrundelse
+## 8. Rust over C — reasons
 
 | | Rust | C |
 |---|---|---|
-| Hastighed | Samme som C (LLVM, ingen GC) | Samme |
-| Hukommelsesfejl (buffer overflow, use-after-free, data races) | Fanges af compileren | Fanges først når robotten crasher |
-| Tråde (seriel-læser, behandling, web-server) | Sikkert via typesystemet | Manuelt med mutex; klassisk fejlkilde |
-| Web-server + WebSocket til UI | Færdige biblioteker (`tungstenite`, `tiny_http`) | Skal bindes til fx mongoose/libwebsockets |
-| Tests + benchmarks | Indbygget (`cargo test`, `cargo bench`) | Selvbygget / eksternt framework |
-| Krydskompilering til Pi 5 (aarch64) | `cargo build --target aarch64-unknown-linux-gnu` eller byg direkte på Pi'en | gcc-cross, Makefile |
-| Genbrug af Mega-linkets C99-kerne | Via FFI (`cc`-crate) eller ~100 linjer Rust-port af COBS+CRC-16 | Direkte |
-| Læringskurve | Stejl (ejerskab/borrow checker) | Lav at starte, høj at gøre robust |
+| Speed | Same as C (LLVM, no GC) | Same |
+| Memory errors (buffer overflow, use-after-free, data races) | Caught by the compiler | Caught only when the robot crashes |
+| Threads (serial reader, processing, web server) | Safe via the type system | Manual with mutex; a classic source of bugs |
+| Web server + WebSocket for the UI | Ready-made libraries (`tungstenite`, `tiny_http`) | Must be bound to e.g. mongoose/libwebsockets |
+| Tests + benchmarks | Built in (`cargo test`, `cargo bench`) | Home-made / external framework |
+| Cross-compiling to Pi 5 (aarch64) | `cargo build --target aarch64-unknown-linux-gnu` or build directly on the Pi | gcc-cross, Makefile |
+| Reuse of the Mega link's C99 core | Via FFI (`cc` crate) or a ~100-line Rust port of COBS+CRC-16 | Directly |
+| Learning curve | Steep (ownership/borrow checker) | Low to start, high to make robust |
 
-Konklusion: Rust giver C's fart uden C's crash-klasser, og har det økosystem en web-UI og tests kræver.
-Ulempen er læringskurven. C-kernen fra Mega-linket kan bruges som den er via FFI.
+Conclusion: Rust gives C's speed without C's crash classes, and has the ecosystem a web UI and tests need.
+The downside is the learning curve. The C core from the Mega link can be used as is via FFI.
 
-**Ærlig note om kamera-AI:** Raspberry Pi AI Camera (IMX500) kører det neurale netværk *på selve
-kamerasensoren*; Pi'en modtager kun resultaterne. Ansigtsgenkendelse koster derfor langt mindre CPU
-på Pi'en end man skulle tro — men det ændrer ikke valget, fordi Rust også er det bedste til resten.
+**Honest note about camera AI:** the Raspberry Pi AI Camera (IMX500) runs the neural network *on the
+camera sensor itself*; the Pi only receives the results. Face recognition therefore costs far less CPU
+on the Pi than you would think — but it does not change the choice, because Rust is also the best for the rest.
 
-### Runde 2 (2026-10-12) — plan godkendt
-- **Sprog: Rust** for hele Pi-applikationen (Mega-linkets C99-kerne kan bruges via FFI eller porteres).
-- **Hindringer:** Pi'en sender "nærmeste afstand pr. sektor" til Megaen (~20–50 Hz); Megaen begrænser
-  fart/stopper sammen med ToF (refleks-arkitekturen i `docs/electronics/PI_MEGA_LINK.md`, branch
-  `claude/stoic-cray-tsomgg`). I v1 ligger zonerne bag et interface; selve link-indkodningen laves, når linket er bygget.
-- **Rækkefølge godkendt:** (1) parser + scan-samling + simulator + tests → (2) web-UI med stabilt
-  live-billede → (3) sikkerhedszoner → (4) LiDAR-odometri + kort der holder når robotten kører.
-- **Tilslutning:** USB-adapteren fra kittet (CP2102), fundet via `/dev/serial/by-id/…`; porten er en indstilling.
+### Round 2 (2026-10-12) — plan approved
+- **Language: Rust** for the whole Pi application (the Mega link's C99 core can be used via FFI or ported).
+- **Obstacles:** the Pi sends "nearest distance per sector" to the Mega (~20–50 Hz); the Mega limits
+  speed/stops together with ToF (the reflex architecture in `docs/electronics/PI_MEGA_LINK.md`, branch
+  `claude/stoic-cray-tsomgg`). In v1 the zones sit behind an interface; the link encoding itself is done when the link is built.
+- **Order approved:** (1) parser + scan assembly + simulator + tests → (2) web UI with a stable
+  live picture → (3) safety zones → (4) LiDAR odometry + a map that holds when the robot drives.
+- **Connection:** the USB adapter from the kit (CP2102), found via `/dev/serial/by-id/…`; the port is a setting.
 
-## 9. Endelig arkitektur (v1)
+## 9. Final architecture (v1)
 
-Én Rust-binær `sennep-lidar` (mappe `lidar/`), ingen runtime-afhængigheder:
+One Rust binary `sennep-lidar` (folder `lidar/`), no runtime dependencies:
 
-| Modul | Ansvar |
+| Module | Responsibility |
 |---|---|
-| `protocol` | Streaming-parser for LD19-pakker: resync, CRC8, vinkel-wrap, ingen allokering pr. pakke |
-| `source` | `ByteSource`-trait: `SerialSource`, `ReplaySource` (rå `.ldr` + gamle `.jsonl`, genindkodet til pakker), `SimSource` |
-| `clock` | Afbilder LiDAR'ens ms-ur (wrap 30000) til værtens monotone tid |
-| `scan` | Scan-samler på punkt-niveau (split ved 360→0), robotramme (x frem, y venstre, mod uret), tid pr. punkt |
-| `filter` | Rækkevidde, LDROBOT-lignende near-filter, maske for robottens egen krop |
-| `zones` | Sektorafstande fra robottens kant (rektangel), opdateret **pr. pakke** |
-| `odom` | Scan-til-lokalt-kort: konstant-hastigheds-prædiktion → de-skew → punkt-til-linje ICP (Gauss-Newton, Huber) mod keyframes |
-| `grid` | Log-odds occupancy grid (5 cm), ray-casting, beskidte fliser sendes inkrementelt |
-| `sim` | Syntetisk rum + bane + støj fra databladet → **rå LD19-bytes** (tester hele kæden) |
-| `server` | HTTP (én statisk side) + WebSocket med binære frames; klienter får altid nyeste frame (ingen kø) |
-| `bench` | Afspiller optagelser + sim, måler latens, CPU, RSS, jitter, drift, kort-IoU → `docs/lidar/BENCHMARK.md` |
+| `protocol` | Streaming parser for LD19 packets: resync, CRC8, angle wrap, no allocation per packet |
+| `source` | `ByteSource` trait: `SerialSource`, `ReplaySource` (raw `.ldr` + old `.jsonl`, re-encoded to packets), `SimSource` |
+| `clock` | Maps the LiDAR's ms clock (wrap 30000) to the host's monotonic time |
+| `scan` | Scan assembler at point level (split at 360→0), robot frame (x forward, y left, counter-clockwise), time per point |
+| `filter` | Range, LDROBOT-like near filter, mask for the robot's own body |
+| `zones` | Sector distances from the robot's edge (rectangle), updated **per packet** |
+| `odom` | Scan-to-local-map: constant-velocity prediction → de-skew → point-to-line ICP (Gauss-Newton, Huber) against keyframes |
+| `grid` | Log-odds occupancy grid (5 cm), ray casting, dirty tiles sent incrementally |
+| `sim` | Synthetic room + path + noise from the datasheet → **raw LD19 bytes** (tests the whole chain) |
+| `server` | HTTP (one static page) + WebSocket with binary frames; clients always get the newest frame (no queue) |
+| `bench` | Replays recordings + sim, measures latency, CPU, RSS, jitter, drift, map IoU → `docs/lidar/BENCHMARK.md` |
 
-## 10. Status efter v1 (2026-10-12)
+## 10. Status after v1 (2026-10-12)
 
-![UI på 7" skærm (simulator)](ui-sim-7inch.png)
+![UI on the 7" screen (simulator)](ui-sim-7inch.png)
 
-Målt i skyen (x86, ~1,5–2,5× hurtigere pr. kerne end Pi 5) — fuld tabel i `BENCHMARK.md`:
+Measured in the cloud (x86, ~1.5–2.5× faster per core than the Pi 5) — full table in `BENCHMARK.md`:
 
-| Mål (§3) | Krav | Målt |
+| Target (§3) | Requirement | Measured |
 |---|---|---|
-| Behandling pr. omgang, median / p99 | ≤ 10 / ≤ 25 ms | 2,9 / 7,2 ms (Pi-estimat ~5–7 / ~15 ms) |
-| Zoner pr. pakke | ≤ 2 ms | < 1 µs median, p99 2 µs |
-| CPU | ≤ 10–25 % af én kerne | 2–3,4 % (inkl. web-server: 5–6 % med sim) |
-| RAM | ≤ 150 MB | ~6 MB for hele programmet |
-| Statisk jitter | ≤ 5 mm / 0,2° | 0,25–0,7 mm / 0,07–0,09° (optagelser), 1,4 mm / 0,04° (sim, 15 mm støj) |
-| Kort der holder | — | 8,7 m tur: 0,02 % drift, 99 % præcision; 173 m (11 min): 2,6 mm / 0,01° tilbage ved start, 92 % præcision |
-| Zoner korrekte | — | 0 optimistiske fejl i 4800 sektorværdier med gående person |
+| Processing per revolution, median / p99 | ≤ 10 / ≤ 25 ms | 2.9 / 7.2 ms (Pi estimate ~5–7 / ~15 ms) |
+| Zones per packet | ≤ 2 ms | < 1 µs median, p99 2 µs |
+| CPU | ≤ 10–25 % of one core | 2–3.4 % (incl. web server: 5–6 % with sim) |
+| RAM | ≤ 150 MB | ~6 MB for the whole program |
+| Static jitter | ≤ 5 mm / 0.2° | 0.25–0.7 mm / 0.07–0.09° (recordings), 1.4 mm / 0.04° (sim, 15 mm noise) |
+| Map that holds | — | 8.7 m trip: 0.02 % drift, 99 % precision; 173 m (11 min): 2.6 mm / 0.01° back at the start, 92 % precision |
+| Zones correct | — | 0 optimistic errors in 4800 sector values with a walking person |
 
-Vigtige fund undervejs: sensoren overlapper af og til to pakker med 0,2° (også ved sømmen) — ufarligt;
-tynde ting langt væk rammes ikke hver omgang (fysik, ikke bug); en zone er op til én omdrejning (100 ms)
-gammel, hvilket ved rotation betyder at en ting kan "skifte sektor" mellem to passager; tykke vægge kræver
-at ICP afviser bagsiden (normaler orienteret mod sensoren); keyframes skal genbruges når robotten kommer
-tilbage, ellers driver kursen ~4° på 11 minutter.
+Important findings along the way: the sensor now and then overlaps two packets by 0.2° (also at the seam) — harmless;
+thin things far away are not hit every revolution (physics, not a bug); a zone is up to one revolution (100 ms)
+old, which during rotation means a thing can "change sector" between two passes; thick walls require
+ICP to reject the back side (normals oriented towards the sensor); keyframes must be reused when the robot comes
+back, otherwise the heading drifts ~4° in 11 minutes.
 
-**Næste skridt (forslag):**
-1. Mikkel: kør `sennep-lidar --serial …` + `bench` på Pi'en med den rigtige LiDAR; optag et par ture med `--record`.
-2. Tjek monteringen: at LiDAR'ens 0° peger fremad (ellers `Mount.yaw`) og at robottens omrids passer.
-3. Send `ZoneReport` over Pi↔Mega-linket, når det er bygget (`ObstacleSink`).
-4. Flet gyroen (MPU-6050 via Megaen) ind i prædiktionen → robust ved hurtige drej.
-5. Gem/indlæs kort + lokalisering i et gemt kort; derefter bevægelige objekter.
+**Next steps (proposal):**
+1. Mikkel: run `sennep-lidar --serial …` + `bench` on the Pi with the real LiDAR; record a few trips with `--record`.
+2. Check the mounting: that the LiDAR's 0° points forward (otherwise `Mount.yaw`) and that the robot's outline fits.
+3. Send `ZoneReport` over the Pi↔Mega link when it is built (`ObstacleSink`).
+4. Fuse the gyro (MPU-6050 via the Mega) into the prediction → robust in fast turns.
+5. Save/load map + localisation in a saved map; then moving objects.

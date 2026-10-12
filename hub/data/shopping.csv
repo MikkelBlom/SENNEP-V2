@@ -1,0 +1,18 @@
+id;item;qty;est_dkk;tier;for;status;link;note
+s01;Inline blade fuse holder 10–12 AWG;1;30;minimum;Battery + M1 main fuse;check first;;Maybe in the car fuse kit. 20 A for the test LiPo, 30 A for the 3S6P
+s02;Inline blade fuse holder 16 AWG (or a small fuse box);5;40;minimum;M1: 15 A per driver + 5 A logic;check first;;
+s03;1N4007 or 1N5819 diode;5;10;minimum;Flyback across the relay coil;to buy;;
+s04;TVS P6KE15A (through-hole);2;15;minimum;Motor bus spike protection (V1 damage);to buy;;
+s05;Electrolytic 1000–2200 µF / 25 V;4;20;minimum;Motor bus;check first;;Only if the kit has nothing ≥ 1000 µF / 25 V
+s06;LiPo alarm (balance-plug buzzer);1;20;minimum;Test LiPo has no BMS;to buy;;
+s07;Wago 221 (or screw terminals);20;50;minimum;Power distribution + star ground;to buy;;
+s08;USB-C pigtail, male;1;15;minimum;Buck → Pi 5;to buy;;
+s09;Fish-paper rings 18650 (self-adhesive);20;30;recommended;Battery + pole insulation;to buy;;
+s10;Spot-welding service;1;;minimum;Battery;to ask;;Price unknown: call Fyns Batteri Service
+s11;Ring terminals M4 for 10 AWG;4;40;recommended;Battery main lead to strip;to buy;;
+s12;6-way blade fuse box with ground bar;1;80;recommended;Replaces the inline holders;to buy;;
+s13;BSS138 level converter;3;30;recommended;Spare + Pi link;to buy;;
+s14;Dedicated 5 V / 5 A+ buck for the Pi 5;1;80;recommended;Only if the XL4015 drops below 5.0 V under load;check first;;
+s15;INA226 + 50 A / 75 mV shunt;1;60;recommended;Measure total battery current (INA219 max ~3.2 A);to buy;;
+s16;Ferrules + crimp tool, ring lugs, heat shrink;1;125;recommended;Reliable screw terminals;to buy;;
+s17;Bench power supply 30 V / 5 A with current limit;1;500;recommended;Safe first power-up;to buy;;

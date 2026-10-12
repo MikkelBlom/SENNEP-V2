@@ -1,0 +1,23 @@
+id;title;area;status;who;priority;depends_on;note
+t01;Measure and inspect all 20 cells (before any welding);Battery;todo;Mikkel;high;;Step-by-step in docs/electronics/BATTERY_PLAN.md §6. Log the numbers in the Battery cells tab
+t02;Assign cells to 3 matched groups;Battery;todo;Claude;high;t01;Group means within ±0.01 V, cells within 0.05 V
+t03;Call Fyns Batteri Service (Knullen 8, Odense S);Battery;todo;Mikkel;high;;Ask: yes/no, price, pure nickel (not nickel-plated steel), will they fit BMS + balance leads? Script in BATTERY_PLAN §3a
+t04;Find blade fuse holders in the car fuse kit (size + rating);Battery;todo;Mikkel;medium;;Main fuse needs 30 A
+t05;Photo of the BMS board, both sides;Battery;todo;Mikkel;medium;;Exact BMS model is unknown
+t06;Measure one motor's winding resistance (Fluke, Ω);Power;todo;Mikkel;high;;Stall current ≈ 12.6 V / R. Needed for fuses and soft-start
+t07;Write the illustrated battery assembly guide;Battery;todo;Claude;medium;t01,t03,t04;After welding: BMS, fuse, first charge under supervision, storage
+t08;Wiring diagrams for milestone M1 (Pi 5 + Mega + 4 motors + LiDAR);Electronics;todo;Claude;high;;Breadboard plan v0.2 approved 2026-10-12
+t09;Step-by-step build + test guide for M1;Electronics;todo;Claude;high;t08;10 test steps are in BREADBOARD_PLAN §7
+t10;Hardware measurements: e-stop contacts, BTS7960 IS resistors, 12 V adapter rating, buck under load, largest electrolytic cap;Electronics;todo;Mikkel;medium;;See BREADBOARD_PLAN
+t11;Decide: Arduino C++ or Rust on the Mega (Q1);Firmware;todo;Mikkel;high;;Read the explanation in docs/electronics/PI_MEGA_LINK.md. Recommendation: Arduino C++
+t12;Rust Pi-side link (sennep-proto / sennep-link / sennep-cli) + Rust output in gen_msgs.py;Firmware;todo;Claude;medium;;Replaces tools/sennep_link.py (Python). PLAN_PI_MEGA_LINK §9 phase A
+t13;Mega firmware: VL53L0X via TCA9548A, HC-SR04, NRF24 RC, EEPROM params, firmware/README.md;Firmware;todo;Claude;medium;t11;
+t14;Send LiDAR zone report (41 B) to the Mega over the link;Firmware;todo;Claude;medium;t12;ObstacleSink trait is ready in lidar/
+t15;Run sennep-lidar on the real LiDAR + Pi 5, record drives;LiDAR;todo;Mikkel;medium;;Commands in lidar/README.md. Check the LiDAR 0° direction and the 800 × 650 outline
+t16;Check Pi 5 RAM (printed next to the RAM chip);Parts;todo;Mikkel;low;;4 or 8 GB
+t17;Physical parts count (qty, source, condition, counted ✓);Parts;doing;Mikkel;high;;Parts and Tools tabs. Add anything missing with "+ Add row"
+t18;Find Pi 5 and LiDAR receipts (price);Parts;todo;Claude;low;;Gmail connector needed re-auth last time
+t19;Check Pi 5 UART name on the Pi: ls -l /dev/serial* /dev/ttyAMA*;Firmware;todo;Mikkel;low;;ttyAMA0 vs ttyAMA10
+t20;Start the PCB session again;PCB;blocked;Claude;low;t09;Needs the breadboard build tested first. Measure max board size, mounting holes and cable exits meanwhile
+t21;Resolve open concerns C1–C18;Docs;todo;Mikkel;medium;;ai-instructions/WORKING_NOTES.md
+t22;Print + test wheel v3.1, assembly ring, housing v2, frame joint test;Mechanics;doing;Mikkel;high;;See ai-instructions/FEATURES.md

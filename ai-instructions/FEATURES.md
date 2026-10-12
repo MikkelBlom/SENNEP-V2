@@ -27,18 +27,18 @@ Status: ✅ done · 🔄 in progress · ⏳ waiting (on a print/test/Mikkel) · 
 | Feature | Status | Description | Date | Depends on | Blocked by |
 |---|---|---|---|---|---|
 | Parts list (`components/`) | ✅ | English inventory with `source` + `condition` columns, datasheets | 2026-10-12 | — | — |
-| Physical parts count | 📋 | Go through every part Mikkel has now, incl. other projects; set qty, source and condition; fill Pi 5 RAM/price + LiDAR price | 2026-10-12 | Parts list | Full consolidation session |
-| 3S6P battery series connections | 📋 | Connect the built groups using materials already owned (own workstream) | 2026-10-12 | — | Mikkel wary of soldering/welding cells |
-| Breadboard circuits | 📋 | Power tree, drivers and sensors on breadboard (own workstream) | 2026-10-12 | Parts count | — |
-| PCB | 📋 | Only after the breadboard works | 2026-10-12 | Breadboard circuits | — |
+| Physical parts count | 🔄 | Tick `counted` per part in the hub (Parts/Tools tabs); set qty, source, condition; add missing parts. Pi 5 RAM/price + LiDAR price still open | 2026-10-12 | Parts list | Mikkel counting |
+| 3S6P battery pack | ⏳ | Plan v2 approved: measure + match cells now, then spot-weld at a workshop in Odense (`docs/electronics/BATTERY_PLAN.md`) | 2026-10-12 | — | Mikkel measuring cells + calling the workshop |
+| Breadboard circuits (M1) | 🔄 | Plan v0.2 approved (`docs/electronics/BREADBOARD_PLAN.md`). M1 = Pi 5 + Mega + 4 motors + LiDAR. Next: wiring diagrams + build guide | 2026-10-12 | — | — |
+| PCB | ⛔ | Carrier/shield board in KiCad. Session stopped: needs a tested breadboard first | 2026-10-12 | Breadboard circuits | Breadboard not built |
 | Motor drivers | 📋 | Replace L298N with the 43 A H-bridges | 2025-12 | Chip confirmed | — |
-| ESP-01 guide | ✅ | Pinout, wiring SVG, passthrough + web-server sketches (compiled, not tested on hardware) | 2026-10-07 | — | — |
+| ESP-01 guide | ✅ | Pinout, wiring SVG, sketches. **ESP-01 dropped from the design** (Pi has WiFi) | 2026-10-12 | — | — |
 
 ## Software
 | Feature | Status | Description | Date | Depends on | Blocked by |
 |---|---|---|---|---|---|
-| LiDAR stack (new) | 📋 | Built from scratch; the old Gemini app is inspiration only (own workstream) | 2026-10-12 | Pi 5 back from parents | — |
-| Pi ↔ Mega link | 📋 | Main Pi–MCU link (Nano also used); protocol to be designed (own workstream) | 2026-10-12 | — | — |
+| LiDAR stack v2 (`lidar/`) | ⏳ | Rust: LD19 parser, safety zones, LiDAR odometry, occupancy grid, web UI, simulator, bench. 17 tests green; not run on real hardware | 2026-10-12 | — | Run on the Pi 5 + real LiDAR |
+| Pi ↔ Mega link | 🔄 | Approved design: GPIO UART 250 k, COBS + CRC-16, spec in `protocol/messages.json`. C core + Mega sketch done (12 071 checks green). Next: Rust Pi side | 2026-10-12 | — | Q1: Arduino C++ or Rust on the Mega |
 | LiDAR test app | ✅ | Electron + Next.js viewer and pipeline. Known: `next build` fails on missing `onCalibrationProgress` preload type | 2026-04-10 | — | — |
 | Motor control firmware | 📋 | Mecanum kinematics, soft-start, collision backup, RF override | — | Drivers, Pi ↔ Mega link | — |
 
@@ -46,4 +46,5 @@ Status: ✅ done · 🔄 in progress · ⏳ waiting (on a print/test/Mikkel) · 
 | Feature | Status | Description | Date | Depends on | Blocked by |
 |---|---|---|---|---|---|
 | AI notes + polished docs | ✅ | This structure (CLAUDE.md, INDEX, FEATURES, WORKING_NOTES, FUTURE_IDEAS, docs/) | 2026-10-12 | — | — |
-| Full consolidation | 📋 | Resolve the remaining contradictions (see WORKING_NOTES) | 2026-10-12 | — | Mikkel |
+| Consolidation of the 6 cloud sessions | ✅ | Branches merged, docs in English, plans reconciled | 2026-10-12 | — | — |
+| Project hub (`hub/`) | ✅ | Local HTML hub over the repo files: tasks, parts, tools, shopping, battery cells, ideas, links, docs/notes | 2026-10-12 | — | — |

@@ -6,14 +6,14 @@ Kept open until Mikkel decides. A full consolidation is planned; do not resolve 
 | # | Concern | Since | Notes |
 |---|---|---|---|
 | C1 | **Wheelbase 550** was set by Claude, never confirmed | 2026-10-05 | Same 125 mm overhang as before |
-| C2 | **Pi ↔ Mega vs Nano split** | 2026-10-12 | Main link is Pi ↔ Mega (Mikkel), Nano also used. Older notes say Pi ↔ Nano UART with Mega as plan B. Who does what is not settled. |
+| C2 | ~~Pi ↔ Mega vs Nano split~~ **Resolved 2026-10-12**: one Mega is the real-time hub; a Nano/Uno only drives the WS2812B strip | 2026-10-12 | See decisions |
 | C3 | **KFL003 is self-aligning** | 2026-10-05 | If the seat rotates under load, the moment goes into the motor shaft (~450 N vs 50 N allowed). Load test planned. |
 | C4 | **No motor lock** | 2026-10-06 | Only the coupling set screw holds the motor axially |
 | C5 | **Wheel fits unconfirmed** | 2026-10-11 | No record of the v3 quick-test result before the full v3.1 wheel |
 | C6 | **H-bridge chip** | 2025-12 | Assumed BTS7960, truncated item name. Read the chip marking. |
 | C7 | **Bot'n Roll MOSFETs** | 2026-10-07 | Assumed IRFZ44N. IRFZ44N is not logic-level (barely opens at 3.3 V; OK from 5 V for the 3 W LEDs, which need current limiting). |
 | C8 | **E-stop rating** | 2025 | The small 40 mm E-stop is probably ~10 A, so it drives the 40 A relay instead of breaking main power |
-| C9 | **Battery series connections** not made | 2025-05 | Mikkel is wary of soldering/welding cells |
+| C9 | **Battery: no cells connected at all** (only clicked into holders; older notes wrongly said the P-groups were built) | 2026-10-12 | Plan approved: spot-welding service. `docs/electronics/BATTERY_PLAN.md` |
 | C10 | **TVS diodes** not on the parts list | 2025 | Part of the V1-spike protection plan |
 | C11 | Housing print guide says "≈160 g **PLA**"; everything else is PETG | 2026-10-12 | `print/housing_v2/LÆS MIG.md` |
 | C12 | Housing material use | 2026-10-12 | Hollow variant uses more filament. Real savings need a smaller outer volume. |
@@ -22,6 +22,11 @@ Kept open until Mikkel decides. A full consolidation is planned; do not resolve 
 | C15 | LiDAR test app build | 2026-10-04 | `next build` fails on missing `onCalibrationProgress` in the preload types |
 | C16 | Naming "pod" vs "housing" | 2026-10-12 | Mikkel says housing; code and Fusion components still say pod |
 | C17 | Unreviewed sources | 2026-10-04 | ChatGPT project (8 chats + 2 docx) not read; the ChatGPT zip with images not received |
+| C19 | **Motor stall current unknown** | 2026-10-12 | Datasheet's "5.5 mA" is an error; similar motors 12–25 A. 4 stalled motors > BMS 40 A → soft-start + current limit are mandatory. Measure winding resistance. |
+| C20 | **E-stop sense needs a second NC contact** | 2026-10-12 | Mega pin 23 reads the e-stop fail-safe; contact type of the 40 mm e-stop unknown. Fallback: A4 bus-voltage divider |
+| C21 | **Arm button vs Pi-only ARM** | 2026-10-12 | Breadboard plan has a physical arm button (pin 29); link safety rules say ARM comes from the Pi. Role undecided |
+| C22 | **Test LiPo (Zippy 1000 mAh, no BMS) fried V1** | 2026-10-12 | Only with a fuse < 10 cm from the XT60, LiPo alarm, never < 10.5 V under load |
+| C23 | Inventory says 2 Mega / 2 Nano / 0 Uno; Mikkel says 1 Mega, several Uno, a few Nano | 2026-10-12 | Settle in the parts count |
 | C18 | Screen mounting holes | 2025 | Wrong in the laser-cut test. Check the Waveshare drawing before the body panels. |
 
 ## Decisions
@@ -29,6 +34,17 @@ Newest first. Reasoning included so they are not re-litigated.
 
 | Date | Decision | Why | Rejected |
 |---|---|---|---|
+| 2026-10-12 | Project hub `hub/`: local HTML over plain CSV/Markdown files in the repo, edits saved through Chrome folder access | Mikkel and Claude edit the same files; no server, works offline | Tiny local server; online claude.ai page |
+| 2026-10-12 | All docs in English, including the electronics and LiDAR plans | One language (docs session choice) | — |
+| 2026-10-12 | Battery: measure and match cells first, then spot-weld at a workshop (Fyns Batteri Service first) | Mikkel is wary of soldering/welding cells; 48 W iron too weak | Printed compression pack (backup), soldering on cells, magnets, loose strip |
+| 2026-10-12 | Breadboard M1 = Pi 5 + Mega + 4 motors + LiDAR; power on Wago/screw terminals, signals on breadboard; e-stop cuts the 40 A relay coil | First test matches what Mikkel is building now | Power through breadboard/Dupont |
+| 2026-10-12 | Mega pin map = `firmware/sennep_mega/config.h` (the breadboard plan follows it) | One map, already compiled and tested | Separate map in the plan |
+| 2026-10-12 | Pi ↔ Mega: GPIO UART (Serial1 ↔ GPIO14/15) via BSS138, 250 kbaud, reset wire on GPIO4; USB only for debug | Lowest latency, frees the USB, flash from the Pi | USB (breadboard proposal), I²C/SPI |
+| 2026-10-12 | Custom binary protocol: COBS + CRC-16, spec in `protocol/messages.json` | Fits the Mega, fully testable | micro-ROS, Firmata, rosserial |
+| 2026-10-12 | Reflex architecture: anything < 5 ms (edge, ToF, e-stop, link loss) is decided on the Mega | Latency is the top priority | Safety on the Pi |
+| 2026-10-12 | ESP-01 dropped | The Pi has WiFi; converter channels needed for the link | — |
+| 2026-10-12 | Rust for all Pi software ("no Python") | Speed; the Pi also runs camera/AI | Python, C |
+| 2026-10-12 | LiDAR on the CP2102 USB adapter; Pi sends "nearest free space per sector" (16 sectors) to the Mega | Pi GPIO UART is used by the Mega | LiDAR on a Pi UART |
 | 2026-10-12 | Docs restructured: root `CLAUDE.md`, English, `PROJECT_OVERVIEW` split into `docs/` and archived | One source of truth; public repo | Keeping the overview as a living reference (two truths drift) |
 | 2026-10-12 | Public repo; private files stay local, order numbers and address scrubbed | Sharing the project | — |
 | 2026-10-12 | Every workstream starts "status → research → plan → ask Mikkel → build" | Avoid building the wrong thing | — |
@@ -53,6 +69,6 @@ Newest first. Reasoning included so they are not re-litigated.
 | 2026-10-04 | Pi 5 (not Pi 4) | The case and the OS install are Pi 5 | — |
 | 2025-12 | TCA9548A mux for the 8 VL53L0X | All share 0x29; the mux saves 8 GPIO | XSHUT address assignment |
 | 2025-12 | E-stop drives a 40 A relay | Small E-stop rating | E-stop breaking main power |
-| 2025-04 | No ROS 2, Python from scratch on the Pi | Learning | ROS 2 (invented by a ChatGPT summary) |
+| 2025-04 | No ROS 2, from scratch on the Pi (language later changed to Rust) | Learning | ROS 2 (invented by a ChatGPT summary) |
 | 2025-04 | No wheel encoders | Deliberate | — |
 | 2025 | 3S6P, not 6S3P | 12 V motors; BMS and charger are 3S | 6S3P (early Gemini chat) |

@@ -1,183 +1,193 @@
-# Batteriplan — 3S6P (18 × Samsung 35E)
+# Battery plan — 3S6P (18 × Samsung 35E)
 
-> Status: **UDKAST v2 (2026-10-12)**. Mikkel går efter **punktsvejsning hos et værksted i Odense** (§3a). Kompressionspakken (metode 2) er reserveløsning. Først når planen er godkendt, skrives den endelige trin-for-trin-guide.
+> Status: **Plan v2 — APPROVED by Mikkel 2026-10-12 (consolidation session). Method: spot-welding at a workshop in Odense.** (§3a). The compression pack (method 2) is the fallback. The final step-by-step guide is written after the cells are welded (see §10).
 
-## 1. Status: hvad vi ved
+> **Order of work: measure and match all cells NOW (§6), before anything is welded or connected → send the numbers to Claude → Claude assigns the 3 groups → only then take the sorted cells to the welder.**
 
-| Del | Hvad vi har | Kilde | Bemærkning |
+## 1. Status: what we know
+
+| Part | What we have | Source | Note |
 |---|---|---|---|
-| Celler | 20 × Samsung INR18650-35E, **nye og aldrig brugt** (købt maj 2025). Der skal bruges 18 → 2 i reserve | inventory + Mikkel | 3,6 V nom., 4,20 V ladespænding, 2,50 V cutoff, **maks. 8 A afladning**, maks. 1,5 A ladning pr. celle |
-| Holdere | 20 × "1×2-holder m. afstandsstykke" (kliks-plastik) | inventory | **Ingen metalkontakter.** De holder kun cellerne på plads |
-| Forbindelser | **Ingen.** Cellerne sidder bare i holderne, og der er hverken strip, lod eller svejs | Mikkel | Alle 36 celleender skal forbindes, ikke kun 2 serieled |
-| Nikkelstrip | Ren nikkel 0,15 × 27 mm "2H-19 mm" (købt maj 2025) | Mikkel | Findes, men stykkerne er **for små til at dække en række** → skal klippes og svejses sammen. Værkstedet bruger nok sin egen strip |
-| BMS | 2 × "3S 40 A BMS m. balance" (Bot'n Roll) | inventory | Præcis model ukendt. Kort af den type: 40 A kontinuert (kræver køling), ofte ~80 A startstrøm, passiv balance ~40–100 mA, kun ved fuld ladning |
-| Lader | 3S Li-ion-lader 12,6 V 2 A | inventory | Passende. 20 Ah / 2 A ≈ 10–11 t fra tom |
-| Kabel | 10 AWG silikone (3 × 2 m), 16 AWG (10 m), 22 AWG (50 m) | inventory | 10 AWG til hovedstrøm, 22 AWG til balanceledninger |
-| Stik | 2 × XT60-par | inventory | XT60 er godt til batteri ↔ robot og lader |
-| Sikringer | Blade-sikringer (180 stk sortiment) + **måske blade-holdere** i samme kasse, 10 × 5×20 mm glassikringsholder | inventory + Mikkel | Holderne skal findes, og deres rating tjekkes (står ofte på holderen/ledningen). 5×20-holdere er typisk max ~10 A → ikke til hovedsikringen |
-| Andet | Nødstop 40 mm + 40 A-relæ, INA219, voltmeter-display | inventory | |
-| Værktøj | **Fluke 83** (fremragende), loddestation 48 W (Puctec ZD-99), afbidertang | Mikkel | Ingen punktsvejser, ingen crimptang |
+| Cells | 20 × Samsung INR18650-35E, **new and never used** (bought May 2025). 18 are needed → 2 spare | inventory `18650-35e` + Mikkel | 3.6 V nom., 4.20 V charge voltage, 2.50 V cutoff, **max. 8 A discharge**, max. 1.5 A charge per cell |
+| Holders | 20 × "1×2 holder with spacer" (click-together plastic) | inventory `18650-holder` | **No metal contacts.** They only hold the cells in place |
+| Connections | **None.** The cells just sit in the holders. There is no strip, solder or weld | Mikkel | All 36 cell ends must be connected, not just 2 series links |
+| Nickel strip | Pure nickel 0.15 × 27 mm "2H-19 mm" (bought May 2025) | inventory `nickel-strip` + Mikkel | Exists, but the pieces are **too small to cover a row** → must be cut and welded together. The workshop will probably use its own strip |
+| BMS | 2 × "3S 40 A BMS with balancing" (Bot'n Roll) | inventory `bms-3s` | Exact model unknown. Boards of this type: 40 A continuous (needs cooling), often ~80 A inrush, passive balancing ~40–100 mA, only at full charge |
+| Charger | 3S Li-ion charger 12.6 V 2 A | inventory `charger-3s` | Suitable. 20 Ah / 2 A ≈ 10–11 h from empty |
+| Cable | 10 AWG silicone (3 × 2 m), 16 AWG (10 m), 22 AWG (50 m) | inventory `cable-10awg`, `cable-16awg`, `cable-22awg` | 10 AWG for main current, 22 AWG for balance leads |
+| Connectors | 2 × XT60 pairs | inventory `xt60` | XT60 is good for battery ↔ robot and charger |
+| Fuses | Blade fuses (180-piece assortment) + **maybe blade holders** in the same box, 10 × 5×20 mm glass fuse holders | inventory `blade-fuses`, `fuse-holder` + Mikkel | The holders must be found and their rating checked (often printed on the holder/lead). 5×20 holders are typically max ~10 A → not for the main fuse |
+| Other | E-stop 40 mm + 40 A relay, INA219, voltmeter display | inventory `estop-40mm`, `relay-40a`, `ina219`, `voltmeter-display` | |
+| Tools | **Fluke 83** (excellent), 48 W soldering station (Puctec ZD-99), side cutters | Mikkel | No spot welder, no crimping tool |
 
-**Ukendt / skal tjekkes:** Hvilken BMS-model er det (foto af printet med pads)? Hvilke blade-holdere er der i kassen (mini/standard, ledningstykkelse)? Lange bolte: **nej** (påvirker kun metode 2). Fiskepapir: ukendt.
+**Unknown / to check:** Which BMS model is it (photo of the board with pads)? Which blade holders are in the box (mini/standard, wire gauge)? Long bolts: **no** (only affects method 2). Fish paper: unknown.
 
-## 2. Elektriske tal
+## 2. Electrical numbers
 
 ```
-3S6P:  3 grupper i serie, 6 celler parallelt i hver
-       10,8 V nominelt · 12,6 V fuld · ~9,0–9,9 V tom · ~20,4 Ah · ~220 Wh · ~0,9 kg celler
-Maks. afladning pr. celle 8 A  →  pakken teoretisk 48 A
-BMS 40 A                       →  6,7 A pr. celle (OK)
-Ladning 2 A                    →  0,33 A pr. celle (meget skånsomt)
+3S6P:  3 groups in series, 6 cells in parallel in each
+       10.8 V nominal · 12.6 V full · ~9.0–9.9 V empty · ~20.4 Ah · ~220 Wh · ~0.9 kg cells
+Max. discharge per cell 8 A  →  pack theoretically 48 A
+BMS 40 A                     →  6.7 A per cell (OK)
+Charging 2 A                 →  0.33 A per cell (very gentle)
 ```
 
-**Motorer (4 × RS 834-7641):** 41,3 W ud ved 60 % virkningsgrad ≈ 69 W ind ≈ **~5,7 A pr. motor ved mærkelast** (en lignende 42 mm 49:1-motor er opgivet til 5,5 A). **Stall-strømmen er ikke opgivet** i RS-databladet. Lignende motorer ligger på ~12–25 A, så det tal er usikkert. Fire motorer, der starter eller blokerer samtidig, kan altså trække 50–100 A i et kort øjeblik. Det er mere end BMS'en kan levere.
-→ **Mål det selv:** mål motorens viklingsmodstand R med Fluke 83 (Ω-område, træk prøveledningernes modstand fra). Så er stall ≈ 12,6 V / R. Det er sikkert og kræver ingen strøm.
-→ **Konsekvens:** soft-start/rampe i motorkoden er obligatorisk. Uden den slår BMS'en fra ved hver hård start, og det er generende men ikke farligt. Normal kørsel (~10–20 A i alt) er fint for både celler og BMS.
+**Motors (4 × RS 834-7641):** 41.3 W out at 60 % efficiency ≈ 69 W in ≈ **~5.7 A per motor at rated load** (a similar 42 mm 49:1 motor is rated at 5.5 A). **The stall current is not given** in the RS datasheet. Similar motors are at ~12–25 A, so that number is uncertain. Four motors starting or stalling at the same time can therefore draw 50–100 A for a short moment. That is more than the BMS can deliver.
+→ **Measure it yourself:** measure the motor's winding resistance R with the Fluke 83 (Ω range, subtract the resistance of the test leads). Then stall ≈ 12.6 V / R. This is safe and needs no power.
+→ **Consequence:** soft-start/ramp in the motor code is mandatory. Without it the BMS cuts out at every hard start. That is annoying but not dangerous. Normal driving (~10–20 A total) is fine for both cells and BMS.
 
-## 3. Metoder til at forbinde cellerne — rangeret efter sikkerhed
+## 3. Methods for connecting the cells — ranked by safety
 
-| # | Metode | Sikkerhed | Har han det? | Vurdering |
+| # | Method | Safety | Does he have it? | Assessment |
 |---|---|---|---|---|
-| **1** | **Punktsvejsning af nikkelstrip** — enten få et værksted til det (elcykelværksted/batteributik, 36 svejsninger ≈ 15 min arbejde) eller købe en punktsvejser | ★★★★★ | Strip: måske. Svejser: nej | Standardmetoden og den mest robuste mod vibrationer. Næsten ingen varme går ind i cellen. **Anbefales som den permanente løsning** |
-| **2** | **Kompressionspakke** — nikkelstrip presses mod celleenderne af printede endeplader, der spændes sammen med bolte/gevindstang. Fjedring fra TPU-puder eller tallerkenfjedre | ★★★☆☆ | Printer, PETG, strip (?), M3-indsatser. Mangler sandsynligvis lange bolte + fiskepapir | Kan laves af det, han har (næsten). Holder kun, hvis trykket holdes: PETG kryber under varme og tryk, og vibrationer kan løsne kontakten → modstand → varme. **OK til at komme i gang, men kun med måling af spændingsfald pr. kontakt og periodisk eftersyn** |
-| 3 | Lodde direkte på cellerne | ★★☆☆☆ | 48 W er **for lidt** | Kræver en kraftig kolbe (≥ 80–100 W, bred spids, flux), så hver lodning tager under 3 s. Med 48 W varmer man for længe, og det skader cellens indre (separator og sikkerhedsventil). **Ikke anbefalet, og ikke med det udstyr, han har** |
-| ✗ | Magneter (neodym) mellem celle og strip | Farligt | — | Høj kontaktmodstand. Neodym mister magnetisme ved ~80 °C. De kan glide → kortslutning. **Afvist** |
-| ✗ | Strip lagt løst i klikholderne / krokodillenæb | Farligt | — | Holderne giver intet tryk. Krokodillenæb kan kun klare få A og kan falde af → kortslutning. **Afvist**, også "bare til en test" |
-| ✗ | Fjeder-batterikasser (1×N plastkasser) | Dårligt | Nej | Fjedrene kan typisk klare 2–3 A og bliver varme. For svage til motorer |
+| **1** | **Spot-welding nickel strip** — either have a workshop do it (e-bike workshop/battery shop, 36 welds ≈ 15 min of work) or buy a spot welder | ★★★★★ | Strip: maybe. Welder: no | The standard method and the most robust against vibration. Almost no heat goes into the cell. **Recommended as the permanent solution** |
+| **2** | **Compression pack** — nickel strip pressed against the cell ends by printed end plates, clamped together with bolts/threaded rod. Springing from TPU pads or disc springs | ★★★☆☆ | Printer, PETG, strip (?), M3 inserts. Probably missing long bolts + fish paper | Can be made from what he has (almost). Only holds if the pressure is kept: PETG creeps under heat and pressure, and vibration can loosen the contact → resistance → heat. **OK to get started, but only with voltage-drop measurement per contact and periodic inspection** |
+| 3 | Soldering directly onto the cells | ★★☆☆☆ | 48 W is **too little** | Needs a powerful iron (≥ 80–100 W, wide tip, flux), so each joint takes under 3 s. With 48 W you heat for too long, and that damages the inside of the cell (separator and safety vent). **Not recommended, and not with the equipment he has** |
+| ✗ | Magnets (neodymium) between cell and strip | Dangerous | — | High contact resistance. Neodymium loses magnetism at ~80 °C. They can slide → short circuit. **Rejected** |
+| ✗ | Strip laid loosely in the click holders / alligator clips | Dangerous | — | The holders give no pressure. Alligator clips can only handle a few A and can fall off → short circuit. **Rejected**, also "just for a test" |
+| ✗ | Spring battery boxes (1×N plastic boxes) | Poor | No | The springs can typically handle 2–3 A and get hot. Too weak for motors |
 
-**Ærlig vurdering:** Den hurtigste og sikreste vej er metode 1 via et værksted. Det koster sandsynligvis mindre end en svejser, og du slipper for selv at røre cellerne med varme. Metode 2 er "lav det nu med det, du har". Den kan fungere, men den kræver omhu og målinger. Den hører hjemme på en robot, der står meget og kører roligt, ikke på én, der kører hårdt over dørtrin.
+**Honest assessment:** The fastest and safest route is method 1 via a workshop. It probably costs less than a welder, and you never have to put heat on the cells yourself. Method 2 is "do it now with what you have". It can work, but it needs care and measurements. It belongs on a robot that mostly stands still and drives gently, not on one that drives hard over door sills.
 
-### 3a. Svejseservice i Odense (Mikkels valg)
+### 3a. Welding service in Odense (Mikkel's choice)
 
-Fundet ved websøgning 2026-10-12. **Jeg kunne ikke åbne siderne selv** (netværksblokering), så adresse og ydelser er fra søgeresultater og skal bekræftes:
+Found by web search 2026-10-12. **I could not open the pages myself** (network block), so address and services come from search results and must be confirmed:
 
-| Sted | Hvad vi ved | Chance |
+| Place | What we know | Chance |
 |---|---|---|
-| **Fyns Batteri Service ApS**, Knullen 8, Odense S | Renoverer elcykelbatterier (= de punktsvejser 18650-pakker). Priser "fra 1.750 kr" gælder hel renovering inkl. celler, ikke svejsning af egne celler | Bedst. Ring og spørg |
-| Elcykelværksteder i Odense (fx via Handyhand) | Mange sender batterier videre i stedet for at svejse selv | Lav–middel |
-| Himex (elcykel-webshop, har batteriservice) | Placering ikke bekræftet | Ukendt |
-| SDU MakerSpace (Videnbyen) | Lodning, 3D-print, laser. Punktsvejser ikke nævnt. Kun for SDU-studerende | Kun hvis du er SDU-studerende |
-| Odense Bibliotek Makerspace | Maskinlisten kunne ikke hentes | Spørg |
+| **Fyns Batteri Service ApS**, Knullen 8, Odense S | Refurbishes e-bike batteries (= they spot-weld 18650 packs). Prices "from 1,750 DKK" are for a full refurbishment incl. cells, not welding of your own cells | Best. Call and ask |
+| E-bike workshops in Odense (e.g. via Handyhand) | Many send batteries on instead of welding themselves | Low–medium |
+| Himex (e-bike webshop, has battery service) | Location not confirmed | Unknown |
+| SDU MakerSpace (Videnbyen) | Soldering, 3D printing, laser. Spot welder not mentioned. SDU students only | Only if you are an SDU student |
+| Odense Library Makerspace | The machine list could not be fetched | Ask |
 
-**Hvad du siger, når du ringer (forslag):**
+**What to say when you call (suggestion, in Danish):**
 > "Jeg har 18 nye Samsung 35E-celler (18650), som jeg vil have punktsvejset til en 3S6P-pakke (12 V) til en robot. Cellerne er målt og sorteret, og de sidder i klik-holdere i den rigtige retning. Kan I punktsvejse nikkelstrip på (jeres strip eller min 0,15 mm rene nikkel), og evt. sætte balanceledninger på? Hvad koster det, og hvor lang tid tager det?"
 
-Spørg også: **ren nikkel eller forniklet stål?** (Kun ren nikkel. Forniklet stål har ~5× højere modstand og bliver varmt.) Tag ringe på + (fiskepapir) med, hvis de har det. **Tag gerne BMS'en med**, hvis de også vil montere den.
+(English: "I have 18 new Samsung 35E cells (18650) that I want spot-welded into a 3S6P pack (12 V) for a robot. The cells are measured and sorted, and they sit in click holders in the right orientation. Can you spot-weld nickel strip on (your strip or my 0.15 mm pure nickel), and maybe add balance leads? What does it cost, and how long does it take?")
 
-Det er ikke sikkert, at de vil svejse kundens egne celler (ansvar). Siger alle nej → køb en punktsvejser (metode 1b) eller lav kompressionspakken (metode 2).
+Also ask: **pure nickel or nickel-plated steel?** (Only pure nickel. Nickel-plated steel has ~5× higher resistance and gets hot.) Bring rings for + (fish paper) if they have them. **Feel free to bring the BMS** if they will fit it too.
 
-**Forberedelse før værkstedet** (så de kun skal svejse):
-1. Mål og sortér cellerne (§6) → 3 grupper á 6 med ens gennemsnit.
-2. Klik pakken sammen præcis efter layoutet i §4 (G1 + op, G2 − op, G3 + op). **Tjek retningen af hver eneste celle to gange** — én vendt celle i en parallelgruppe = kortslutning i det øjeblik, strippen svejses på.
-3. Skriv "+ PAKKE" / "− PAKKE" og "G1/G2/G3" med tusch på holderne.
-4. Transportér pakken i en kasse uden metal; tape over enderne (malertape) så intet kan kortslutte dem.
+They may not want to weld a customer's own cells (liability). If everyone says no → buy a spot welder (method 1b) or build the compression pack (method 2).
 
-### Lodning væk fra cellerne er OK
-Når nikkelstrippen først sidder på (svejset eller presset), må der gerne loddes **på stripens flapper, der stikker ud over pakkens kant (≥ 10 mm fra nærmeste celle)**: balanceledninger (22 AWG) og hovedledninger. Varmen går ind i strippen, ikke ind i cellen. Lodning på BMS-printet er også helt fint med 48 W. 10 AWG kan være tungt for 48 W. Brug den bredeste spids, fortin ledningen først, eller brug en M4-bolt + ringterminal.
+**Preparation before the workshop** (so they only have to weld):
+1. Measure and sort the cells (§6) → 3 groups of 6 with equal averages. **This comes first. Nothing is welded or connected before the cells are measured and grouped.**
+2. Click the pack together exactly according to the layout in §4 (G1 + up, G2 − up, G3 + up). **Check the orientation of every single cell twice** — one reversed cell in a parallel group = short circuit the moment the strip is welded on.
+3. Write "+ PACK" / "− PACK" and "G1/G2/G3" with a marker on the holders.
+4. Transport the pack in a box with no metal; tape over the ends (masking tape) so nothing can short them.
 
-## 4. Pakke-layout (fra Fusion-modellen "31 Battery Module")
+### Soldering away from the cells is OK
+Once the nickel strip is on (welded or pressed), you may solder **on the strip tabs that stick out past the edge of the pack (≥ 10 mm from the nearest cell)**: balance leads (22 AWG) and main leads. The heat goes into the strip, not into the cell. Soldering on the BMS board is also completely fine with 48 W. 10 AWG can be heavy for 48 W. Use the widest tip, tin the wire first, or use an M4 bolt + ring terminal.
 
-3 rækker á 6 celler, vekslende retning. Så klares alle serieforbindelser af selve strippen. Der skal ikke være ekstra serieledninger mellem grupperne:
+## 4. Pack layout (from the Fusion model "31 Battery Module")
+
+3 rows of 6 cells, alternating orientation. This way the strip itself makes all series connections. No extra series wires are needed between the groups:
 
 ```
-          TOP-SIDE                                BUND-SIDE
+          TOP SIDE                                BOTTOM SIDE
   ┌────────────────────────────┐          ┌────────────────────────────┐
-  │ G1:  + + + + + +           │ strip A  │ G1:  − − − − − −           │ strip C = PAKKE −  (B−)
+  │ G1:  + + + + + +           │ strip A  │ G1:  − − − − − −           │ strip C = PACK −  (B−)
   │ G2:  − − − − − −           │ (G1+/G2−)│ G2:  + + + + + +           │ strip D
-  │ G3:  + + + + + +  strip B  │ = PAKKE+ │ G3:  − − − − − −           │ (G2+/G3−)
+  │ G3:  + + + + + +  strip B  │ = PACK + │ G3:  − − − − − −           │ (G2+/G3−)
   └────────────────────────────┘          └────────────────────────────┘
-  strip A: dækker G1 og G2 (12 celler) → balance B1
-  strip B: dækker G3 (6 celler)        → PAKKE + og balance B+
-  strip C: dækker G1 (6 celler)        → PAKKE − og BMS B−
-  strip D: dækker G2 og G3 (12 celler) → balance B2
+  strip A: covers G1 and G2 (12 cells) → balance B1
+  strip B: covers G3 (6 cells)         → PACK + and balance B+
+  strip C: covers G1 (6 cells)         → PACK − and BMS B−
+  strip D: covers G2 and G3 (12 cells) → balance B2
 ```
-**Skal tjekkes:** at stripens hulafstand passer til holdernes celleafstand (modellen siger ~20,5–20,7 mm, "2H-19 mm" tyder på 19 mm). Passer de ikke, skal strippen klippes og lægges som rækker.
+**To check:** that the strip's hole pitch matches the holders' cell pitch (the model says ~20.5–20.7 mm, "2H-19 mm" suggests 19 mm). If they do not match, the strip must be cut and laid as rows.
 
-## 5. BMS-ledninger (3S)
+## 5. BMS wiring (3S)
 
 ```
- PAKKE −  (strip C) ──10 AWG── B−   ┐
+ PACK −  (strip C)  ──10 AWG── B−   ┐
  strip A (G1+/G2−)  ──22 AWG── B1   │  BMS
  strip D (G2+/G3−)  ──22 AWG── B2   │
- PAKKE +  (strip B) ──22 AWG── B+   ┘
-                                P− ──10 AWG── XT60 − ──→ robot / lader
- PAKKE +  (strip B) ──10 AWG── HOVEDSIKRING 30 A ── XT60 + ──→ robot / lader
+ PACK +  (strip B)  ──22 AWG── B+   ┘
+                                P− ──10 AWG── XT60 − ──→ robot / charger
+ PACK +  (strip B)  ──10 AWG── MAIN FUSE 30 A ── XT60 + ──→ robot / charger
 ```
-- Mål før hver ledning sættes på (Fluke, fra B−): B1 ≈ 3,6 V, B2 ≈ 7,2 V, B+ ≈ 10,8 V. Afviger et tal mere end ~0,1 V fra 1×, 2× eller 3× gruppespændingen, så STOP: så er en ledning forkert.
-- Rækkefølge: **B− først**, derefter B1 → B2 → B+ (lav → høj). Følg BMS-kortets egen påskrift, hvis den siger noget andet.
-- Nogle kort skal "vækkes" første gang: P− giver 0 V, indtil laderen har været sat til et øjeblik.
-- Laderen lader gennem P+/P− (samme port som afladning). Balanceringen sker kun ved ~4,2 V og er svag → grupperne skal være matchet fra start (§6).
+- Measure before each lead is connected (Fluke, from B−): B1 ≈ 3.6 V, B2 ≈ 7.2 V, B+ ≈ 10.8 V. If a number is off by more than ~0.1 V from 1×, 2× or 3× the group voltage, STOP: a lead is wrong.
+- Order: **B− first**, then B1 → B2 → B+ (low → high). Follow the BMS board's own markings if they say otherwise.
+- Some boards must be "woken up" the first time: P− gives 0 V until the charger has been connected for a moment.
+- The charger charges through P+/P− (same port as discharge). Balancing only happens at ~4.2 V and is weak → the groups must be matched from the start (§6).
 
-## 6. Matching af celler — PRÆCIS sådan (gøres FØR noget forbindes)
+## 6. Matching the cells — EXACTLY like this (done BEFORE anything is connected)
 
-Det her er risikofrit, så længe du følger punkt 0. Cellerne er ikke forbundet med hinanden, så du måler hver celle for sig. Det kan sagtens gøres, mens de sidder i klikholderne.
+This is risk-free as long as you follow point 0. The cells are not connected to each other, so you measure each cell on its own. It can easily be done while they sit in the click holders.
 
-**0. Sikkerhed først**
-- Tag ur, ringe og armbånd af. Arbejd på et træbord/papir, ikke på metal, og fjern skruer, værktøj og krokodillenæb fra bordet.
-- **Fluke'ens ledninger: sort i COM, rød i V/Ω-bøsningen.** ALDRIG rød i "A"- eller "mA"-bøsningen: så er multimeteret en kortslutning, og cellen sender op til 10+ A gennem måleren (sikringen springer i bedste fald).
-- Drejeknappen på **V med lige streg (V⎓ / DC)**, ikke V~ (AC), og ikke Ω eller dioden.
+**0. Safety first**
+- Take off your watch, rings and bracelets. Work on a wooden table/paper, not on metal, and clear screws, tools and alligator clips off the table.
+- **Fluke leads: black in COM, red in the V/Ω jack.** NEVER red in the "A" or "mA" jack: then the multimeter is a short circuit, and the cell pushes up to 10+ A through the meter (in the best case the fuse blows).
+- Rotary switch on **V with a straight line (V⎓ / DC)**, not V~ (AC), and not Ω or diode.
 
-**1. Kend polerne**
+**1. Know the poles**
 ```
-   + ende: lille knap i midten, omgivet af en isolationsring
-           (det metalliske "skulder"-område rundt om ringen er − !)
-   − ende: helt flad bund
+   + end: small button in the middle, surrounded by an insulation ring
+          (the metal "shoulder" area around the ring is − !)
+   − end: completely flat bottom
 ```
-Isolationsringen ved + er det eneste, der adskiller + fra − på den ende. Er den væk eller revnet, er cellen "reserve".
+The insulation ring at + is the only thing that separates + from − on that end. If it is missing or cracked, the cell is a "spare".
 
-**2. Nummerér** cellerne 1–20 med tusch på folien eller på holderen.
+**2. Number** the cells 1–20 with a marker on the wrap or on the holder.
 
-**3. Efterse hver celle** (vend den i lyset): revner eller flænger i plastfolien (især ved kanterne i begge ender), buler, rust eller misfarvning, mangler isolationsring. Notér "OK" eller hvad du ser.
+**3. Inspect each cell** (turn it in the light): cracks or tears in the plastic wrap (especially at the edges at both ends), dents, rust or discoloration, missing insulation ring. Write "OK" or what you see.
 
-**4. Mål hver celle:**
-- Sort spids på den flade − ende, rød spids midt på + knappen. Hold dem stille, ~2 sek.
-- Aflæs med alle decimaler (fx `3.512`). Fluke 83 viser 3 decimaler i 4 V-området. Står der "AUTO", vælger den selv.
-- Viser den et minustegn (`-3.512`), har du byttet spidserne om. Det er ufarligt, skriv bare tallet uden minus.
-- Skriv tallet i skemaet:
+**4. Measure each cell:**
+- Black probe on the flat − end, red probe in the middle of the + button. Hold them still, ~2 s.
+- Read all decimals (e.g. `3.512`). The Fluke 83 shows 3 decimals in the 4 V range. If it shows "AUTO", it picks the range itself.
+- If it shows a minus sign (`-3.512`), you have swapped the probes. That is harmless, just write the number without the minus.
+- Write the number in the table:
 
-| Celle | Spænding (V) | Folie/ring OK? | Note |
+| Cell | Voltage (V) | Wrap/ring OK? | Note |
 |---|---|---|---|
 | 1 | | | |
 | … | | | |
 | 20 | | | |
 
-**5. Send tallene til Claude.** Så laver jeg fordelingen. Grænserne jeg bruger:
-- Alle 3,0–4,2 V og spredning ≤ 0,05 V → fint.
-- En celle < 2,5 V eller > 0,3 V fra de andre → reserve.
-- < 2,0 V → må **ikke** lades, kasseres (batteri-indsamling, ikke skraldespanden).
-- Hver gruppe: celler inden for ~0,05 V af hinanden. Gruppernes gennemsnit så ens som muligt (helst ±0,01 V), fordi BMS'ens balancering er svag.
+The measurement log can also be filled in at `hub/` (file `hub/data/battery_cells.csv`, columns `cell;voltage_v;wrap_ok;group;note`; the "Battery cells" tab shows range and spread live).
 
-Nye celler fra samme batch er typisk ens inden for få mV. Efter 17 måneders opbevaring regner jeg med ~3,4–3,6 V pr. celle. Det er et estimat, ikke målt.
+**5. Send the numbers to Claude.** Then I make the grouping. The limits I use:
+- All 3.0–4.2 V and spread ≤ 0.05 V → fine.
+- A cell < 2.5 V or > 0.3 V from the others → spare.
+- < 2.0 V → must **not** be charged, discard it (battery collection point, not the bin).
+- Each group: cells within ~0.05 V of each other. Group averages as equal as possible (ideally ±0.01 V), because the BMS balancing is weak.
 
-## 7. Sikringer og hovedafbryder
+New cells from the same batch are typically equal within a few mV. After 17 months of storage I expect ~3.4–3.6 V per cell. That is an estimate, not measured.
 
-- **Hovedsikring 30 A** (blade) så tæt på PAKKE + som muligt. Den beskytter mod kortslutning i ledninger, hvis BMS-MOSFET'erne svigter ved en kortslutning. **Kræver en blade-sikringsholder (inline, til 10–12 AWG)**, og den er der ikke i listen → skal købes (~20–40 kr) eller findes.
-- Grene efter sikringen: motordrivere 15 A hver (eller én 30 A for alle fire). Logik-buck: 5 A (5×20-holderne er OK her).
-- Nødstop → styrer 40 A-relæet (som planlagt), relæet bryder hovedstrømmen efter sikringen.
-- INA219 (maks 26 V, shunt typisk 0,1 Ω = **max 3,2 A**!) → kan IKKE sidde i motorstrømmen med standardshunten. Den kan måle pakkespænding og logikstrøm. Software-cutoff ved ~3,3 V/celle (9,9 V), før BMS'ens ~2,5–2,8 V.
+## 7. Fuses and main switch
 
-## 8. Ladning og opbevaring
+- **Main fuse 30 A** (blade) as close to PACK + as possible. It protects against short circuits in the wiring if the BMS MOSFETs fail during a short. **Needs a blade fuse holder (inline, for 10–12 AWG)**, and there is none in the list → must be bought (~20–40 DKK) or found.
+- Branches after the fuse: motor drivers 15 A each (or one 30 A for all four). Logic buck: 5 A (the 5×20 holders are OK here).
+- E-stop → drives the 40 A relay (as planned), the relay breaks the main current after the fuse.
+- INA219 (max 26 V, shunt typically 0.1 Ω = **max 3.2 A**!) → can NOT sit in the motor current with the standard shunt. It can measure pack voltage and logic current. Software cutoff at ~3.3 V/cell (9.9 V), before the BMS's ~2.5–2.8 V.
 
-- Lad på et ikke-brændbart underlag (flise/metalbakke), kun under opsyn — ikke om natten de første 5 gange. Røgalarm i rummet.
-- Mål de tre gruppespændinger efter hver af de første ladninger: alle ~4,18–4,20 V, forskel < 0,03 V.
-- Opbevaring > 1 uge: 3,6–3,8 V/celle (~11 V pakke), køligt, i metalkasse/LiPo-pose.
-- Pakken må ikke blive varm. Mærk efter kørsel: lunken er OK. Kan du ikke holde hånden på den → stop og find kontakten.
+## 8. Charging and storage
 
-## 9. Hvad mangler (indkøb)
+- Charge on a non-flammable surface (tile/metal tray), only under supervision — not overnight for the first 5 times. Smoke alarm in the room.
+- Measure the three group voltages after each of the first charges: all ~4.18–4.20 V, difference < 0.03 V.
+- Storage > 1 week: 3.6–3.8 V/cell (~11 V pack), cool, in a metal box/LiPo bag.
+- The pack must not get hot. Feel it after driving: lukewarm is OK. If you cannot keep your hand on it → stop and find the bad contact.
 
-| Ting | Hvorfor | Ca. pris | Nødvendig? |
+## 9. What is missing (to buy)
+
+| Item | Why | Approx. price | Needed? |
 |---|---|---|---|
-| Inline blade-sikringsholder 10–12 AWG | Hovedsikring | 20–40 kr | **Ja**, medmindre kassen med bilsikringer har en holder, der kan klare 30 A |
-| Fiskepapir-ringe 18650 (selvklæbende) | Ekstra isolering ved +polen | 20–40 kr | Ja ved metode 2, anbefalet ved 1 |
-| Nikkelstrip 0,15 mm ren nikkel (hvis den ikke findes) | Forbindelser | 40–80 kr | Hvis den mangler |
-| Svejseservice **eller** punktsvejser | Metode 1 | Service: ukendt (spørg). Svejser: ~200–600 kr | Metode 1 |
-| 4–6 × gevindstang/bolte M4/M5 ~100 mm + møtrikker | Metode 2 | 20–40 kr | Metode 2 |
-| Ringterminaler M4 til 10 AWG (+ tang) | Hovedledning til strip | 20–60 kr | Anbefalet |
+| Inline blade fuse holder 10–12 AWG | Main fuse | 20–40 DKK | **Yes**, unless the car fuse box has a holder that can handle 30 A |
+| Fish paper rings 18650 (self-adhesive) | Extra insulation at the + pole | 20–40 DKK | Yes for method 2, recommended for 1 |
+| Nickel strip 0.15 mm pure nickel (if it cannot be found) | Connections | 40–80 DKK | If missing |
+| Welding service **or** spot welder | Method 1 | Service: unknown (ask). Welder: ~200–600 DKK | Method 1 |
+| 4–6 × threaded rod/bolts M4/M5 ~100 mm + nuts | Method 2 | 20–40 DKK | Method 2 |
+| Ring terminals M4 for 10 AWG (+ crimper) | Main lead to strip | 20–60 DKK | Recommended |
 
-## 10. Næste skridt
+## 10. Next steps
 
-1. **Nu, uden risiko:** nummerér, efterse og mål alle 20 celler (§6). Send tallene → Claude fordeler dem i grupper.
-2. Ring til Fyns Batteri Service (§3a) — svarer de ja: pris, strip-type, og om de monterer BMS + balanceledninger.
-3. Find blade-sikringsholderne i bilsikringskassen, og tag et foto af BMS-printet (begge sider).
-4. Mål én motors viklingsmodstand (§2) → stall-strøm.
-5. Endelig illustreret guide (samling efter svejsning, BMS, sikring, første ladning) skrives, når 1–3 er afklaret.
+**Measure first, weld later. Do not take anything to the welder before step 2 is done.**
+
+1. **Now, no risk:** number, inspect and measure all 20 cells (§6). Do not weld or connect anything yet.
+2. Send the numbers → Claude assigns the cells to the 3 groups.
+3. Click the sorted cells into the holders per §4 and §3a. Only then take them to the welder.
+4. Call Fyns Batteri Service (§3a) — if they say yes: price, strip type, and whether they fit the BMS + balance leads.
+5. Find the blade fuse holders in the car fuse box, and take a photo of the BMS board (both sides).
+6. Measure one motor's winding resistance (§2) → stall current.
+7. The final illustrated guide (assembly after welding, BMS, fuse, first charge) is written once steps 1–5 are settled.

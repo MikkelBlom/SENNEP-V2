@@ -8,7 +8,7 @@ Almost everything is 3D-printed in PETG on a Bambu X1C. Wheels, axles, corner ho
 Status (Oct 2026): the wheel and corner housing are at the test-print stage, the frame and body are modelled, and there is no robot code yet. The only software is the LiDAR test app (`Lidar Test Enviornment/`).
 
 ## Read first
-`ai-instructions/INDEX.md` maps every file. Then read `FEATURES.md` (what is in progress) and `WORKING_NOTES.md` (open concerns and decisions). Parts: `components/inventory.csv`.
+`ai-instructions/INDEX.md` maps every file. Then read `FEATURES.md` (what is in progress) and `WORKING_NOTES.md` (open concerns and decisions). Parts: `components/inventory.csv`. Tasks, shopping, ideas, links and notes: `hub/` (plain CSV/Markdown that Mikkel edits through `hub/index.html`; re-read before editing, and keep the `;` CSV format).
 
 ## Never violate
 1. **Public repo.** Never commit invoices, order numbers, home address, e-mail addresses, chat exports (`gpttxt.txt`, `botnroll.txt`, root `*.pdf`) or secrets. `components/esp-01/.../secrets.h` stays local; only the `.example` is committed.

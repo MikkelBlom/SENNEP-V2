@@ -30,6 +30,9 @@ static const uint8_t SONAR_ECHO_PIN[4] = {A8, A9, A10, A11}; // PCINT16-19
 #define NRF_CSN_PIN 53                                // + SPI 50/51/52
 #define DOCK_IR_FIRST_PIN 31                          // 31..34: 4x VS1838B
 #define RESET_FROM_PI "RESET pin"                     // Pi GPIO4 -> BSS138 ch3 -> RESET (flash from Pi)
+// From docs/electronics/BREADBOARD_PLAN.md §2.4/§2.7 (consolidation 2026-10-12). Not read by the firmware yet.
+#define MOTOR_BUS_SENSE_PIN A4                        // motor bus after the relay, divider 47k/10k (12.6 V -> 2.2 V)
+#define ARM_BUTTON_PIN 29                             // red PBS-110, INPUT_PULLUP. Role open: ARM must come from the Pi
 
 // ---- Simple outputs (SET_OUTPUT) ----
 #define HEADLIGHT_PIN 9            // PWM (timer 2) -> MOSFET gate driver (IRFZ44N is not logic level!)
