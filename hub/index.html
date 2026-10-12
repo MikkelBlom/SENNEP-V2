@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SENNEP Hub</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="battery.js"></script>
 <style>
 :root {
   --bg: #f6f6f3; --panel: #ffffff; --ink: #1d1f21; --muted: #6b6f73; --line: #e2e2dc;
@@ -70,6 +71,43 @@ td a { color: var(--accent); word-break: break-all; }
 .pill { display: inline-block; padding: 1px 7px; border-radius: 10px; background: var(--chip); font-size: 12px; }
 .warn { color: var(--warn); }
 .okc { color: var(--ok); }
+/* battery diagram */
+.batt { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+.batt-bar { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.seg { display: inline-flex; background: var(--chip); border-radius: 8px; padding: 3px; }
+.seg button { border: 0; background: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font: inherit; color: var(--muted); }
+.seg button.on { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.15); }
+.batt-toggle { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.batt-main { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px; align-items: start; }
+.batt-svg svg { width: 100%; height: auto; display: block; user-select: none; }
+.b-cell { cursor: pointer; }
+.b-cell:hover .halo { stroke: var(--accent); }
+.b-cell.sel .halo { stroke: var(--accent); stroke-width: 6; fill: none; }
+.halo { fill: none; stroke-width: 4; }
+.halo.st-none { stroke: #6b6f73; stroke-dasharray: 4 5; stroke-width: 2; }
+.st-good { stroke: #2e9d5b; background: #2e9d5b; } .st-ok { stroke: #c9a227; background: #c9a227; }
+.st-off { stroke: #e07b24; background: #e07b24; } .st-bad { stroke: #d64545; background: #d64545; }
+.b-num { font: 600 11px system-ui, sans-serif; fill: #3a3a38; text-anchor: middle; }
+.b-volt { font: 700 13px ui-monospace, Menlo, Consolas, monospace; fill: #1d1f21; text-anchor: middle; }
+.b-volt.empty { font-size: 20px; fill: #6b6a64; }
+.b-row { font: 600 14px system-ui, sans-serif; fill: var(--ink); }
+.b-sub { font: 12px system-ui, sans-serif; fill: var(--muted); }
+.b-you { font: 600 12px system-ui, sans-serif; fill: var(--accent); letter-spacing: .04em; }
+.b-strip-t { font: 600 13px system-ui, sans-serif; fill: var(--ink); }
+.b-lead { stroke: #d64545; stroke-width: 2.5; }
+.batt-side { display: grid; gap: 6px; }
+.b-stat { display: flex; justify-content: space-between; gap: 8px; padding: 6px 10px; background: var(--chip); border-radius: 6px; font-size: 13px; }
+.b-stat span { color: var(--muted); }
+.b-legend { display: grid; gap: 4px; font-size: 12px; margin-top: 6px; color: var(--muted); }
+.b-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.b-form { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--line); margin-top: 10px; }
+.b-form label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+.b-form label.grow { flex: 1; min-width: 160px; }
+.b-form input, .b-form select { padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font: inherit; }
+.b-form .b-v { width: 110px; font-family: var(--mono); font-size: 16px; }
+.b-title { width: 100%; font-size: 15px; }
+.b-btns { display: flex; gap: 6px; }
+@media (max-width: 860px) { .batt-main { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .docs { grid-template-columns: 1fr; } .doclist { max-height: 240px; } }
 </style>
 </head>
@@ -107,8 +145,8 @@ const VIEWS = [
     enums: { tier: ["minimum", "recommended", "nice"], status: ["check first", "to ask", "to buy", "ordered", "have", "dropped"] },
     filters: ["tier", "status"], long: ["note", "item", "for"], defaults: { tier: "minimum", status: "to buy" } },
   { key: "cells", label: "Battery cells", file: "hub/data/battery_cells.csv",
-    enums: { wrap_ok: ["", "yes", "no"], group: ["", "G1", "G2", "G3", "spare", "scrap"] }, long: ["note"],
-    hint: "How to measure: docs/electronics/BATTERY_PLAN.md §6. Fluke: black in COM, red in V/Ω, dial on V⎓. Never the A or mA socket." },
+    enums: { wrap_ok: ["", "yes", "no"] }, long: ["note"],
+    hint: "Orientation: black mark front-left, nearest you. Slots: front row 1–6 (G1), middle 7–12 (G2), back 13–18 (G3), left → right; <code>spare</code> = loose. How to measure: docs/electronics/BATTERY_PLAN.md §6. Fluke: black in COM, red in V/Ω, dial on V⎓. Never the A or mA socket." },
   { key: "ideas", label: "Ideas", file: "hub/data/ideas.csv",
     enums: { status: ["someday", "next", "picked up", "dropped"] }, filters: ["status"], long: ["notes", "idea"], defaults: { status: "someday" } },
   { key: "links", label: "Links", file: "hub/data/links.csv", long: ["note"], url: ["url"], filters: ["category"] },
@@ -248,7 +286,8 @@ async function tableView(v) {
   bar.append(count);
   wrap.append(bar);
   if (v.hint) wrap.append($("p", { class: "hint", html: v.hint }));
-  if (v.key === "cells") wrap.append(cellStats(data));
+  let diag = null;
+  if (v.key === "cells") { diag = batteryDiagram(data, () => { scheduleSave(v.file); drawBody(); }); wrap.append(diag.el); }
 
   const table = $("table");
   const head = $("tr", {}, fields.map(k => $("th", { onclick: () => { st.sort = st.sort === k ? "-" + k : k; drawBody(); } }, k)), $("th"));
@@ -265,7 +304,7 @@ async function tableView(v) {
     return rows;
   }
   function editor(r, k) {
-    const set = val => { r[k] = val; scheduleSave(v.file); if (v.key === "cells") wrap.replaceChild(cellStats(data), wrap.querySelector(".cards")); };
+    const set = val => { r[k] = val; scheduleSave(v.file); if (diag) diag.refresh(); };
     if ((v.check || []).includes(k)) return $("input", { type: "checkbox", checked: !!r[k], style: "width:auto", onchange: e => set(e.target.checked ? "✓" : "") });
     const en = v.enums?.[k];
     if (en) {
