@@ -1,5 +1,5 @@
 id;item;qty;est_dkk;tier;for;status;link;note
-s01;Inline blade fuse holder 10–12 AWG;1;30;minimum;Battery + M1 main fuse;check first;;Maybe in the car fuse kit. 20 A for the test LiPo, 30 A for the 3S6P
+s01;Inline blade fuse holder 10–12 AWG;1;30;minimum;Battery + M1 main fuse;to buy;;Blade fuses owned, no blade holder on the parts list. 20 A for the test LiPo, 30 A for the 3S6P
 s02;Inline blade fuse holder 16 AWG (or a small fuse box);5;40;minimum;M1: 15 A per driver + 5 A logic;check first;;
 s03;1N4007 or 1N5819 diode;5;10;minimum;Flyback across the relay coil;to buy;;
 s04;TVS P6KE15A (through-hole);2;15;minimum;Motor bus spike protection (V1 damage);to buy;;

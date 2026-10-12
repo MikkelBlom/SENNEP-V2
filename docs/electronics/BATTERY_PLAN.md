@@ -36,6 +36,8 @@ Charging 2 A                 →  0.33 A per cell (very gentle)
 → **Measure it yourself:** measure the motor's winding resistance R with the Fluke 83 (Ω range, subtract the resistance of the test leads). Then stall ≈ 12.6 V / R. This is safe and needs no power.
 → **Consequence:** soft-start/ramp in the motor code is mandatory. Without it the BMS cuts out at every hard start. That is annoying but not dangerous. Normal driving (~10–20 A total) is fine for both cells and BMS.
 
+**Motor (measured 2026-10-12):** winding resistance 1.7–1.8 Ω at rest (Fluke, incl. ~0.1–0.3 Ω probe leads). Stall current ≈ 12.6 V / ~1.6–1.8 Ω ≈ **7–8 A per motor**, ~30 A for all four: under the BMS's 40 A. Readings while turning are meaningless (brushes + the motor generating voltage).
+
 ## 3. Methods for connecting the cells — ranked by safety
 
 | # | Method | Safety | Does he have it? | Assessment |

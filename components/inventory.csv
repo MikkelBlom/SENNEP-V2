@@ -25,8 +25,8 @@ irfz44n;IRFZ44N N-MOSFET (TO-220);Power;5;SENNEP V2;unknown;;30;DKK;30.00;Ardust
 mosfet-55v;N-MOSFET 55 V 41 A (probably IRFZ44N);Power;3;SENNEP V2;unknown;;3.00;EUR;22.38;Bot'n Roll;2025-05-01;IRFZ44N (assumed);irfz44n.pdf;;
 heatsink-to220;Aluminium heatsink TO-220;Mechanical;5;SENNEP V2;unknown;;25;DKK;25.00;Ardustore;2024-05-14;;;;
 relay-40a;Car relay 12 V 40 A, 5-pin;Power;1;SENNEP V2;unknown;;7.58;DKK;7.58;AliExpress;2025-12;;;;The E-stop drives the relay instead of breaking main power itself
-fuse-holder;Fuse holder 5×20 mm with cap;Power;10;SENNEP V2;unknown;;3.00;EUR;22.38;Bot'n Roll;2025-05-01;;;;
-blade-fuses;Car blade fuses, 180-piece assortment;Power;1;SENNEP V2;unknown;;27.79;DKK;27.79;AliExpress;2025-12;;;;
+fuse-holder;Fuse holder 5×20 mm with cap;Power;10;SENNEP V2;unknown;;3.00;EUR;22.38;Bot'n Roll;2025-05-01;;;;For 5×20 glass fuses (small branches: logic, drivers). Not for the 30 A main fuse
+blade-fuses;Car blade fuses, 180-piece assortment;Power;1;SENNEP V2;unknown;;27.79;DKK;27.79;AliExpress;2025-12;;;;No blade holders listed: the 30 A main fuse needs an inline blade holder (shopping list)
 xt60;XT60 male/female pair;Connectors;2;SENNEP V2;unknown;;3.00;EUR;22.38;Bot'n Roll;2025-05-01;;;;
 estop-40mm;Emergency stop 40 mm;Connectors;1;SENNEP V2;unknown;;1.49;GBP;12.92;Hobby Components;2025-04-18;;;;
 vl53l0x;VL53L0X ToF distance sensor (laser);Sensors;8;SENNEP V2;unknown;;25.27;GBP;219.09;Hobby Components;2025-04-18;VL53L0X;vl53l0x.pdf;;Same I²C address (0x29) -> used via tca9548a. 8 around the robot
@@ -96,7 +96,6 @@ lipo-charger-b3;HobbyKing B3 AC compact LiPo charger;Tools;1;SENNEP V1;unknown;;
 breadboards;Breadboards + Dupont jumpers;Tools;1;other project;unknown;;;;;;;;;;Quantity unknown (added in consolidation 2026-10-12, not counted yet)
 filament-tpu;TPU filament;Consumables;1;other project;unknown;;;;;;;;;;Amount left unknown (added in consolidation 2026-10-12, not counted yet)
 screw-kit-m2-m4;Old M2–M4 screw kit (M3×12/×19 ×20 each, M4×12 ×20, M4×25 ×10, nuts, washers);Hardware;1;other project;unknown;;;;;;;;;;(added in consolidation 2026-10-12, not counted yet)
-car-fuse-kit;Car blade fuse assortment kit (+ some holders?);Power;1;other project;unknown;;;;;;;;;;Check holder size/rating for the 30 A main fuse (added in consolidation 2026-10-12, not counted yet)
 resistor-kit;Resistor assortment kit;Passives;1;other project;unknown;;;;;;;;;;Many values (added in consolidation 2026-10-12, not counted yet)
 lipo-zippy-1000;Zippy Compact 35C LiPo 1000 mAh 3S 11.1 V (XT60);Power;1;SENNEP V1;used;;;;;;;;;;No BMS. Fried V1's Mega: only use with a fuse < 10 cm from the XT60 and a LiPo alarm (added in consolidation 2026-10-12, not counted yet)
 adapter-12v;12 V power adapter;Power;1;other project;unknown;;;;;;;;;;Rating unknown (≥ 3 A needed for bench logic) (added in consolidation 2026-10-12, not counted yet)
