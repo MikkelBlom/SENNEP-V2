@@ -165,3 +165,48 @@ the timing must be tested). The link program must close the port first.
 - Without encoders (a deliberate choice) duty ≠ speed. Odometry has to come from LiDAR scan matching + IMU, and MAX_WHEEL_MM_S is an estimate.
 - The motor direction/kinematics sign convention (mecanum X layout) must be checked at the robot (tests 6–7).
 - Cloud sessions cannot reach `downloads.arduino.cc`; arduino-cli builds happen on the Pi/PC. The Rust toolchain and crates.io index *are* reachable.
+
+## 13. Conversation record (for the consolidating session)
+
+Mikkel has **not read** the outputs of this session. Everything he said and everything he was told is recorded here.
+
+**Original task:** work out how the Pi 5 and the Mega work together "instantly and seamlessly". Strict order: take stock →
+research → write `docs/electronics/PI_MEGA_LINK.md` → AskUserQuestion rounds → code only after approval. This task owns the
+protocol and software; the circuit task owns the physical wiring.
+
+**Round 1: Mikkel's answers (close to verbatim)**
+- Mega or Nano: "I'm not sure if mega replaces nano. It kinda depends on the design. I have multiple unos, one mega, a few nanos, and one
+  raspberry pi." Link: "If we have the material I want to do UART now. Otherwise USB for now and UART later."
+- Pi language: "depends on what works best … LiDAR code is still being debated. Maybe defer."
+- "Instant": "I don't want the robot to be slow reacting. There are a LOT of inputs … we need to be able to process it all … low latency is
+  a priority. Which is also why I am leaning towards a fast language like Rust or C … depends on the stack and design."
+- Sensor placement: "Whatever is best design … as long as latency is priority."
+
+**What he was told in reply:** latency comes from sensor rates (ToF 20–33 ms, sonar 60–100 ms per round, LiDAR 100 ms) and from *where
+decisions are made*, not from the link (~1 ms) or the language. Hence the reflex architecture (D7). Everything real-time fits on one Mega.
+
+**Round 2:** Mega hub + Nano chosen, *"but on SENNEP V1 we ran out of pins … plan for possible future expansion"* (→ §4).
+Reset wire chosen. "Build firmware + C core + tests now" chosen. Safety rules approved as written.
+
+**Mid-session:** "FYI — we decided to go with full rust for the system." (Sent twice; it is the same message.)
+
+**Round 3:** replace the Python tool with a Rust CLI. On "Rust on the Mega?" he answered: *"I'm not sure. I don't really understand … I have
+only ever worked with Arduino, where I just got it out of the package, flashed some code from the Arduino IDE … I have never made
+custom firmware … I guess it is just a processing unit, so it could work. Please explain."*
+
+**The explanation he was given (summary):**
+- Every Arduino sketch already is custom firmware: the IDE compiles C++ to a .hex and avrdude flashes it. The chip only runs machine code.
+- The language only changes the tools and libraries. Option 1, Arduino C++ on the Mega: he keeps the IDE + Upload, has proven libraries,
+  and the code is already written and tested. The system is then ~95 % Rust (the Pi) and ~1000 lines of Arduino (the Mega), kept in sync
+  by one spec + cross-tests. Option 2, Rust on the Mega: same chip and flashing, but no IDE, a nightly compiler, fewer drivers and more
+  hand-written work. That is a lot of new things for a first non-IDE firmware.
+- **Recommendation given: Rust on the Pi, Arduino C++ on the Mega for now; RP2040/Pico if Rust on an MCU is wanted later.**
+  (In the question before that, "Rust on Mega" had been marked "recommended"; this was corrected in the explanation once it was clear he only knows the IDE.)
+- He was asked to reply "Arduino on Mega" or "Rust on Mega". **He has not answered (Q1 is still open).**
+
+**Last instruction:** write everything down for a separate consolidating session. Six cloud sessions ran independently (LiDAR stack,
+this link, breadboard circuit, PCB, documentation/component list, 3S6P battery). The PCB session logged that it was blocked
+because the breadboard plan was missing (branch `claude/youthful-planck-dsjzos`). When this session ran, `docs/electronics/` existed
+only on this branch: no circuit work had been pushed yet.
+
+**Branch:** everything is on `claude/stoic-cray-tsomgg` (not merged into `main`, no PR). The files are listed in §7.
