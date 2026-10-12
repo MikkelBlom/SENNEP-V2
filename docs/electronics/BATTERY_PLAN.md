@@ -81,6 +81,8 @@ Once the nickel strip is on (welded or pressed), you may solder **on the strip t
 
 ## 4. Pack layout (from the Fusion model "31 Battery Module")
 
+**Orientation (fixed 2026-10-12):** the block lies in front of you with the **black mark at the front-left corner of the top face**. Front row = G1 (slots 1–6, left → right), middle = G2 (7–12), back = G3 (13–18). Bottom view = flipped front-over-back: left stays left, G1 ends up at the back. Interactive diagram: hub → Battery cells.
+
 3 rows of 6 cells, alternating orientation. This way the strip itself makes all series connections. No extra series wires are needed between the groups:
 
 ```
