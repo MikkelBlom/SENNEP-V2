@@ -2,7 +2,7 @@
 
 > Genereret af `build_inventory.py` fra `inventory.csv`. Redigér CSV'en, ikke denne fil.
 
-85 linjer · [Compute](#compute) · [Drivlinje](#drivlinje) · [Strøm](#strøm) · [Sensorer](#sensorer) · [Kommunikation](#kommunikation) · [UI](#ui) · [Lyd](#lyd) · [Lys](#lys) · [Styring](#styring) · [Kontakter](#kontakter) · [Kabler](#kabler) · [Passive](#passive) · [Mekanik](#mekanik) · [Forbrug](#forbrug) · [Værktøj](#værktøj)
+86 linjer · [Compute](#compute) · [Drivlinje](#drivlinje) · [Strøm](#strøm) · [Sensorer](#sensorer) · [Kommunikation](#kommunikation) · [UI](#ui) · [Lyd](#lyd) · [Lys](#lys) · [Styring](#styring) · [Kontakter](#kontakter) · [Kabler](#kabler) · [Passive](#passive) · [Mekanik](#mekanik) · [Forbrug](#forbrug) · [Værktøj](#værktøj)
 
 ## Pr. butik (ekskl. fragt)
 
@@ -38,8 +38,9 @@
 
 | id | Komponent | Antal | ≈ DKK | Butik | Dato | Datablad / links | Noter |
 |---|---|---:|---:|---|---|---|---|
-| `18650-35e` | Samsung INR18650-35E Li-ion 3400 mAh | 20 | 880 kr | Bot'n Roll | 2025-05-01 | [samsung-inr18650-35e.pdf](datasheets/samsung-inr18650-35e.pdf) | Samlet som 3S6P (10,8 V nom / 12,6 V fuld, ~20 Ah). Serieforbindelser ikke lavet endnu |
-| `18650-holder` | 18650-holder 1×2 m. afstandsstykke | 20 | 45 kr | Bot'n Roll | 2025-05-01 |  |  |
+| `18650-35e` | Samsung INR18650-35E Li-ion 3400 mAh | 20 | 880 kr | Bot'n Roll | 2025-05-01 | [samsung-inr18650-35e.pdf](datasheets/samsung-inr18650-35e.pdf) | Planlagt 3S6P (10,8 V nom / 12,6 V fuld, ~20 Ah). Kun klikset i holdere, ingen forbindelser (okt 2026). Plan: docs/electronics/BATTERY_PLAN.md |
+| `18650-holder` | 18650-holder 1×2 m. afstandsstykke | 20 | 45 kr | Bot'n Roll | 2025-05-01 |  | Kliks-plastik uden metalkontakter |
+| `nikkelstrip` | Ren nikkelstrip 0,15 × 27 mm (2H-19 mm) | 1 | ? | ukendt | 2025-05 |  | Mængde ukendt. Stykkerne er for små til at dække en række → skal klippes og svejses. Se docs/electronics/BATTERY_PLAN.md |
 | `bms-3s` | 3S 40 A BMS m. balance | 2 | 73 kr | Bot'n Roll | 2025-05-01 |  |  |
 | `lader-3s` | 3S Li-ion-lader 12,6 V 2 A (EU-stik) | 1 | 89 kr | Bot'n Roll | 2025-05-01 |  |  |
 | `buck-5a` | DC-DC step-down 5 A | 2 | 61 kr | Hobby Components | 2025-04-18 |  | Tænkt til Pi 5 (5 V / 5 A) |

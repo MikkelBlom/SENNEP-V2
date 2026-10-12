@@ -168,7 +168,7 @@ Konklusion: ~50 kg samlet (robot + last) er realistisk designmål; 100 kg kun p�
 - ChatGPT-zip (med billeder) kommer senere.
 - AFKLARET: ikke vandtæt (indendørs) → ventilation beholdes.
 - GPS (GY-NEO6MV2, købt dec 2025) skal med. IMU (MPU-6050) + magnetometer skal med.
-- Batteri: 3S6P-grupper samlet, men serieforbindelserne er ikke lavet endnu (Mikkel er utryg ved at lodde/svejse).
+- Batteri: **ingen celler er forbundet** (kun klikset i holdere — rettet 2026-10-12, også parallelforbindelserne mangler). Plan: `docs/electronics/BATTERY_PLAN.md` (punktsvejsning hos værksted i Odense; printet kompressionspakke som reserve).
 - Størrelse: 500 × 816 (Fusion nu) eller 650 × 400 (2025-krav)?
 - Hjul + lejemekanisme er stort set færdigdesignet; resten af kroppen og sensorplacering mangler.
 

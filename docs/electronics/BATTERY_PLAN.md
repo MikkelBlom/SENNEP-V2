@@ -1,6 +1,6 @@
 # Batteriplan — 3S6P (18 × Samsung 35E)
 
-> Status: **UDKAST v1 (2026-10-12)**. Afventer Mikkels valg af forbindelsesmetode. Først når planen er godkendt, skrives den endelige trin-for-trin-guide.
+> Status: **UDKAST v2 (2026-10-12)**. Mikkel går efter **punktsvejsning hos et værksted i Odense** (§3a). Kompressionspakken (metode 2) er reserveløsning. Først når planen er godkendt, skrives den endelige trin-for-trin-guide.
 
 ## 1. Status: hvad vi ved
 
@@ -9,16 +9,16 @@
 | Celler | 20 × Samsung INR18650-35E, **nye og aldrig brugt** (købt maj 2025). Der skal bruges 18 → 2 i reserve | inventory + Mikkel | 3,6 V nom., 4,20 V ladespænding, 2,50 V cutoff, **maks. 8 A afladning**, maks. 1,5 A ladning pr. celle |
 | Holdere | 20 × "1×2-holder m. afstandsstykke" (kliks-plastik) | inventory | **Ingen metalkontakter.** De holder kun cellerne på plads |
 | Forbindelser | **Ingen.** Cellerne sidder bare i holderne, og der er hverken strip, lod eller svejs | Mikkel | Alle 36 celleender skal forbindes, ikke kun 2 serieled |
-| Nikkelstrip | Ren nikkel 0,15 × 27 mm "2H-19 mm" (ChatGPT-chat, maj 2025) | PROJECT_OVERVIEW §7b | **Ikke bekræftet**, at den findes, eller hvor meget der er. Mangler i inventory |
+| Nikkelstrip | Ren nikkel 0,15 × 27 mm "2H-19 mm" (købt maj 2025) | Mikkel | Findes, men stykkerne er **for små til at dække en række** → skal klippes og svejses sammen. Værkstedet bruger nok sin egen strip |
 | BMS | 2 × "3S 40 A BMS m. balance" (Bot'n Roll) | inventory | Præcis model ukendt. Kort af den type: 40 A kontinuert (kræver køling), ofte ~80 A startstrøm, passiv balance ~40–100 mA, kun ved fuld ladning |
 | Lader | 3S Li-ion-lader 12,6 V 2 A | inventory | Passende. 20 Ah / 2 A ≈ 10–11 t fra tom |
 | Kabel | 10 AWG silikone (3 × 2 m), 16 AWG (10 m), 22 AWG (50 m) | inventory | 10 AWG til hovedstrøm, 22 AWG til balanceledninger |
 | Stik | 2 × XT60-par | inventory | XT60 er godt til batteri ↔ robot og lader |
-| Sikringer | Blade-sikringer (180 stk sortiment), 10 × 5×20 mm glassikringsholder | inventory | **Ingen blade-holder fundet.** 5×20-holdere er typisk max ~10 A → ikke til hovedsikringen |
+| Sikringer | Blade-sikringer (180 stk sortiment) + **måske blade-holdere** i samme kasse, 10 × 5×20 mm glassikringsholder | inventory + Mikkel | Holderne skal findes, og deres rating tjekkes (står ofte på holderen/ledningen). 5×20-holdere er typisk max ~10 A → ikke til hovedsikringen |
 | Andet | Nødstop 40 mm + 40 A-relæ, INA219, voltmeter-display | inventory | |
 | Værktøj | **Fluke 83** (fremragende), loddestation 48 W (Puctec ZD-99), afbidertang | Mikkel | Ingen punktsvejser, ingen crimptang |
 
-**Ukendt / skal tjekkes:** findes nikkelstrippen, og hvor meget (meter)? Hvilken BMS-model er det (foto af printet med pads)? Står der størrelse på blade-sikringerne (mini/standard)? Er der lange bolte eller gevindstang (M4/M5, ~90–100 mm) i unbrakosættet? Er der fiskepapir-ringe?
+**Ukendt / skal tjekkes:** Hvilken BMS-model er det (foto af printet med pads)? Hvilke blade-holdere er der i kassen (mini/standard, ledningstykkelse)? Lange bolte: **nej** (påvirker kun metode 2). Fiskepapir: ukendt.
 
 ## 2. Elektriske tal
 
@@ -46,6 +46,31 @@ Ladning 2 A                    →  0,33 A pr. celle (meget skånsomt)
 | ✗ | Fjeder-batterikasser (1×N plastkasser) | Dårligt | Nej | Fjedrene kan typisk klare 2–3 A og bliver varme. For svage til motorer |
 
 **Ærlig vurdering:** Den hurtigste og sikreste vej er metode 1 via et værksted. Det koster sandsynligvis mindre end en svejser, og du slipper for selv at røre cellerne med varme. Metode 2 er "lav det nu med det, du har". Den kan fungere, men den kræver omhu og målinger. Den hører hjemme på en robot, der står meget og kører roligt, ikke på én, der kører hårdt over dørtrin.
+
+### 3a. Svejseservice i Odense (Mikkels valg)
+
+Fundet ved websøgning 2026-10-12. **Jeg kunne ikke åbne siderne selv** (netværksblokering), så adresse og ydelser er fra søgeresultater og skal bekræftes:
+
+| Sted | Hvad vi ved | Chance |
+|---|---|---|
+| **Fyns Batteri Service ApS**, Knullen 8, Odense S | Renoverer elcykelbatterier (= de punktsvejser 18650-pakker). Priser "fra 1.750 kr" gælder hel renovering inkl. celler, ikke svejsning af egne celler | Bedst. Ring og spørg |
+| Elcykelværksteder i Odense (fx via Handyhand) | Mange sender batterier videre i stedet for at svejse selv | Lav–middel |
+| Himex (elcykel-webshop, har batteriservice) | Placering ikke bekræftet | Ukendt |
+| SDU MakerSpace (Videnbyen) | Lodning, 3D-print, laser. Punktsvejser ikke nævnt. Kun for SDU-studerende | Kun hvis du er SDU-studerende |
+| Odense Bibliotek Makerspace | Maskinlisten kunne ikke hentes | Spørg |
+
+**Hvad du siger, når du ringer (forslag):**
+> "Jeg har 18 nye Samsung 35E-celler (18650), som jeg vil have punktsvejset til en 3S6P-pakke (12 V) til en robot. Cellerne er målt og sorteret, og de sidder i klik-holdere i den rigtige retning. Kan I punktsvejse nikkelstrip på (jeres strip eller min 0,15 mm rene nikkel), og evt. sætte balanceledninger på? Hvad koster det, og hvor lang tid tager det?"
+
+Spørg også: **ren nikkel eller forniklet stål?** (Kun ren nikkel. Forniklet stål har ~5× højere modstand og bliver varmt.) Tag ringe på + (fiskepapir) med, hvis de har det. **Tag gerne BMS'en med**, hvis de også vil montere den.
+
+Det er ikke sikkert, at de vil svejse kundens egne celler (ansvar). Siger alle nej → køb en punktsvejser (metode 1b) eller lav kompressionspakken (metode 2).
+
+**Forberedelse før værkstedet** (så de kun skal svejse):
+1. Mål og sortér cellerne (§6) → 3 grupper á 6 med ens gennemsnit.
+2. Klik pakken sammen præcis efter layoutet i §4 (G1 + op, G2 − op, G3 + op). **Tjek retningen af hver eneste celle to gange** — én vendt celle i en parallelgruppe = kortslutning i det øjeblik, strippen svejses på.
+3. Skriv "+ PAKKE" / "− PAKKE" og "G1/G2/G3" med tusch på holderne.
+4. Transportér pakken i en kasse uden metal; tape over enderne (malertape) så intet kan kortslutte dem.
 
 ### Lodning væk fra cellerne er OK
 Når nikkelstrippen først sidder på (svejset eller presset), må der gerne loddes **på stripens flapper, der stikker ud over pakkens kant (≥ 10 mm fra nærmeste celle)**: balanceledninger (22 AWG) og hovedledninger. Varmen går ind i strippen, ikke ind i cellen. Lodning på BMS-printet er også helt fint med 48 W. 10 AWG kan være tungt for 48 W. Brug den bredeste spids, fortin ledningen først, eller brug en M4-bolt + ringterminal.
@@ -83,19 +108,46 @@ Når nikkelstrippen først sidder på (svejset eller presset), må der gerne lod
 - Nogle kort skal "vækkes" første gang: P− giver 0 V, indtil laderen har været sat til et øjeblik.
 - Laderen lader gennem P+/P− (samme port som afladning). Balanceringen sker kun ved ~4,2 V og er svag → grupperne skal være matchet fra start (§6).
 
-## 6. Matching af celler (gøres FØR noget forbindes)
+## 6. Matching af celler — PRÆCIS sådan (gøres FØR noget forbindes)
 
-1. Nummerér alle 20 celler med tusch på folien (1–20).
-2. Efterse hver celle: revnet eller flænset folie, buler, rust, og om **isolationsringen ved +polen** sidder (det hvide/gennemsigtige papir rundt om + knappen). Enhver skade → cellen er reserve (vi har 2) eller skal have ny folie.
-3. Mål hver celles spænding med Fluke (DC V, 3 decimaler) og skriv det i et skema.
-4. Vurdér:
-   - Alle 3,0–4,2 V og spredning ≤ 0,05 V → fint, fortsæt.
-   - En celle < 2,5 V eller > 0,3 V fra de andre → tag den ud (reserve), og fortæl Claude.
-   - < 2,0 V → må **ikke** lades. Den kasseres (ikke i skraldespanden, men til batteri-indsamling).
-5. Fordel de 18 bedste celler på 3 grupper, så gruppernes gennemsnit er så ens som muligt (helst ±0,01 V).
-6. Celler, der parallelforbindes, må højst afvige ~0,05 V (så er udligningsstrømmen lille).
+Det her er risikofrit, så længe du følger punkt 0. Cellerne er ikke forbundet med hinanden, så du måler hver celle for sig. Det kan sagtens gøres, mens de sidder i klikholderne.
 
-Nye celler fra samme batch er typisk ens inden for få mV, så det ser lovende ud. Efter 17 måneders opbevaring regner jeg med ~3,4–3,6 V pr. celle. Det er et estimat, ikke målt.
+**0. Sikkerhed først**
+- Tag ur, ringe og armbånd af. Arbejd på et træbord/papir, ikke på metal, og fjern skruer, værktøj og krokodillenæb fra bordet.
+- **Fluke'ens ledninger: sort i COM, rød i V/Ω-bøsningen.** ALDRIG rød i "A"- eller "mA"-bøsningen: så er multimeteret en kortslutning, og cellen sender op til 10+ A gennem måleren (sikringen springer i bedste fald).
+- Drejeknappen på **V med lige streg (V⎓ / DC)**, ikke V~ (AC), og ikke Ω eller dioden.
+
+**1. Kend polerne**
+```
+   + ende: lille knap i midten, omgivet af en isolationsring
+           (det metalliske "skulder"-område rundt om ringen er − !)
+   − ende: helt flad bund
+```
+Isolationsringen ved + er det eneste, der adskiller + fra − på den ende. Er den væk eller revnet, er cellen "reserve".
+
+**2. Nummerér** cellerne 1–20 med tusch på folien eller på holderen.
+
+**3. Efterse hver celle** (vend den i lyset): revner eller flænger i plastfolien (især ved kanterne i begge ender), buler, rust eller misfarvning, mangler isolationsring. Notér "OK" eller hvad du ser.
+
+**4. Mål hver celle:**
+- Sort spids på den flade − ende, rød spids midt på + knappen. Hold dem stille, ~2 sek.
+- Aflæs med alle decimaler (fx `3.512`). Fluke 83 viser 3 decimaler i 4 V-området. Står der "AUTO", vælger den selv.
+- Viser den et minustegn (`-3.512`), har du byttet spidserne om. Det er ufarligt, skriv bare tallet uden minus.
+- Skriv tallet i skemaet:
+
+| Celle | Spænding (V) | Folie/ring OK? | Note |
+|---|---|---|---|
+| 1 | | | |
+| … | | | |
+| 20 | | | |
+
+**5. Send tallene til Claude.** Så laver jeg fordelingen. Grænserne jeg bruger:
+- Alle 3,0–4,2 V og spredning ≤ 0,05 V → fint.
+- En celle < 2,5 V eller > 0,3 V fra de andre → reserve.
+- < 2,0 V → må **ikke** lades, kasseres (batteri-indsamling, ikke skraldespanden).
+- Hver gruppe: celler inden for ~0,05 V af hinanden. Gruppernes gennemsnit så ens som muligt (helst ±0,01 V), fordi BMS'ens balancering er svag.
+
+Nye celler fra samme batch er typisk ens inden for få mV. Efter 17 måneders opbevaring regner jeg med ~3,4–3,6 V pr. celle. Det er et estimat, ikke målt.
 
 ## 7. Sikringer og hovedafbryder
 
@@ -115,7 +167,7 @@ Nye celler fra samme batch er typisk ens inden for få mV, så det ser lovende u
 
 | Ting | Hvorfor | Ca. pris | Nødvendig? |
 |---|---|---|---|
-| Inline blade-sikringsholder 10–12 AWG | Hovedsikring | 20–40 kr | **Ja**, for alle metoder |
+| Inline blade-sikringsholder 10–12 AWG | Hovedsikring | 20–40 kr | **Ja**, medmindre kassen med bilsikringer har en holder, der kan klare 30 A |
 | Fiskepapir-ringe 18650 (selvklæbende) | Ekstra isolering ved +polen | 20–40 kr | Ja ved metode 2, anbefalet ved 1 |
 | Nikkelstrip 0,15 mm ren nikkel (hvis den ikke findes) | Forbindelser | 40–80 kr | Hvis den mangler |
 | Svejseservice **eller** punktsvejser | Metode 1 | Service: ukendt (spørg). Svejser: ~200–600 kr | Metode 1 |
@@ -124,6 +176,8 @@ Nye celler fra samme batch er typisk ens inden for få mV, så det ser lovende u
 
 ## 10. Næste skridt
 
-1. **Nu, uden risiko:** nummerér, efterse og mål alle 20 celler (§6). Send tallene.
-2. Mikkel vælger metode (1 eller 2) → planen forfines.
-3. Endelig illustreret guide skrives først derefter.
+1. **Nu, uden risiko:** nummerér, efterse og mål alle 20 celler (§6). Send tallene → Claude fordeler dem i grupper.
+2. Ring til Fyns Batteri Service (§3a) — svarer de ja: pris, strip-type, og om de monterer BMS + balanceledninger.
+3. Find blade-sikringsholderne i bilsikringskassen, og tag et foto af BMS-printet (begge sider).
+4. Mål én motors viklingsmodstand (§2) → stall-strøm.
+5. Endelig illustreret guide (samling efter svejsning, BMS, sikring, første ladning) skrives, når 1–3 er afklaret.
