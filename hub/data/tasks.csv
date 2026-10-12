@@ -1,6 +1,6 @@
 id;title;area;status;who;priority;depends_on;note
-t01;Measure and inspect all 20 cells (before any welding);Battery;todo;Mikkel;high;;Step-by-step in docs/electronics/BATTERY_PLAN.md §6. Log the numbers in the Battery cells tab
-t02;Assign cells to 3 matched groups;Battery;todo;Claude;high;t01;Group means within ±0.01 V, cells within 0.05 V
+t01;Measure and inspect all 20 cells (before any welding);Battery;done;Mikkel;high;;Step-by-step in docs/electronics/BATTERY_PLAN.md §6. Log the numbers in the Battery cells tab
+t02;Assign cells to 3 matched groups;Battery;done;Claude;high;t01;No moves needed: all 20 within 3.534–3.536 V, group means 3.535/3.535/3.535 (2026-10-12). Cells 19–20 are spares
 t03;Call Fyns Batteri Service (Knullen 8, Odense S);Battery;todo;Mikkel;high;;Ask: yes/no, price, pure nickel (not nickel-plated steel), will they fit BMS + balance leads? Script in BATTERY_PLAN §3a
 t04;Find blade fuse holders in the car fuse kit (size + rating);Battery;todo;Mikkel;medium;;Main fuse needs 30 A
 t05;Photo of the BMS board, both sides;Battery;todo;Mikkel;medium;;Exact BMS model is unknown
@@ -21,3 +21,4 @@ t19;Check Pi 5 UART name on the Pi: ls -l /dev/serial* /dev/ttyAMA*;Firmware;tod
 t20;Start the PCB session again;PCB;blocked;Claude;low;t09;Needs the breadboard build tested first. Measure max board size, mounting holes and cable exits meanwhile
 t21;Resolve open concerns C1–C18;Docs;todo;Mikkel;medium;;ai-instructions/WORKING_NOTES.md
 t22;Print + test wheel v3.1, assembly ring, housing v2, frame joint test;Mechanics;doing;Mikkel;high;;See ai-instructions/FEATURES.md
+t23;Measure holder cell pitch (centre to centre) and nickel strip hole pitch with calipers;Battery;todo;Mikkel;high;;Plan assumes holders ~20.5–20.7 mm vs strip 19 mm: if they differ the strip must be cut per row. Tell the welder

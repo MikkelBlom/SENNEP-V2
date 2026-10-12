@@ -152,3 +152,4 @@
 **Decisions:** Battery plan v2 and breadboard plan v0.2 approved by Mikkel. Translate everything to English. Hub saves through Chrome folder access.
 **Open:** Q1 Arduino C++ vs Rust on the Mega (Mikkel reads the explanation first). Pi 5 RAM. Physical parts count (in the hub). C19–C23 in WORKING_NOTES.
 **Next:** Mikkel measures the 20 cells and calls the workshop; Claude makes the M1 wiring diagrams + build guide.
+- 2026-10-12 (cont. 5b): Mega language decided (Arduino C++ + IDE). Battery orientation fixed (black mark front-left; rows G1/G2/G3 front → back) and an interactive battery diagram added to the hub (top/bottom view, strip layer). Mikkel measured all 20 cells: 3.534–3.536 V, all wraps OK; group means equal within 0.001 V, so no cells need moving. **Next:** measure strip/holder pitch, call the welding shop, fuse holders, BMS photo, motor winding resistance.
