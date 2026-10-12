@@ -1,0 +1,3 @@
+/target
+*.ldr
+!tests/data/*.ldr
