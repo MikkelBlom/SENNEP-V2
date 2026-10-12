@@ -92,6 +92,8 @@ docs/
 
 ## 3. Inventory count
 
+> **Outcome 2026-10-12:** the CSV was translated to English and got `source` + `condition` columns (validated by the build script, filterable in `index.html`; the empty `order` column was dropped). Mikkel moved the physical count to the upcoming full consolidation session, where every part he has will be gone through. All rows stay `condition = unknown` until then. Gmail needed re-authentication, so the Pi 5 / LiDAR receipts were not searched again.
+
 **CSV changes:** two new columns after `antal`: `kilde` (`SENNEP` = bought for this project / `andet projekt` = already owned) and `stand` (`ok` / `brugt` / `defekt` / `ukendt`). `build_inventory.py` + template get a source filter and show both. Rows without a receipt get `butik` = `eget lager`. ❓ Column name: `kilde` (matches the Danish CSV) or `source` (as written in the task).
 
 **Count method:** one round per category group, in this order: boards → sensors → motors/drivers → power → connectors/switches → cables → hardware/screws → tools → consumables (+ UI/sound/light/passive along the way). Each round:

@@ -26,7 +26,8 @@ Status: ✅ done · 🔄 in progress · ⏳ waiting (on a print/test/Mikkel) · 
 ## Electronics and power
 | Feature | Status | Description | Date | Depends on | Blocked by |
 |---|---|---|---|---|---|
-| Parts list (`components/`) | 🔄 | Inventory + datasheets; count incl. parts from other projects | 2026-10-12 | — | — |
+| Parts list (`components/`) | ✅ | English inventory with `source` + `condition` columns, datasheets | 2026-10-12 | — | — |
+| Physical parts count | 📋 | Go through every part Mikkel has now, incl. other projects; set qty, source and condition; fill Pi 5 RAM/price + LiDAR price | 2026-10-12 | Parts list | Full consolidation session |
 | 3S6P battery series connections | 📋 | Connect the built groups using materials already owned (own workstream) | 2026-10-12 | — | Mikkel wary of soldering/welding cells |
 | Breadboard circuits | 📋 | Power tree, drivers and sensors on breadboard (own workstream) | 2026-10-12 | Parts count | — |
 | PCB | 📋 | Only after the breadboard works | 2026-10-12 | Breadboard circuits | — |

@@ -2,7 +2,7 @@ id;name;category;qty;source;condition;line_price;currency;dkk;store;date;chip;da
 arduino-mega;Arduino Mega 2560 R3 (clone);Compute;2;SENNEP V2;unknown;490;DKK;490.00;Ardustore;2024-05-14;ATmega2560;arduino-mega-2560.pdf;;Main MCU for the Pi link (Nano also used)
 arduino-nano;Arduino Nano clone, CH340, USB-C;Compute;2;SENNEP V2;unknown;7.48;GBP;64.85;Hobby Components;2025-04-18;ATmega328P + CH340;arduino-nano.pdf ch340.pdf;;Low-level jobs alongside the Mega. Needs the CH340 driver on Windows
 nano-terminal;Screw-terminal adapter for Arduino Nano;Compute;2;SENNEP V2;unknown;3.15;GBP;27.31;Hobby Components;2025-04-18;;;;
-raspberry-pi-5;Raspberry Pi 5;Compute;1;SENNEP V2;unknown;;;;unknown;2025-05;BCM2712;raspberry-pi-5.pdf;;No receipt. RAM size unknown. At Mikkel's parents (Oct 2026)
+raspberry-pi-5;Raspberry Pi 5;Compute;1;SENNEP V2;unknown;;;;unknown;2025-05;BCM2712;raspberry-pi-5.pdf;;No receipt. RAM 4 or 8 GB per Mikkel (unconfirmed: check the sticker or run free -h). At Mikkel's parents (Oct 2026)
 pi5-case;Aluminium case for Pi 5 with 2 fans (Waveshare 26086);Compute;1;SENNEP V2;unknown;9.40;EUR;70.12;Bot'n Roll;2025-05-01;;;;
 sd-32gb;microSDHC 32 GB Adata Class 10;Compute;1;SENNEP V2;unknown;4.50;EUR;33.57;Bot'n Roll;2025-05-01;;;;Pi OS installed May 2025 (user sennep)
 sd-16gb;SD card 16 GB Class 10 + adapter;Compute;1;SENNEP V2;unknown;50;DKK;50.00;Ardustore;2024-05-14;;;;
