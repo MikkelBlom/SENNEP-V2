@@ -12,7 +12,7 @@
 | Holders | 20 × "1×2 holder with spacer" (click-together plastic) | inventory `18650-holder` | **No metal contacts.** They only hold the cells in place |
 | Connections | **None.** The cells just sit in the holders. There is no strip, solder or weld | Mikkel | All 36 cell ends must be connected, not just 2 series links |
 | Nickel strip | Pure nickel 0.15 × 27 mm "2H-19 mm" (bought May 2025) | inventory `nickel-strip` + Mikkel | Exists, but the pieces are **too small to cover a row** → must be cut and welded together. The workshop will probably use its own strip |
-| BMS | 2 × "3S 40 A BMS with balancing" (Bot'n Roll) | inventory `bms-3s` | Exact model unknown. Boards of this type: 40 A continuous (needs cooling), often ~80 A inrush, passive balancing ~40–100 mA, only at full charge |
+| BMS | 2 × "3S 40 A BMS with balancing" (Bot'n Roll, product photo says **HW-288**) | inventory `bms-3s` | Listing: 40 A continuous, < 80 A start, charge 12.6–13.6 V / max 10 A, auto recovery, 60 × 41 × 3.4 mm; seller recommends a 10–100 µF non-polar cap (≥ 25 V) across each brushed motor. Boards of this type: 40 A continuous (needs cooling), often ~80 A inrush, passive balancing ~40–100 mA, only at full charge |
 | Charger | 3S Li-ion charger 12.6 V 2 A | inventory `charger-3s` | Suitable. 20 Ah / 2 A ≈ 10–11 h from empty |
 | Cable | 10 AWG silicone (3 × 2 m), 16 AWG (10 m), 22 AWG (50 m) | inventory `cable-10awg`, `cable-16awg`, `cable-22awg` | 10 AWG for main current, 22 AWG for balance leads |
 | Connectors | 2 × XT60 pairs | inventory `xt60` | XT60 is good for battery ↔ robot and charger |
@@ -97,7 +97,11 @@ Once the nickel strip is on (welded or pressed), you may solder **on the strip t
   strip C: covers G1 (6 cells)         → PACK − and BMS B−
   strip D: covers G2 and G3 (12 cells) → balance B2
 ```
-**To check:** that the strip's hole pitch matches the holders' cell pitch (the model says ~20.5–20.7 mm, "2H-19 mm" suggests 19 mm). If they do not match, the strip must be cut and laid as rows.
+**Strip types (2026-10-12):** Mikkel has **2P** and **1P** strip for integrated holders, 19 mm spacing. A 2P strip is a ladder: two continuous rails joined by rungs. It is meant to lie **across two rows** (one rail on each row's cell ends, the rungs bridging between them), which makes it exactly strip A (rows 1+2, top) and strip D (rows 2+3, bottom). 1P covers one row: strips B (row 3, top) and C (row 1, bottom). Weld spots go on the rails over each cell end; the small slits in the rails sit between the two spots of one cell.
+
+**To check:** the holder pitch (row to row and cell to cell, model says ~20.5–20.7 mm) against the strip's 19 mm. Row-to-row decides whether both 2P rails land on the cell ends; along the row, the rungs and slits drift a little per cell, which the welder can live with as long as the spots land on the cell ends.
+
+**Current in strips B and C (estimate, not measured):** a 1P rail (~8 × 0.15 mm pure nickel) carries roughly as much as ~0.3 mm² copper, i.e. a few amps without getting warm. Strips B and C collect the **whole pack current** towards the main leads, so ask the welder for a **double layer** on B and C and a tab for each 10 AWG lead (lead in the middle of the row rather than at one end). The rungs between rows only carry one cell's share (~1/6) and are fine.
 
 ## 5. BMS wiring (3S)
 
