@@ -1,6 +1,7 @@
-# SENNEP V2 — Elektronik, breadboard-version (plan v0.1)
+# SENNEP V2 — Elektronik, breadboard-version (plan v0.2)
 
-Status: **UDKAST — afventer Mikkels svar** (se §8). Ingen ledningsdiagrammer før planen er godkendt.
+Status: **KLAR TIL KONSOLIDERING** (2026-10-12). Mikkel samler de seks sessioners arbejde i en fælles session; derefter
+godkendes planen, og først da laves ledningsdiagrammer (SVG/KiCad). Ingen diagrammer endnu.
 Ejer: denne fil ejer *ledningerne* (strøm, stik, pins, niveauskift). Protokollen mellem Pi og Mega ejes af
 `PI_MEGA_LINK.md` (findes ikke endnu, 2026-10-12). Batteriets serieforbindelser er en separat opgave.
 
@@ -13,6 +14,20 @@ pinfordeling, samme strømtræ).
 
 ---
 
+## 0. Beslutninger og afgrænsning (Mikkel, 2026-10-12)
+
+- **Første milepæl (M1):** Pi 5 + Mega + 4 motorer med hjul + LiDAR. Megaen styrer motorerne, Pi'en er forbundet til
+  Megaen, Pi'en læser LiDAR'en. Alt andet (ToF, kant, GPS, IMU, NRF24, ESP-01 …) kommer efter M1.
+- **Byggestil:** strøm via Wago/skrueterminaler, signaler på breadboard + Dupont. Mikkel har breadboards, jumpere og et
+  modstandssæt. Ingen dioder ud over dem på indkøbslisterne. Fuld komponentliste kommer senere (separat opgave).
+- **Ikke denne sessions beslutning:** fysisk Pi↔Mega-forbindelse og protokol (link-sessionen) samt hvilke sensorer der
+  sidder på Pi vs. Mega (anden session). Mine forslag står i §2.5–2.6 som input til konsolideringen.
+- **Budget:** ikke fastlagt → §5 har *minimum* og *anbefalet* niveau.
+- **Strøm til test:** 12 V-adapter (strøm ukendt), multimeter og en **Zippy Compact 1000 mAh 3S 35C LiPo** (XT60, lader
+  HobbyKing B3AC). **Det er batteriet, der ødelagde V1's Mega og elektronik** → §2.8.
+
+---
+
 ## 1. Status: alle elektriske dele
 
 Kilde: `components/inventory.csv` + datablade. **Fed** = indgår i første version.
@@ -22,6 +37,7 @@ Kilde: `components/inventory.csv` + datablade. **Fed** = indgår i første versi
 | Del | Spænding | Strøm | Bemærk |
 |---|---|---|---|
 | **3S6P 18650 (Samsung 35E)** | 9,0–12,6 V (10,8 nom) | 8 A/celle maks → 48 A for pakken | ~20 Ah / ~220 Wh. **Serier ikke loddet endnu** |
+| **Test: Zippy Compact 1000 mAh 3S 35C LiPo** (ikke i inventory) | 9,0–12,6 V | 35 A kont., **ingen BMS** | Ødelagde V1. Kun til test, se §2.8 |
 | **3S 40 A BMS** (×2) | 3S | 40 A | Sidste forsvarslinje, ikke en sikring |
 | **XT60** (×2 par) | — | 60 A | Batteristik, polaritetssikret |
 | **Bilsikringer (blade), sortiment** | 32 V | 5–30 A (tjek hvilke værdier der er) | **Mangler holdere til blade-sikringer** |
@@ -125,7 +141,7 @@ motorernes reelle strøm under last ikke kendes.
 
 | Strækning | Strøm | Kabel | Sikring |
 |---|---|---|---|
-| Batteri → XT60 → hovedsikring → relæ → motorbus | ≤ 40 A | **10 AWG silikone** | **30 A** blade (hovedsikring, tæt på batteriet) |
+| Batteri → XT60 → hovedsikring → relæ → motorbus | ≤ 40 A | **10 AWG silikone** | **30 A** blade med 3S6P, **20 A** med test-LiPo'en (§2.8) — direkte ved XT60 |
 | Motorbus → hver BTS7960 (B+/B−) | ≤ 15 A | **16 AWG** | **15 A** blade pr. driver |
 | BTS7960 → motor | ≤ 15 A | **16 AWG**, snoet par | — |
 | Batteri (efter hovedsikring) → afbryder → bucks | ≤ 3 A | 16 AWG (22 AWG er nok elektrisk, men 16 er mere robust) | **5 A** |
@@ -175,7 +191,7 @@ Nødstoppet bryder **relæspolen**, ikke hovedstrømmen (dets rating er ukendt, 
 - Kendt svaghed: at åbne relæet under fuld last giver lysbue på kontakterne. Megaen kan ikke nå at slukke driverne først,
   fordi den først ser det bagefter. Accepteret i v1; på printet kan nødstoppets anden kontakt (hvis den findes) gå til Megaen.
 
-### 2.5 Hvem styrer hvad (forslag)
+### 2.5 Hvem styrer hvad (FORSLAG — besluttes i konsolideringen)
 
 Princip: **3,3 V-dele til Pi'en, 5 V-dele til Megaen** → næsten intet niveauskift.
 
@@ -184,7 +200,7 @@ Princip: **3,3 V-dele til Pi'en, 5 V-dele til Megaen** → næsten intet niveaus
 - **Mega (5 V):** 4× BTS7960, 8× ToF via TCA9548A, 4× kantsensorer, INA219, nødstop-/bussensor, NRF24 (manuel styring),
   evt. HC-SR04 og ESP-01. Megaen er sikkerhedslaget: den kan stoppe ved kant/ToF uden Pi'en.
 
-### 2.6 Niveauskift
+### 2.6 Niveauskift (følger af forslaget i 2.5)
 
 | Forbindelse | Retning | Løsning |
 |---|---|---|
@@ -238,6 +254,24 @@ USB-FET.
 
 (UART-overlay-pinnene for Pi 5 er fundet i sekundære kilder — tjekkes med `pinctrl` på den rigtige Pi.)
 
+### 2.8 Testbatteriet: Zippy Compact 1000 mAh 3S 35C (ingen BMS)
+
+Fakta: 11,1 V nom / 12,6 V fuld, 1 Ah ≈ 11 Wh (3S6P-pakken har 20× så meget). 35C = **35 A kontinuerligt**, og en
+kortslutning giver langt mere — der er ingen BMS, der slår fra. Det er sandsynligvis forklaringen på V1-skaden sammen
+med manglende beskyttelse (præcis årsag ukendt; typiske syndere er spidser fra motorer uden TVS/kondensatorer, 12 V på
+Megaens 5V-pin, eller en kortslutning uden sikring).
+
+Regler, så længe LiPo'en bruges:
+1. **Sikring direkte ved XT60-stikket** (< 10 cm ledning før sikringen): **20 A** i LiPo-perioden (30 A med 3S6P).
+2. **Aldrig under 3,5 V/celle under last (10,5 V), aldrig under 3,0 V/celle i hvile.** LiPo'en har ingen beskyttelse.
+   Minimum: en "LiPo-alarm" (summer på balancestikket). Megaen måler også bussen (A4) og stopper motorerne under 10,5 V.
+3. Kapacitet: Pi 5 + LiDAR + Mega alene ≈ 2–2,5 A → ~20–25 min. Med 4 motorer kørende kun **~5–10 min**. Derfor:
+4. **Bænk-tilstand med to kilder** (anbefalet til M1): logikgrenen (Pi + Mega + LiDAR) på 12 V-adapteren (skal kunne
+   ≥ 3 A — tjek mærkaten) og motorbussen på LiPo'en gennem sikring + relæ. De to kilder forbindes **kun i GND**
+   (stjernepunktet), aldrig på plus. Når 3S6P er klar, forsyner den begge grene, og adapteren fjernes.
+5. Oplad og opbevar i LiPo-pose; lad aldrig opladeren være uden opsyn. Opbevaringsspænding 3,8 V/celle.
+6. Første tilslutning altid med motorer frakoblet og et multimeter på bussen. Første motorstart uden hjul på gulvet.
+
 ---
 
 ## 3. Blokdiagram
@@ -281,25 +315,35 @@ USB-FET.
 
 ---
 
-## 5. Indkøbsliste (forslag, priser ca., AliExpress/Ardustore)
+## 5. Indkøb: minimum og anbefalet (til M1)
+
+Mikkel har breadboards, Dupont og modstande. Sikringsholdere har han måske. Priser er grove (AliExpress/Ardustore).
+
+**Minimum — uden disse bygges M1 ikke:**
 
 | Vare | Antal | ca. kr | Hvorfor |
 |---|---|---|---|
-| Sikringsboks 6-vejs til blade-sikringer m. minus-skinne | 1 | 60–100 | Fordeling + sikringer + stjernestel i én |
-| Inline blade-sikringsholder 10 AWG (hovedsikring) | 1–2 | 20 | 30 A tæt på batteriet |
-| 1N4007 / 1N5819 | 10 | 15 | Flyback på relæspolen |
-| TVS P6KE15A (eller SMBJ15A) | 5 | 20 | Motorbus |
-| Modstandssæt 1/4 W | 1 | 40 | Delere, pull-downs |
-| Elektrolyt 2200 µF 25 V | 4 | 30 | Ved driverne (hvis kittet ikke har dem) |
-| BSS138 level converter 4-kanal | 3 | 30 | Reserve + Pi-link + ESP |
-| USB-C-pigtail (han, 2 ledere) | 2 | 20 | Buck → Pi 5 |
-| Wago 221 sortiment | 1 | 80–120 | Strømfordeling uden lodning |
-| Krympeflex + kabelsko/ferruler | 1 | 50 | |
-| *Valgfrit:* INA226 + 50 A/75 mV shunt | 1 | 60 | Måle hele batteristrømmen (INA219 kan kun 3,2 A) |
-| *Valgfrit:* laboratorieforsyning 30 V/5 A | 1 | 400–600 | Sikker test af alt, før batteriet er færdigt |
-| **I alt (uden valgfrit)** | | **~370–450** | |
+| Blade-sikringsholder (inline, 10–12 AWG) | 1 | 20 | Hovedsikring ved XT60 (20 A LiPo / 30 A 3S6P) |
+| Blade-sikringsholder (inline, 16 AWG) *eller* lille sikringsboks | 4 + 1 | 40 | 15 A pr. driver + 5 A logik |
+| 1N4007 eller 1N5819 | 5 | 10 | Flyback over relæspolen |
+| TVS P6KE15A (gennemhul, passer i skrueterminal) | 2 | 15 | Motorbussen — mod V1-skaden |
+| Elektrolyt 1000–2200 µF / 25 V | 2–4 | 20 | Motorbussen (hvis kittet ikke har ≥ 1000 µF/25 V) |
+| LiPo-alarm (summer på balancestik) | 1 | 20 | Testbatteriet har ingen BMS |
+| Wago 221 (eller skrueklemmer) | 10–20 | 50 | Strømfordeling + stjernestel |
+| USB-C-pigtail, han | 1 | 15 | Buck → Pi 5 |
+| **I alt** | | **~190** | |
 
-Breadboards, Dupont-jumpere og multimeter tilføjes, hvis Mikkel ikke har dem.
+**Anbefalet — gør det sikrere og nemmere, og flytter direkte over på printet:**
+
+| Vare | ca. kr | Hvorfor |
+|---|---|---|
+| 6-vejs blade-sikringsboks med minus-skinne (i stedet for inline-holdere) | 80 | Fordeling, sikringer og stjernestel i én del |
+| 3× ekstra BSS138 level converter | 30 | Reserve + Pi-link (hvis GPIO) + ESP-01 |
+| Dedikeret 5 V/5 A+ buck til Pi 5 (hvis XL4015-modulet falder under 5,0 V ved belastningstest) | 60–100 | Pi 5 throttler under ~4,8 V |
+| INA226 + 50 A/75 mV shunt | 60 | Måle hele batteristrømmen (INA219 kan kun 3,2 A) |
+| Ferruler + krympetang, kabelsko, krympeflex | 100–150 | Pålidelige skrueterminaler på en robot, der ryster |
+| Laboratorieforsyning 30 V/5 A med strømgrænse | 400–600 | Sikker første tilslutning af alt (i stedet for LiPo'en) |
+| **I alt anbefalet (inkl. minimum)** | **~900–1200** | |
 
 ---
 
@@ -311,28 +355,36 @@ Hvis den opgave vælger noget andet fysisk, skal §2.6/§2.7 opdateres.
 
 ---
 
-## 7. Bygge- og testrækkefølge (skitse — detaljeres efter godkendelse)
+## 7. Bygge- og testrækkefølge for M1 (forslag — detaljeres med diagrammer efter godkendelse)
 
-1. **Strømtræ uden last** (laboratorieforsyning eller færdigt batteri): sikringer, afbryder, relæ + nødstop. Mål: relæet
-   klikker, nødstop bryder motorbussen, 0 V på bussen ved tryk.
-2. **Bucks justeres uden last**: 5,15 V (Pi), 5,00 V (logik), 3,3 V. Derefter dummy-last (fx 3 A) og mål rippel/fald.
-3. **Én BTS7960 + én motor** på bordet, Mega via USB: PWM-rampe, retning, IS-aflæsning, stallmåling (kort!).
-4. Alle fire drivere + fælles EN + motorbus-sensor; nødstop under kørsel.
-5. Pi 5 på sin buck (belastningstest, `vcgencmd get_throttled`), LiDAR, GPS, IMU/mag.
-6. Pi ↔ Mega-link (efter PI_MEGA_LINK).
-7. Megaens sensorer: TCA9548A + ToF, kantsensorer, INA219, NRF24.
+Ét delsystem ad gangen. Gå ikke videre, før målingen i højre kolonne er OK.
+
+| # | Byg | Mål / tjek før næste trin |
+|---|---|---|
+| 1 | XT60 → 20 A-sikring → Wago-fordeling, **ingen last**. Stjernepunkt på minus | Busspænding = batterispænding; ingen varme; polaritet rigtig på alle udtag |
+| 2 | Relæ + flyback-diode + nødstop (NC) i spolekredsen, TVS + elektrolyt på motorbussen | Relæ klikker ved strøm på; 0 V på motorbussen med nødstop trykket; korrekt igen når det drejes ud |
+| 3 | Logikgren: afbryder + 5 A-sikring → LM2596 (5,00 V) og 5 A-buck (5,15 V), **ingen last** | Justér spændingerne *før* noget tilsluttes. Derefter dummy-last (fx bilpære) → spændingen må ikke falde under 4,9 V |
+| 4 | Mega på LM2596'ens 5 V (5V-pin, ikke VIN). Ingen USB fra Pi endnu | Mega booter, blink-sketch, 5V-pin måler 4,95–5,05 V |
+| 5 | **Én BTS7960 + én motor**, hjul i luften: VCC/GND/RPWM/LPWM/EN/IS til Megaen, 15 A-sikring, 100 nF over motoren | Rampe 0→30 % begge retninger; IS-spænding ved kendt last; mål stallstrøm i **< 1 s** (ellers estimat) |
+| 6 | De tre andre drivere + motorer, fælles EN med 10 kΩ pull-down, A4-busdeler | Alle 4 drejer rigtig vej; nødstop under kørsel stopper alt; Megaen holder EN lav efter genstart, til den "armes" |
+| 7 | Pi 5 på 5 A-bucken via USB-C-pigtail (`usb_max_current_enable=1`) | `vcgencmd get_throttled` = `0x0` under stresstest; buck-spænding ved Pi'en ≥ 5,0 V |
+| 8 | LiDAR: 5 V fra LM2596, TX → Pi uart2 RX (GPIO5), PWM-ben i GND | Data på 230400 baud; fejlfri pakker mens motorerne kører (støjtest) |
+| 9 | Pi ↔ Mega efter `PI_MEGA_LINK.md` | Megaen stopper motorerne ved link-timeout |
+| 10 | Hjul på gulvet, kort kørsel | Busspænding ≥ 10,5 V under kørsel (LiPo), ingen varme i ledninger/sikringer |
 
 ---
 
-## 8. Åbne spørgsmål til Mikkel
+## 8. Til konsolideringen / stadig åbent
 
-1. Har du laboratorieforsyning / 12 V-adapter / multimeter? (Batteriet er ikke i serie endnu.)
-2. Hvad skal testes først?
-3. Pi ↔ Mega: USB-kabel eller UART på GPIO?
-4. Godkender du fordelingen 3,3 V-sensorer på Pi'en, 5 V-sensorer på Megaen?
-5. Hvordan vil du bygge: breadboard + Wago, eller lodde på protoboard med det samme?
-6. Hvad har du liggende, som ikke står på listen (breadboards, jumpere, modstande, krympetang, Wago, dioder)?
-7. Budget til manglende dele?
-8. Nødstoppet: ved du, om det har en NC-kontakt (og evt. en NO)?
-9. ESP-01 og HC-SR04: med i v1? (Pi 5 har selv WiFi; ToF + LiDAR dækker afstand, men ultralyd ser glas.)
-10. DS3231 droppes til fordel for Pi 5's egen RTC?
+Afklaret: testforsyning (LiPo + 12 V-adapter + multimeter), byggestil, M1-omfang, breadboards/jumpere/modstande haves.
+
+Åbent:
+1. **Pi ↔ Mega fysisk** (link-sessionen): USB anbefales (husk at afbryde USB-5 V), ellers UART0 ↔ Serial2 via BSS138.
+2. **Sensorfordeling** (anden session): forslag = 3,3 V-sensorer på Pi, 5 V-sensorer på Mega (§2.5).
+3. 12 V-adapterens strømrating — kan den bære logikgrenen (≥ 3 A)?
+4. Nødstoppets kontakter (NC? evt. ekstra NO?) — måles med multimeter.
+5. Har IBT-2-modulerne modstande på IS-benene? — måles (modstand IS → GND).
+6. Stallstrøm på motoren — måles i trin 5.
+7. Hvad sidder på 5 A-bucken (XL4015?) — og holder den 5,0 V ved 4 A?
+8. ESP-01, HC-SR04 og DS3231 i senere versioner? (Pi 5 har WiFi og RTC; ToF + LiDAR dækker afstand.)
+9. Har elektrolyt-kittet ≥ 1000 µF / 25 V?

@@ -32,6 +32,8 @@ Sidste prompt-retning: aflang rektangulær krop, lodrette flade sider flush med 
 - **Raspberry Pi** (højniveau: LiDAR, kamera, skærm, de fleste sensorer, Python fra bunden — INGEN ROS2).
 - **Arduino Nano** (motorstyring + sekundær kollisionsundgåelse, RF-override). Mega som plan B hvis pins slipper op.
 - Pi ↔ Nano via UART.
+- **Opdateret 2026-10-12:** Megaen (ikke Nano) styrer motorerne (4× BTS7960 = 8 PWM + 4 strømsense). Elektronikplanen ligger i `docs/electronics/BREADBOARD_PLAN.md`.
+- **Testbatteri:** Zippy Compact 1000 mAh 3S 35C LiPo uden BMS — det ødelagde V1's elektronik. Kun med sikring ved XT60 og LiPo-alarm.
 - Strøm: 3S Li-ion → sikring → nødstop (hovedafbryder) → 12 V direkte til motordrivere; buck-convertere → 5 V til logik. TVS/Schottky/kondensatorer pga. V1-skaden.
 
 ## 4. Krydstjek: kvitteringer
