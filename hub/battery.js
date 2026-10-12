@@ -3,8 +3,8 @@
 // Orientation convention (fixed, 2026-10-12): the block lies in front of you with the black mark at the
 // FRONT-LEFT corner of the top face. Columns 1–6 run left → right. Rows: front (marked) = G1, middle = G2,
 // back = G3. Slots: front 1–6, middle 7–12, back 13–18; "spare" = loose cell.
-// Bottom view = the block flipped front-over-back (like turning a page upward): left stays left,
-// the front row ends up at the back.
+// Bottom view: default is "see-through" (rows keep their places, as if looking through the block from above).
+// "Flipped" = the block turned front-over-back (like turning a page upward): left stays left, row 1 ends up at the back.
 "use strict";
 
 const BATT = {
@@ -41,10 +41,10 @@ function battMigrate(data) {
 
 function batteryDiagram(data, onChange) {
   const migrated = battMigrate(data);
-  let state = { side: "top", layer: false, sel: null };
+  let state = { side: "top", layer: false, flip: false, sel: null };
   try { Object.assign(state, JSON.parse(localStorage.hubBatt || "{}")); } catch {}
   state.sel = null;
-  const persist = () => { try { localStorage.hubBatt = JSON.stringify({ side: state.side, layer: state.layer }); } catch {} };
+  const persist = () => { try { localStorage.hubBatt = JSON.stringify({ side: state.side, layer: state.layer, flip: state.flip }); } catch {} };
 
   const el = document.createElement("div");
   el.className = "batt";
@@ -52,6 +52,7 @@ function batteryDiagram(data, onChange) {
     <div class="batt-bar">
       <div class="seg" data-k="side"><button data-v="top">Top view</button><button data-v="bottom">Bottom view</button></div>
       <label class="batt-toggle"><input type="checkbox" data-k="layer"> Show connections</label>
+      <label class="batt-toggle batt-flip"><input type="checkbox" data-k="flip"> As seen flipped over</label>
       <span class="hint batt-cap"></span>
     </div>
     <div class="batt-main">
@@ -63,6 +64,8 @@ function batteryDiagram(data, onChange) {
   el.querySelectorAll(".seg button").forEach(b => b.onclick = () => { state.side = b.dataset.v; persist(); draw(); });
   const layerBox = el.querySelector('[data-k="layer"]');
   layerBox.onchange = () => { state.layer = layerBox.checked; persist(); draw(); };
+  const flipBox = el.querySelector('[data-k="flip"]');
+  flipBox.onchange = () => { state.flip = flipBox.checked; persist(); draw(); };
 
   const cellIn = slot => data.rows.find(r => String(r.slot) === String(slot));
   const spares = () => data.rows.filter(r => !(parseInt(r.slot) >= 1 && parseInt(r.slot) <= 18));
@@ -80,9 +83,12 @@ function batteryDiagram(data, onChange) {
   function draw() {
     el.querySelectorAll(".seg button").forEach(b => b.classList.toggle("on", b.dataset.v === state.side));
     layerBox.checked = state.layer;
+    flipBox.checked = state.flip;
+    el.querySelector(".batt-flip").style.display = state.side === "bottom" ? "" : "none";
     el.querySelector(".batt-cap").textContent = state.side === "top"
       ? "Seen from above. Black mark front-left, nearest you."
-      : "Flipped front-over-back (like turning a page): left stays left, the marked row is now at the back.";
+      : state.flip ? "Block turned front-over-back (like a page): left stays left, row 1 is now at the back."
+      : "Underside, see-through: every row stays where it is in the top view.";
     svgBox.innerHTML = svg();
     svgBox.querySelectorAll("[data-cell]").forEach(g => g.addEventListener("click", () => select(g.dataset.cell)));
     sidePanel();
@@ -90,10 +96,10 @@ function batteryDiagram(data, onChange) {
   }
 
   function svg() {
-    const P = 84, R = 36, L = 150, T = 34, W = 6 * P + 24, H = 3 * P + 24;
-    const bottom = state.side === "bottom";
-    // SVG row order top→bottom. Top view: back, middle, front. Bottom view (flipped): front, middle, back.
-    const order = bottom ? [0, 1, 2] : [2, 1, 0];
+    const P = 84, R = 36, L = 180, T = 34, W = 6 * P + 24, H = 3 * P + 24;
+    const bottom = state.side === "bottom", flipped = bottom && state.flip;
+    // SVG row order top→bottom: back, middle, front — except the flipped bottom view: front, middle, back.
+    const order = flipped ? [0, 1, 2] : [2, 1, 0];
     const yOf = ri => T + 12 + order.indexOf(ri) * P + P / 2;
     const xOf = c => L + 12 + c * P + P / 2;
     let s = `<svg viewBox="0 0 ${L + W + 250} ${T + H + 140}" role="img" aria-label="Battery ${state.side} view">
@@ -109,8 +115,8 @@ function batteryDiagram(data, onChange) {
     // row labels
     for (const ri of [0, 1, 2]) {
       const r = BATT.rows[ri], pol = bottom ? (r.top === "+" ? "−" : "+") : r.top, m = rowMean(ri);
-      s += `<text x="${L - 14}" y="${yOf(ri) - 6}" text-anchor="end" class="b-row">${r.group} · ${r.name}</text>
-            <text x="${L - 14}" y="${yOf(ri) + 14}" text-anchor="end" class="b-sub">${pol} up${m ? ` · ⌀ ${m.mean.toFixed(3)} V` : ""}</text>`;
+      s += `<text x="${L - 14}" y="${yOf(ri) - 6}" text-anchor="end" class="b-row">Row ${ri + 1} · ${r.group}</text>
+            <text x="${L - 14}" y="${yOf(ri) + 14}" text-anchor="end" class="b-sub">${r.name} · ${pol} ${bottom ? "end" : "up"}${m ? ` · ⌀ ${m.mean.toFixed(3)} V` : ""}</text>`;
     }
     // cells
     for (const ri of [0, 1, 2]) {
@@ -132,8 +138,10 @@ function batteryDiagram(data, onChange) {
     // mark
     if (!bottom) s += `<path d="M${L} ${T + H - 34} v24 a10 10 0 0 0 10 10 h24" fill="none" stroke="#000" stroke-width="10" stroke-linecap="round"/>
         <text x="${L + 4}" y="${T + H + 22}" class="b-sub">◤ black mark</text>`;
-    else s += `<path d="M${L} ${T + 34} v-24 a10 10 0 0 1 10 -10 h24" fill="none" stroke="#000" stroke-width="6" stroke-dasharray="4 5"/>
+    else if (flipped) s += `<path d="M${L} ${T + 34} v-24 a10 10 0 0 1 10 -10 h24" fill="none" stroke="#000" stroke-width="6" stroke-dasharray="4 5"/>
         <text x="${L + 4}" y="${T - 10}" class="b-sub">mark is underneath here</text>`;
+    else s += `<path d="M${L} ${T + H - 34} v24 a10 10 0 0 0 10 10 h24" fill="none" stroke="#000" stroke-width="6" stroke-dasharray="4 5"/>
+        <text x="${L + 4}" y="${T + H + 22}" class="b-sub">◤ mark (on the top face)</text>`;
     // strips layer
     if (state.layer) {
       const strips = BATT.strips[state.side];
@@ -142,8 +150,10 @@ function batteryDiagram(data, onChange) {
         const ys = st.rows.map(yOf), y0 = Math.min(...ys) - P / 2 + 8, y1 = Math.max(...ys) + P / 2 - 8;
         const means = [0, 1, 2].map(rowMean);
         const expect = st.mult === 0 ? 0 : means.slice(0, st.mult).every(Boolean) ? means.slice(0, st.mult).reduce((a, m) => a + m.mean, 0) : null;
+        const col = { A: "#3b82c4", B: "#d64545", C: "#222", D: "#2e9d5b" }[st.id];
         s += `<rect x="${L + 10}" y="${y0}" width="${W - 20}" height="${y1 - y0}" rx="10" fill="url(#nickel)" opacity=".55" class="b-strip"/>
-          <rect x="${L + 10}" y="${y0}" width="${W - 20}" height="${y1 - y0}" rx="10" fill="none" stroke="#7c8288" stroke-width="2"/>`;
+          <rect x="${L + 10}" y="${y0}" width="${W - 20}" height="${y1 - y0}" rx="10" fill="none" stroke="${col}" stroke-width="4"/>
+          <text x="${L + 22}" y="${y0 + 18}" class="b-strip-id" fill="${col}">${st.id}</text>`;
         const ly = (y0 + y1) / 2, lx = L + W + 18;
         s += `<line x1="${L + W - 10}" y1="${ly}" x2="${lx + 4}" y2="${ly}" class="b-lead" />
           <circle cx="${L + W - 10}" cy="${ly}" r="5" fill="#d64545"/>
@@ -153,8 +163,9 @@ function batteryDiagram(data, onChange) {
       });
       s += `</g>`;
     }
+    if (state.layer) s += `<text x="${L + W / 2}" y="${T - 14}" text-anchor="middle" class="b-sub">Series path: PACK − → C → row 1 → A (top) → row 2 → D (bottom) → row 3 → B (top) → PACK +</text>`;
     // "you" marker
-    s += `<text x="${L + W / 2}" y="${T + H + 30}" text-anchor="middle" class="b-you">▼ ${bottom ? "back edge of the block (originally)" : "front edge · you sit here"}</text>`;
+    s += `<text x="${L + W / 2}" y="${T + H + 30}" text-anchor="middle" class="b-you">▼ ${flipped ? "back edge of the block (originally)" : "front edge · you sit here"}</text>`;
     // spares
     const sp = spares();
     if (sp.length) {
