@@ -23,3 +23,6 @@ gpttxt.txt
 botnroll.txt
 *.invoice.pdf
 /build/
+
+# Build outputs (Windows LiDAR binary etc.)
+*.exe

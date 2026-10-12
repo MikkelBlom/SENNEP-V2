@@ -264,3 +264,34 @@ back, otherwise the heading drifts ~4° in 11 minutes.
 3. Send `ZoneReport` over the Pi↔Mega link when it is built (`ObstacleSink`).
 4. Fuse the gyro (MPU-6050 via the Mega) into the prediction → robust in fast turns.
 5. Save/load map + localisation in a saved map; then moving objects.
+
+## 11. Walls, objects and movement (2026-10-12)
+
+Asked by Mikkel after the first real test: walls as solid lines (the old app's lines "jumped all over"),
+walls vs objects, and movement — not person recognition: "movement is enough", for collision paths, attention
+and as 360° backup for the camera that will follow people.
+
+**Why the old lines jumped:** they were fitted to each revolution and thrown away 0.1 s later. Now:
+- **Walls (`walls.rs`)** are fitted to the occupancy grid, which already averages hundreds of revolutions at
+  corrected poses. Every 0.5 s the known walls are re-fitted first (to the cells near them), then RANSAC finds new
+  ones in the rest. Ids persist; the line is smoothed, growth along the wall is taken at once, shrinking is
+  smoothed; corners are joined with hysteresis so they cannot flicker. Cells hugging a wall (the staircase of a
+  diagonal wall) belong to the wall. Everything else solid = **objects** (convex outlines).
+- **Movement (`motion.rs`)**: a point is moving if it lands in a cell the map has seen free many times
+  (≤ −40 log-odds ≈ 8 beams) with nothing solid within 10 cm. Moving points never become map hits. Points are
+  grouped (35 cm: two legs = one thing) and tracked with a constant-velocity Kalman filter per axis. A track is
+  shown after 3 detections **and 25 cm of travel**; unseen tracks keep predicting for 2 s ("lost").
+
+**Results:**
+| Test | Result |
+|---|---|
+| Mikkel's room (`lidar/recordings/2026-10-12_room_walkthrough.ldr`, LiDAR at chest height, he walks in at 11 s) | 0 false movers before; tracked in 80/80 scans while walking; one id the whole time; 0.5–1.0 m/s |
+| Same recording, walls after the first 5 s | worst end change 37 mm (one end cell), lines hold to mm |
+| Simulated robot driving 2 × 8.7 m, nobody there | 0 ghost movers in 639 scans (before the 25 cm rule: 13 % of scans, all at door frames) |
+| Simulated person, robot driving | 252/252 track positions within 30 cm of the person |
+| Simulated flat, walls | every wall point within 75 mm of a real wall; 30 of 47 m found (the rest not seen on the tour) |
+| Cost | walls ~0.5–1 ms per update (2 Hz); whole revolution 1.3–3.9 ms median on x86 |
+
+**Next (ideas, in the hub):** collision prediction (a mover's path vs the robot's planned path), hand-over
+with the AI camera (camera says "that is the person I follow", LiDAR keeps the track 360°), stopping "lost"
+predictions at walls, gyro in the odometry.

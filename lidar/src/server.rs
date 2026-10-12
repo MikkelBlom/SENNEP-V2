@@ -9,6 +9,10 @@
 //! 2 zones: u8 2, u8 n, u16 0, u32 stale mask, f64 t, n x u16 clearance_mm
 //! 3 tiles: u8 3, u8 0, u16 count, f32 res, f32 origin_x, f32 origin_y, u16 tile, u16 tiles_per_side,
 //!          count x (u16 tx, u16 ty, tile*tile i8 log-odds)
+//! 4 walls: u8 4, u8 0, u16 walls, u16 objects, u16 0,
+//!          walls x (u32 id, f32 ax, f32 ay, f32 bx, f32 by), objects x (u16 n, n x (f32 x, f32 y)) world frame
+//! 5 motion: u8 5, u8 0, u16 tracks, u16 points, u16 0, f64 t,
+//!          tracks x (u32 id, u8 flags (1 = coasting), u8 0, u16 points, f32 x, y, vx, vy), points x (f32 x, f32 y)
 //! Text frames carry JSON diagnostics once per second.
 
 use std::io::{self, Read, Write};
@@ -20,7 +24,9 @@ use std::time::Duration;
 use tungstenite::Message;
 
 use crate::grid::{Grid, TILE};
+use crate::motion::Tracker;
 use crate::pipeline::ScanResult;
+use crate::walls::WallMap;
 use crate::zones::ZoneReport;
 
 pub const INDEX_HTML: &str = include_str!("../web/index.html");
@@ -34,6 +40,10 @@ struct State {
     zones_version: u64,
     stats: Option<Arc<String>>,
     stats_version: u64,
+    walls: Option<Arc<Vec<u8>>>,
+    walls_version: u64,
+    motion: Option<Arc<Vec<u8>>>,
+    motion_version: u64,
     /// Encoded tile payloads and the version at which each last changed.
     tiles: Vec<Option<Arc<Vec<u8>>>>,
     tile_version: Vec<u64>,
@@ -120,6 +130,61 @@ impl Hub {
         });
     }
 
+    pub fn publish_walls(&self, wm: &WallMap) {
+        let walls = wm.output();
+        let mut b = Vec::with_capacity(8 + walls.len() * 20 + wm.objects.len() * 40);
+        b.extend_from_slice(&[4, 0]);
+        b.extend_from_slice(&(walls.len() as u16).to_le_bytes());
+        b.extend_from_slice(&(wm.objects.len() as u16).to_le_bytes());
+        b.extend_from_slice(&[0, 0]);
+        for w in &walls {
+            b.extend_from_slice(&w.id.to_le_bytes());
+            for v in [w.a.0, w.a.1, w.b.0, w.b.1] {
+                b.extend_from_slice(&v.to_le_bytes());
+            }
+        }
+        for o in &wm.objects {
+            b.extend_from_slice(&(o.hull.len() as u16).to_le_bytes());
+            for &(x, y) in &o.hull {
+                b.extend_from_slice(&x.to_le_bytes());
+                b.extend_from_slice(&y.to_le_bytes());
+            }
+        }
+        self.bump(|s, v| {
+            s.walls = Some(Arc::new(b));
+            s.walls_version = v;
+        });
+    }
+
+    /// Confirmed tracks + this scan's moving points.
+    pub fn publish_motion(&self, t: f64, tracker: &Tracker, moving: &[(f32, f32)]) {
+        let tracks: Vec<_> = tracker.tracks.iter().filter(|k| k.confirmed).collect();
+        let mut b = Vec::with_capacity(16 + tracks.len() * 24 + moving.len() * 8);
+        b.extend_from_slice(&[5, 0]);
+        b.extend_from_slice(&(tracks.len() as u16).to_le_bytes());
+        b.extend_from_slice(&(moving.len().min(u16::MAX as usize) as u16).to_le_bytes());
+        b.extend_from_slice(&[0, 0]);
+        b.extend_from_slice(&t.to_le_bytes());
+        for k in tracks {
+            b.extend_from_slice(&k.id.to_le_bytes());
+            b.push(k.coasting() as u8);
+            b.push(0);
+            b.extend_from_slice(&(k.points.min(u16::MAX as usize) as u16).to_le_bytes());
+            let ((x, y), (vx, vy)) = (k.pos(), k.vel());
+            for v in [x, y, vx, vy] {
+                b.extend_from_slice(&(v as f32).to_le_bytes());
+            }
+        }
+        for &(x, y) in moving.iter().take(u16::MAX as usize) {
+            b.extend_from_slice(&x.to_le_bytes());
+            b.extend_from_slice(&y.to_le_bytes());
+        }
+        self.bump(|s, v| {
+            s.motion = Some(Arc::new(b));
+            s.motion_version = v;
+        });
+    }
+
     /// Copies the grid's changed tiles. Call after each integrated scan.
     pub fn publish_grid(&self, g: &mut Grid) {
         let dirty = g.take_dirty();
@@ -155,6 +220,8 @@ impl Hub {
         self.bump(|s, _| {
             s.tiles.clear();
             s.tile_version.clear();
+            s.walls = None;
+            s.motion = None;
             s.epoch += 1;
         });
     }
@@ -212,10 +279,11 @@ fn viewer_loop(ws: &mut tungstenite::WebSocket<TcpStream>, hub: &Hub) -> io::Res
     let err = |e: tungstenite::Error| io::Error::other(e.to_string());
     let (mut seen, mut seen_scan, mut seen_zones, mut seen_stats, mut seen_tiles) =
         (0u64, 0u64, 0u64, 0u64, 0u64);
+    let (mut seen_walls, mut seen_motion) = (0u64, 0u64);
     let mut epoch = u64::MAX;
     loop {
         // Wait for anything new, then take only the newest of each kind.
-        let (scan, zones, stats, tiles) = {
+        let (scan, zones, stats, tiles, walls, motion) = {
             let mut s = hub.state.lock().unwrap();
             while s.version == seen {
                 let (g, timeout) = hub.cond.wait_timeout(s, Duration::from_millis(250)).unwrap();
@@ -228,7 +296,12 @@ fn viewer_loop(ws: &mut tungstenite::WebSocket<TcpStream>, hub: &Hub) -> io::Res
             if s.epoch != epoch {
                 epoch = s.epoch;
                 seen_tiles = 0;
+                seen_walls = 0;
             }
+            let walls = (s.walls_version > seen_walls).then(|| s.walls.clone()).flatten();
+            seen_walls = s.walls_version;
+            let motion = (s.motion_version > seen_motion).then(|| s.motion.clone()).flatten();
+            seen_motion = s.motion_version;
             let scan = (s.scan_version > seen_scan).then(|| s.scan.clone()).flatten();
             seen_scan = s.scan_version;
             let zones = (s.zones_version > seen_zones).then(|| s.zones.clone()).flatten();
@@ -260,8 +333,14 @@ fn viewer_loop(ws: &mut tungstenite::WebSocket<TcpStream>, hub: &Hub) -> io::Res
                 }
                 seen_tiles = s.version;
             }
-            (scan, zones, stats, tiles)
+            (scan, zones, stats, tiles, walls, motion)
         };
+        if let Some(w) = walls {
+            ws.send(Message::Binary(w.to_vec())).map_err(err)?;
+        }
+        if let Some(m) = motion {
+            ws.send(Message::Binary(m.to_vec())).map_err(err)?;
+        }
         if let Some(t) = tiles {
             ws.send(Message::Binary(t)).map_err(err)?;
         }

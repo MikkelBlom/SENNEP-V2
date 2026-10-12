@@ -65,6 +65,10 @@ impl Grid {
             .then_some((cx as usize, cy as usize))
     }
 
+    pub fn cell_index(&self, x: f32, y: f32) -> Option<(usize, usize)> {
+        self.cell_of(x, y)
+    }
+
     pub fn cell_center(&self, cx: usize, cy: usize) -> (f32, f32) {
         (
             self.origin.0 + (cx as f32 + 0.5) * self.cfg.resolution,
@@ -79,6 +83,18 @@ impl Grid {
     /// Integrates one scan. `points` are in the robot frame at `pose`; `sensor` is the LiDAR's
     /// position in the robot frame.
     pub fn integrate(&mut self, pose: &Pose2, sensor: (f32, f32), points: &[(f32, f32)]) {
+        self.integrate_masked(pose, sensor, points, &[]);
+    }
+
+    /// Like `integrate`, but points with `no_hit[i] == true` (moving things) only clear the space in
+    /// front of them and never become map hits, so a person walking past leaves no trace.
+    pub fn integrate_masked(
+        &mut self,
+        pose: &Pose2,
+        sensor: (f32, f32),
+        points: &[(f32, f32)],
+        no_hit: &[bool],
+    ) {
         self.sweep_id = self.sweep_id.wrapping_add(1).max(1);
         let (sx, sy) = pose.apply(sensor.0 as f64, sensor.1 as f64);
         let (sx, sy) = (sx as f32, sy as f32);
@@ -89,7 +105,10 @@ impl Grid {
             self.trace(sx, sy, wx as f32, wy as f32, res);
         }
         // Pass 2: hits win over misses from the same scan.
-        for &(px, py) in points {
+        for (k, &(px, py)) in points.iter().enumerate() {
+            if no_hit.get(k).copied().unwrap_or(false) {
+                continue;
+            }
             let r = (px - sensor.0).hypot(py - sensor.1);
             if r > self.cfg.max_hit_range {
                 continue;

@@ -11,7 +11,7 @@ t11;Decide: Arduino C++ or Rust on the Mega (Q1);Firmware;done;Mikkel;high;;Ardu
 t12;Rust Pi-side link (sennep-proto / sennep-link / sennep-cli) + Rust output in gen_msgs.py;Firmware;todo;Claude;medium;;Replaces tools/sennep_link.py (Python). PLAN_PI_MEGA_LINK §9 phase A
 t13;Mega firmware (Arduino C++): VL53L0X via TCA9548A, HC-SR04, NRF24 RC, EEPROM params, firmware/README.md;Firmware;todo;Claude;medium;;
 t14;Send LiDAR zone report (41 B) to the Mega over the link;Firmware;todo;Claude;medium;t12;ObstacleSink trait is ready in lidar/
-t15;Test the LiDAR stack with the real LiDAR on the PC (then on the Pi 5);LiDAR;todo;Mikkel;medium;;CP2102 adapter → PC. Run locally: cargo run --release -- --serial <port>. Check 0° direction
+t15;Test the LiDAR stack with the real LiDAR on the PC (then on the Pi 5);LiDAR;done;Mikkel;medium;;Works on the PC (Windows build). Recording: lidar/recordings/2026-10-12_room_walkthrough.ldr
 t16;Check Pi 5 RAM (printed next to the RAM chip);Parts;todo;Mikkel;low;;4 or 8 GB
 t17;Physical parts count (qty, source, condition, counted ✓);Parts;doing;Mikkel;high;;Parts and Tools tabs. Add anything missing with "+ Add row"
 t18;Find Pi 5 and LiDAR receipts (price);Parts;todo;Claude;low;;Gmail connector needed re-auth last time
@@ -20,3 +20,5 @@ t20;Start the PCB session again;PCB;blocked;Claude;low;t09;Needs the breadboard 
 t21;Resolve open concerns C1–C18;Docs;todo;Mikkel;medium;;ai-instructions/WORKING_NOTES.md
 t22;Print + test wheel v3.1, assembly ring, housing v2, frame joint test;Mechanics;doing;Mikkel;high;;See ai-instructions/FEATURES.md
 t23;Measure holder cell pitch (centre to centre) and nickel strip hole pitch with calipers;Battery;done;Mikkel;high;;Holder pitch 20.2 mm (measured), strip 19 mm. Use the 2P as is, spots on the rails; tell the welder
+t24;LiDAR: record a few more scenes (several people, a pet, carrying the LiDAR around a room);LiDAR;todo;Mikkel;medium;;sennep-lidar.exe --serial COMx --no-body --record lidar/recordings/<name>.ldr. They become test data
+t25;LiDAR on the Pi 5 (aarch64 build, by-id serial name, 7" screen kiosk);LiDAR;todo;both;medium;;lidar/README.md

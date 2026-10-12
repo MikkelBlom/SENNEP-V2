@@ -6,9 +6,11 @@ use std::time::Instant;
 use crate::filter::{filter_points, FilterConfig};
 use crate::geom::Pose2;
 use crate::grid::{Grid, GridConfig};
+use crate::motion::{classify, MotionConfig, Tracker};
 use crate::odom::{MatchInfo, OdomConfig, Odometry};
 use crate::protocol::{Packet, Parser, POINTS_PER_PACKET};
 use crate::scan::{Mount, Scan, ScanAssembler, ScanPoint};
+use crate::walls::{WallConfig, WallMap};
 use crate::zones::{ZoneConfig, ZoneReport, Zones};
 
 #[derive(Clone, Debug)]
@@ -18,6 +20,10 @@ pub struct PipelineConfig {
     pub zones: ZoneConfig,
     pub odom: OdomConfig,
     pub grid: Option<GridConfig>,
+    pub walls: WallConfig,
+    /// Seconds between wall updates (each costs ~0.5–1 ms).
+    pub wall_period: f64,
+    pub motion: MotionConfig,
     /// Zone reports per second (the Mega link budget is ~20–50 Hz).
     pub zone_rate_hz: f64,
 }
@@ -30,6 +36,9 @@ impl Default for PipelineConfig {
             zones: ZoneConfig::default(),
             odom: OdomConfig::default(),
             grid: Some(GridConfig::default()),
+            walls: WallConfig::default(),
+            wall_period: 0.5,
+            motion: MotionConfig::default(),
             zone_rate_hz: 50.0,
         }
     }
@@ -88,7 +97,11 @@ pub struct ScanResult {
     pub points: Vec<(f32, f32)>,
     /// All valid points of the revolution (robot frame), for display.
     pub raw: Vec<ScanPoint>,
-    /// Processing time for this scan (filter + odometry + grid), µs.
+    /// Moving points of this scan, world frame.
+    pub moving: Vec<(f32, f32)>,
+    /// The wall map was re-fitted during this scan.
+    pub walls_updated: bool,
+    /// Processing time for this scan (filter + odometry + motion + grid + walls), µs.
     pub proc_us: u32,
 }
 
@@ -104,6 +117,10 @@ pub struct Pipeline {
     pub zones: Zones,
     pub odom: Odometry,
     pub grid: Option<Grid>,
+    pub walls: WallMap,
+    pub tracker: Tracker,
+    moving_mask: Vec<bool>,
+    last_wall_t: f64,
     pkt_points: Vec<ScanPoint>,
     filtered: Vec<ScanPoint>,
     last_zone_t: f64,
@@ -120,6 +137,10 @@ impl Pipeline {
             zones: Zones::new(cfg.zones.clone()),
             odom: Odometry::new(cfg.odom.clone()),
             grid: cfg.grid.clone().map(Grid::new),
+            walls: WallMap::new(cfg.walls.clone()),
+            tracker: Tracker::new(cfg.motion.clone()),
+            moving_mask: Vec::with_capacity(600),
+            last_wall_t: f64::NEG_INFINITY,
             pkt_points: Vec::with_capacity(POINTS_PER_PACKET),
             filtered: Vec::with_capacity(600),
             last_zone_t: f64::NEG_INFINITY,
@@ -134,6 +155,9 @@ impl Pipeline {
     pub fn reset_map(&mut self) {
         self.odom = Odometry::new(self.cfg.odom.clone());
         self.grid = self.cfg.grid.clone().map(Grid::new);
+        self.walls = WallMap::new(self.cfg.walls.clone());
+        self.tracker.reset();
+        self.last_wall_t = f64::NEG_INFINITY;
     }
 
     pub fn feed(&mut self, bytes: &[u8], host_us: u64, out: &mut impl FnMut(Output)) {
@@ -186,9 +210,25 @@ impl Pipeline {
         filter_points(&scan.points, &self.cfg.filter, &mut self.filtered);
         let (pose, info) = self.odom.process(&self.filtered, scan.t_end);
         let points = self.odom.deskewed().to_vec();
+        let mut moving = Vec::new();
+        let mut walls_updated = false;
         if let Some(g) = &mut self.grid {
             if info.accepted {
-                g.integrate(&pose, (self.cfg.mount.x, self.cfg.mount.y), &points);
+                // Classify against the map *before* this scan is added, then keep movers out of it.
+                classify(g, &pose, &points, &self.cfg.motion, &mut self.moving_mask);
+                for (p, _) in points.iter().zip(&self.moving_mask).filter(|(_, m)| **m) {
+                    let (wx, wy) = pose.apply(p.0 as f64, p.1 as f64);
+                    moving.push((wx as f32, wy as f32));
+                }
+                self.tracker.update(scan.t_end, Some(&moving));
+                g.integrate_masked(&pose, (self.cfg.mount.x, self.cfg.mount.y), &points, &self.moving_mask);
+                if scan.t_end - self.last_wall_t >= self.cfg.wall_period {
+                    self.last_wall_t = scan.t_end;
+                    self.walls.update(g);
+                    walls_updated = true;
+                }
+            } else {
+                self.tracker.update(scan.t_end, None);
             }
         }
         self.scans += 1;
@@ -204,6 +244,8 @@ impl Pipeline {
             no_return: scan.no_return,
             points,
             raw: scan.points,
+            moving,
+            walls_updated,
             proc_us,
         }
     }

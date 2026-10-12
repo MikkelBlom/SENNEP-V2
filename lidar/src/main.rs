@@ -93,6 +93,8 @@ fn main() {
             hub.reset_map();
         }
         let mut grid_changed = false;
+        let mut walls_changed = false;
+        let mut motion: Option<(f64, Vec<(f32, f32)>)> = None;
         pipeline.feed(&buf, host_us, &mut |o| match o {
             Output::Zones(z) => hub.publish_zones(z),
             Output::Scan(r) => {
@@ -107,12 +109,20 @@ fn main() {
                     r.rev_hz,
                 );
                 grid_changed = true;
+                walls_changed |= r.walls_updated;
+                motion = Some((r.t_end, r.moving.clone()));
             }
         });
         if grid_changed {
             if let Some(g) = &mut pipeline.grid {
                 hub.publish_grid(g);
             }
+        }
+        if walls_changed {
+            hub.publish_walls(&pipeline.walls);
+        }
+        if let Some((t, moving)) = motion {
+            hub.publish_motion(t, &pipeline.tracker, &moving);
         }
         if last_stats.elapsed() >= Duration::from_secs(1) {
             last_stats = Instant::now();
@@ -127,6 +137,9 @@ fn main() {
                 "accepted": last.3,
                 "inliers": last.4,
                 "keyframes": pipeline.odom.keyframe_count(),
+                "walls": pipeline.walls.walls.len(),
+                "objects": pipeline.walls.objects.len(),
+                "movers": pipeline.tracker.tracks.iter().filter(|k| k.confirmed).count(),
                 "packet_us": [p50, p99, max],
                 "scan_us": [s50, s99, smax],
                 "cpu_pct": cpu.sample(),
