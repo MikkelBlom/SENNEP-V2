@@ -26,3 +26,5 @@ botnroll.txt
 
 # Build outputs (Windows LiDAR binary etc.)
 *.exe
+lidar/recordings/auto/
+recordings/auto/

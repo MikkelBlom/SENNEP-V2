@@ -9,6 +9,7 @@ pub mod motion;
 pub mod odom;
 pub mod pipeline;
 pub mod protocol;
+pub mod recording;
 pub mod scan;
 pub mod server;
 pub mod sim;

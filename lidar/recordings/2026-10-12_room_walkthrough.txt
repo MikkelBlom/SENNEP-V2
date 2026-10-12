@@ -1,0 +1,4 @@
+# Mikkel's living room, LiDAR at chest height on a table (times since the recording started)
+00:00.0  empty room
+00:11.3  walks in through the door, around the LiDAR
+00:20.4  walks out

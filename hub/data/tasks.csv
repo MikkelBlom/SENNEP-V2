@@ -20,5 +20,5 @@ t20;Start the PCB session again;PCB;blocked;Claude;low;t09;Needs the breadboard 
 t21;Resolve open concerns C1–C18;Docs;todo;Mikkel;medium;;ai-instructions/WORKING_NOTES.md
 t22;Print + test wheel v3.1, assembly ring, housing v2, frame joint test;Mechanics;doing;Mikkel;high;;See ai-instructions/FEATURES.md
 t23;Measure holder cell pitch (centre to centre) and nickel strip hole pitch with calipers;Battery;done;Mikkel;high;;Holder pitch 20.2 mm (measured), strip 19 mm. Use the 2P as is, spots on the rails; tell the welder
-t24;LiDAR: record a few more scenes (several people, a pet, carrying the LiDAR around a room);LiDAR;todo;Mikkel;medium;;sennep-lidar.exe --serial COMx --no-body --record lidar/recordings/<name>.ldr. They become test data
+t24;LiDAR: record more scenes (several people, a pet, carrying the LiDAR around);LiDAR;todo;Mikkel;medium;;Just run sennep-lidar.exe --serial COMx --no-body: it records by itself. Press Keep recording… on the page for the good ones, then commit lidar/recordings/
 t25;LiDAR on the Pi 5 (aarch64 build, by-id serial name, 7" screen kiosk);LiDAR;todo;both;medium;;lidar/README.md

@@ -1,0 +1,11 @@
+# Mikkel's living room, LiDAR at chest height on a table, not moving (times since the recording started)
+00:26.5  walks in
+00:31.5  stands still ~3 s, then moves around
+00:55.5  sprint to the far wall and back (peak ~3.4 m/s over 0.4 s)
+01:00.0  stands still for ~22 s
+01:23.5  sprint 2 (~3.3 m/s)
+01:30.6  bends down to fix the carpet: below the scan plane, gone for ~2.4 s
+01:33.0  back up, same track id
+01:40.0  sprint 3 (~3.6 m/s, the fastest)
+01:44.0  walks out
+# Also: something at (-1.40, 1.83) flickers the whole time (curtain/plant?), never shown as a mover.

@@ -58,6 +58,8 @@ pub struct Hub {
     cond: Condvar,
     pub reset_requested: AtomicBool,
     pub clients: AtomicUsize,
+    /// Text commands from the page for the main loop (recording control).
+    pub commands: Mutex<Vec<String>>,
 }
 
 impl Default for Hub {
@@ -73,6 +75,7 @@ impl Hub {
             cond: Condvar::new(),
             reset_requested: AtomicBool::new(false),
             clients: AtomicUsize::new(0),
+            commands: Mutex::new(Vec::new()),
         }
     }
 
@@ -356,6 +359,7 @@ fn viewer_loop(ws: &mut tungstenite::WebSocket<TcpStream>, hub: &Hub) -> io::Res
         // Commands from the page (non-blocking).
         match ws.read() {
             Ok(Message::Text(t)) if t.trim() == "reset" => hub.reset_requested.store(true, Ordering::Relaxed),
+            Ok(Message::Text(t)) if t.starts_with("rec:") => hub.commands.lock().unwrap().push(t.to_string()),
             Ok(Message::Close(_)) => return Ok(()),
             Ok(_) => {}
             Err(tungstenite::Error::Io(e))
