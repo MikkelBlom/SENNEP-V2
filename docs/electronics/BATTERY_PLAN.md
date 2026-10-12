@@ -99,7 +99,12 @@ Once the nickel strip is on (welded or pressed), you may solder **on the strip t
 ```
 **Strip types (2026-10-12):** Mikkel has **2P** and **1P** strip for integrated holders, 19 mm spacing. A 2P strip is a ladder: two continuous rails joined by rungs. It is meant to lie **across two rows** (one rail on each row's cell ends, the rungs bridging between them), which makes it exactly strip A (rows 1+2, top) and strip D (rows 2+3, bottom). 1P covers one row: strips B (row 3, top) and C (row 1, bottom). Weld spots go on the rails over each cell end; the small slits in the rails sit between the two spots of one cell.
 
-**To check:** the holder pitch (row to row and cell to cell, model says ~20.5–20.7 mm) against the strip's 19 mm. Row-to-row decides whether both 2P rails land on the cell ends; along the row, the rungs and slits drift a little per cell, which the welder can live with as long as the spots land on the cell ends.
+**Pitch (measured 2026-10-12, calipers):** a 1×2 holder is 20.2 × 40.4 mm, so the **cell pitch is 20.2 mm** in both directions (the holders tile edge to edge). The strip (AliExpress, made for one-piece "integrated" holders) is **19 mm**: 1.2 mm short per cell.
+- Across the rows this barely matters: each 2P rail lands ~0.6 mm off the cell centre.
+- Along a row it adds up: the rungs and slits drift 1.2 mm per cell, ~6 mm by cell 6. The rails are continuous, so every cell end still has rail on it; the welder puts the spots on the rail over each cell end and ignores where the slits fall.
+- **Do not cut the strip between cells** to re-space it: the continuous rails are what parallel the cells in a group.
+- Alternative if the welder dislikes it: plain nickel strip without holes (0.15 mm, ~8–10 mm wide), laid as rails + short bridges, or the welder's own strip.
+- Block size from the pitch: 6 × 20.2 = 121.2 mm by 3 × 20.2 = 60.6 mm. The Fusion "31 Battery Module" (122.7 × 62.1) is ~1.5 mm larger, i.e. the battery mount has a little play.
 
 **Current in strips B and C (estimate, not measured):** a 1P rail (~8 × 0.15 mm pure nickel) carries roughly as much as ~0.3 mm² copper, i.e. a few amps without getting warm. Strips B and C collect the **whole pack current** towards the main leads, so ask the welder for a **double layer** on B and C and a tab for each 10 AWG lead (lead in the middle of the row rather than at one end). The rungs between rows only carry one cell's share (~1/6) and are fine.
 

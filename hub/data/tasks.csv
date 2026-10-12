@@ -21,4 +21,4 @@ t19;Check Pi 5 UART name on the Pi: ls -l /dev/serial* /dev/ttyAMA*;Firmware;tod
 t20;Start the PCB session again;PCB;blocked;Claude;low;t09;Needs the breadboard build tested first. Measure max board size, mounting holes and cable exits meanwhile
 t21;Resolve open concerns C1–C18;Docs;todo;Mikkel;medium;;ai-instructions/WORKING_NOTES.md
 t22;Print + test wheel v3.1, assembly ring, housing v2, frame joint test;Mechanics;doing;Mikkel;high;;See ai-instructions/FEATURES.md
-t23;Measure holder cell pitch (centre to centre) and nickel strip hole pitch with calipers;Battery;todo;Mikkel;high;;Plan assumes holders ~20.5–20.7 mm vs strip 19 mm: if they differ the strip must be cut per row. Tell the welder
+t23;Measure holder cell pitch (centre to centre) and nickel strip hole pitch with calipers;Battery;done;Mikkel;high;;Holder pitch 20.2 mm (measured), strip 19 mm. Use the 2P as is, spots on the rails; tell the welder
