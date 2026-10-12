@@ -13,6 +13,7 @@ desktop.ini
 # secrets
 .env
 .env.*
+secrets.h
 # python
 __pycache__/
 *.pyc
