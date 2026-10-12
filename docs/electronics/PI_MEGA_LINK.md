@@ -1,6 +1,15 @@
 # Pi 5 ↔ Arduino Mega — forbindelse og protokol
 
-Status: **UDKAST, ikke godkendt af Mikkel endnu.** Oprettet 2026-10-12.
+Status: **UDKAST, ikke godkendt af Mikkel endnu.** Oprettet 2026-10-12. Runde 1 med Mikkel: se §0.
+
+## 0. Mikkels svar, runde 1 (2026-10-12)
+
+- **Mega eller Nano?** Uafklaret — "afhænger af designet". Han har (efter eget udsagn) **flere Uno, én Mega, nogle Nano og én Pi**.
+  ⚠ `inventory.csv` siger 2× Mega, 2× Nano, 0× Uno → komponentlisten skal rettes (dokumentations-opgaven).
+- **Forbindelse:** **UART nu, hvis materialerne findes**, ellers USB nu og UART senere. → Det kan lade sig gøre, se §2b.
+- **Sprog på Pi:** udskudt. Hælder til et hurtigt sprog (Rust/C), men det afhænger af resten af stakken (LiDAR-koden er ikke afklaret).
+- **"Instant":** robotten må ikke reagere langsomt, selvom der er rigtig mange input. Lav latens har høj prioritet. Hvordan behandlingen deles (flere Nano'er + Pi eller alt centralt) er åbent → §4b.
+- **Sensorfordeling:** "hvad der er bedst design", så længe latensen prioriteres → forslaget i §5 står.
 Ejerskab: dette dokument ejer protokol og software. Den fysiske ledningsføring (stik, niveauskift, stel, nødstop-kredsløb)
 ejes af kredsløbsopgaven i `docs/electronics/`. Hvor der står **[kredsløb]**, skal det afstemmes dér.
 
@@ -58,6 +67,28 @@ nul ekstra hardware, flash fra Pi'en uden tricks, og man kan teste Megaen med en
 betyder intet for en robot med 0,6 m/s topfart (1 ms = 0,6 mm). B er en god plan B, hvis USB viser sig ustabil
 ved motorstøj — protokollen er den samme, så skiftet er en kabel- og konfigurationsændring.
 
+## 2b. UART nu — har vi materialerne? Ja.
+
+| Behov | Har | Note |
+|---|---|---|
+| Niveauskift Mega TX (5 V) → Pi RX (3,3 V) | 4-kanal BSS138-converter | **Skal** niveauskiftes (Pi tåler ikke 5 V) |
+| Pi TX (3,3 V) → Mega RX | samme converter | Ville virke direkte (Mega læser høj fra ~3,0 V), men converteren giver margen |
+| Pi GPIO → Mega RESET (flash fra Pi) | 3. kanal på converteren | Valgfri. Ellers flashes Megaen med USB-kablet, når det er nødvendigt |
+| Ledninger, fælles GND | 22 AWG | **[kredsløb]**: kort, snoet par TX/RX/GND, væk fra motorledningerne |
+
+Konflikt: ESP-01 bruger også 2 kanaler. Med Pi-link (2) + reset (1) er der kun 1 tilbage → **ESP-01 droppes** (Pi'en har WiFi),
+eller den får sin egen modstandsdeler, når der er modstande (står ikke i komponentlisten).
+
+Baudrate over BSS138: converteren har 10 kΩ pull-ups, så kanterne er langsomme (~0,5 µs). **Start på 250000** (4 µs pr. bit);
+500000 (2 µs pr. bit) virker sandsynligvis også, men skal måles. 250000 er eksakt på 16 MHz og giver ~25 kB/s, dvs. 5× mere end beskedlisten bruger.
+
+Pi 5-siden: GPIO14/15 = UART0. Kilderne er uenige om navnet (`/dev/ttyAMA0` vs `ttyAMA10`; `ttyAMA10` er debug-stikket),
+og om det kræver `dtparam=uart0=on` eller `dtoverlay=uart0-pi5` i `config.txt`. Tjekkes på Pi'en med `ls -l /dev/serial* /dev/ttyAMA*`.
+Den serielle konsol (login-shell) skal være slået fra på porten (`raspi-config` → Interface → Serial: login nej, hardware ja).
+
+Gevinst ved UART frem for USB: ingen auto-reset ved port-åbning, ingen USB-enumerering der kan forsvinde ved motorstøj, ~1–2 ms mindre latens, og
+Megaens USB (Serial0) er fri til debug fra en laptop. Pris: 3 ledninger + converteren, og flash kræver enten reset-ledningen eller USB-kablet.
+
 ## 3. Protokol — muligheder
 
 | | Bedømmelse |
@@ -100,6 +131,69 @@ Belastning med beskedlisten nedenfor: ~5 kB/s af 50 kB/s = ~10 %.
 | Kantdetektor/ToF "for tæt" → motor stoppet | **< 5 ms, uden Pi'en** (Megaen gør det selv) |
 | Pi går død → motorer stoppet | **200 ms** (kommando-timeout) + rampe |
 | Nødstop trykket → motorstrøm væk | øjeblikkeligt, ren hardware (relæ) |
+
+### 4b. Hvor kommer latensen egentlig fra? (svar på "mange input, lav latens")
+
+Det, der gør en robot langsom, er sjældent linket eller programmeringssproget — det er **sensorernes egne målehastigheder**
+og **hvor beslutningen træffes**. Datamængden er lille: alle sensorer tilsammen giver ~5 kB/s, og en 16 MHz Mega
+klarer det med god margen, når intet i `loop()` blokerer.
+
+| Led i kæden | Typisk tid |
+|---|---|
+| VL53L0X ToF, én måling | ~20–33 ms (alle 8 måler parallelt i continuous mode) |
+| HC-SR04 ultralyd | ~6–25 ms pr. måling; 4 stk skal skiftes om (ellers hører de hinandens ekko) → ~60–100 ms pr. runde |
+| LiDAR LD19 | 10 Hz → 100 ms pr. omgang |
+| Kamera | 33 ms (30 fps) + inferens |
+| E18 kant-sensor | < 2 ms (digital) |
+| MPU-6050 | 1 ms (kan læses ved 1 kHz) |
+| **Linket Pi ↔ Mega (UART, 30 B)** | **~1 ms** |
+| Linux-jitter på Pi'en (Python *eller* Rust) | typisk < 1 ms, sjældent 5–10 ms |
+| Motor + gearkasse + robottens masse | 50–200 ms (fysik) |
+
+Konklusion: Rust/C på Pi'en sparer måske 1 ms i linket. Det **betyder noget** for tunge beregninger (LiDAR-scanmatching, kamera)
+— men det er en beslutning for LiDAR-stakken, ikke for linket. Den store gevinst kommer af en **refleks-arkitektur**:
+
+```
+ Refleks  (< 5 ms, Mega alene):    kant-sensor / ToF for tæt / nødstop / link tabt  → stop eller bloker retning
+ Kontrol  (10–20 ms, Mega):        kinematik, rampe, kursholdning med IMU
+ Taktik   (50–100 ms, Pi):         undvig forhindring ud fra LiDAR + ToF, følg sti
+ Strategi (> 100 ms, Pi):          kort, planlægning, UI, kamera
+```
+
+Hvert lag virker, selvom laget over er langsomt eller dødt. Derfor føles robotten hurtig.
+
+### 4c. Én Mega centralt eller flere Nano'er?
+
+Pin-optælling hvis **alt real-tid ligger på én Mega** (Megaen har 54 digitale + 16 analoge, 15 PWM, 4 UART, 6 eksterne interrupts + PCINT):
+
+| Funktion | Pins |
+|---|---|
+| 4× BTS7960: RPWM+LPWM | 8 PWM |
+| BTS7960 enable (fælles eller pr. driver) | 1–4 |
+| BTS7960 strømmåling IS (R_IS+L_IS samlet pr. driver) | 4 analog |
+| I²C-bus: MPU-6050, QMC5883L, INA219, TCA9548A → 8× VL53L0X | 2 |
+| 4× E18 kant | 4 |
+| 4× HC-SR04 (fælles trigger, 4 echo på PCINT) | 5 |
+| NRF24L01 (SPI + CE + CSN + IRQ) | 6 |
+| Nødstop-tilstand | 1 |
+| UART til Pi (+ reset) | 2 (+1 på Pi-siden) |
+| GPS / DFPlayer (hvis på Mega) | 2 + 2 |
+| Dock IR-modtagere (fx 4) | 4 |
+| Lys (forlygter/baglygter via MOSFET) | 2–4 PWM |
+| **I alt** | **~45–50 af 70** |
+
+Det passer på én Mega med plads til mere. En Nano (20 I/O) kan ikke klare det alene.
+
+| | **A: Én Mega (+ evt. 1 Nano til LED)** | **B: Mega + flere Nano-"sensornoder"** | **C: Nano'er direkte til Pi** |
+|---|---|---|---|
+| Latens sensor → motor | 1 hop, < 5 ms | 2 hop (Nano → Mega): +1–3 ms + poll | sensor → Pi → motor-Nano: 2 hop + Linux |
+| Refleks uden Pi | ja | ja | **nej** (beslutningen ligger på Pi'en) |
+| Kompleksitet | 1 firmware, 1 link | N firmwares, intern bus, flere fejlformer | N links på Pi'en |
+| Hvornår giver det mening | standard | hvis Megaen løber tør for CPU-tid eller pins | aldrig til sikkerhedskritiske ting |
+
+**Anbefaling: A.** Én Mega som real-tids-hub. En Nano/Uno kun til opgaver, der ødelægger timingen, primært WS2812B-strippen
+(slår interrupts fra). Uno = samme chip som Nano (ATmega328P), bare større print. Hvis Megaens `loop()`-tid senere bliver for høj
+(STATUS-beskeden måler maks. loop-tid), kan sensorer flyttes ud på en Nano — protokollen og Pi'en mærker ikke forskel.
 
 ### Failsafe-lag
 
@@ -156,7 +250,7 @@ Princip: **alt sikkerhedskritisk og alt med hård timing → Mega. Alt med tung 
 | WS2812B | **Spørgsmål** | Se faldgrube ovenfor |
 | DFPlayer | Pi (lyd kan Pi'en selv) eller Mega Serial3 | — |
 
-Megaens UART'er med USB-forslaget: Serial0 = Pi, Serial1 = ESP-01 (hvis med), Serial2 = GPS (hvis den alligevel skal på Mega), Serial3 = DFPlayer/fri.
+Megaens UART'er med UART-forslaget: Serial0 = USB (flash/debug), Serial1 = Pi, Serial2 = GPS (hvis den alligevel skal på Mega), Serial3 = DFPlayer/fri.
 
 ## 6. Beskedliste — udkast v0
 
@@ -214,10 +308,18 @@ Flash fra Pi'en: `arduino-cli compile --fqbn arduino:avr:mega firmware/sennep_me
 Test uden hardware (cloud): encode/decode-rundtur, CRC mod kendte testvektorer, tabte/indsatte/ændrede bytes midt i en strøm,
 fuzz med tilfældige bytes, og den samme C-kode (frame-laget) kompileret for host og kørt mod Python-implementationen.
 
-## 8. Anbefaling (kort)
+### Sprog-neutral kerne (fordi Pi-sproget er udskudt)
 
-**USB-kabel + egen binær protokol (COBS + CRC-16) med 500 kbaud, Python-bibliotek på Pi, kinematik og alle
-sikkerhedsfunktioner på Megaen, 200 ms kommando-watchdog med eksplicit ARM.** GPIO-UART er plan B med samme protokol.
+Frame-laget (COBS + CRC + beskedstrukturer) skrives som **portabel C99 uden Arduino-afhængigheder**. Samme fil bruges på Megaen,
+kompileres og testes på en PC, og kan kaldes fra C/C++ eller Rust (FFI) på Pi'en. Python bruges kun som uafhængig
+testmodpart (to separate implementationer, der skal give samme bytes = god test). Når Pi-sproget er valgt, skrives Pi-biblioteket
+oven på spec'en — enten som binding til C-kernen eller som egen implementation testet mod de samme testvektorer.
+
+## 8. Anbefaling (kort, opdateret efter runde 1)
+
+**Én Mega som real-tids-hub (refleks- og kontrollag) ↔ Pi over GPIO-UART (Mega Serial1, BSS138, 250 kbaud, evt. 500k) med egen
+binær protokol (COBS + CRC-16), 200 ms kommando-watchdog med eksplicit ARM, og en sprog-neutral C-kerne.** USB-kablet bruges
+til flash/debug og er plan B for linket. ESP-01 droppes. WS2812B på en Nano/Uno.
 MAVLink er et rimeligt alternativ, hvis I senere vil bruge eksisterende værktøjer — men det er mere maskineri, end robotten har brug for nu.
 
 ## Kilder
