@@ -21,3 +21,4 @@ __pycache__/
 gpttxt.txt
 botnroll.txt
 *.invoice.pdf
+/build/
