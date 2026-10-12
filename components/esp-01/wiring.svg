@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 560" font-family="Segoe UI, system-ui, sans-serif" font-size="13">
+  <title>ESP-01 til Arduino Mega: forbindelser</title>
+  <style>
+    .bg { fill: #f6f5f1; }
+    .box { fill: #ffffff; stroke: #2a2a28; stroke-width: 1.5; }
+    .esp { fill: #1f2a44; stroke: #1f2a44; }
+    .t { fill: #1c1c1a; }
+    .m { fill: #6b6a64; font-size: 12px; }
+    .h { font-weight: 700; font-size: 15px; fill: #1c1c1a; }
+    .w { fill: #ffffff; }
+    .pin { fill: #2a2a28; }
+    .v5 { stroke: #c62828; stroke-width: 2.5; fill: none; }
+    .v33 { stroke: #e08a00; stroke-width: 2.5; fill: none; }
+    .sig1 { stroke: #1565c0; stroke-width: 2.5; fill: none; }
+    .sig2 { stroke: #2e7d32; stroke-width: 2.5; fill: none; }
+    .gnd { stroke: #2a2a28; stroke-width: 2; fill: none; }
+    .nc { stroke: #9a998f; stroke-width: 1.5; stroke-dasharray: 4 3; fill: none; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #161615; } .box { fill: #1f1f1d; stroke: #cfcec8; }
+      .t, .h { fill: #ecebe6; } .m { fill: #9a998f; } .pin { fill: #cfcec8; } .gnd { stroke: #cfcec8; }
+      .esp { fill: #2b3a5e; stroke: #4a5f8f; }
+    }
+  </style>
+  <rect class="bg" width="920" height="560"/>
+
+  <!-- Arduino Mega -->
+  <rect class="box" x="20" y="60" width="170" height="330" rx="8"/>
+  <text class="h" x="35" y="88">Arduino Mega</text>
+  <text class="t" x="125" y="114" text-anchor="end">5V</text>
+  <text class="t" x="125" y="164" text-anchor="end">GND</text>
+  <text class="t" x="125" y="304" text-anchor="end">TX1 (pin 18)</text>
+  <text class="t" x="125" y="349" text-anchor="end">RX1 (pin 19)</text>
+  <circle class="pin" cx="190" cy="110" r="4"/><circle class="pin" cx="190" cy="160" r="4"/>
+  <circle class="pin" cx="190" cy="300" r="4"/><circle class="pin" cx="190" cy="345" r="4"/>
+
+  <!-- LD1117V33 -->
+  <rect class="box" x="300" y="80" width="150" height="70" rx="6"/>
+  <text class="h" x="375" y="106" text-anchor="middle">LD1117V33</text>
+  <text class="m" x="375" y="124" text-anchor="middle">5 V → 3,3 V, 800 mA</text>
+  <text class="m" x="308" y="142">IN (ben 3)</text>
+  <text class="m" x="442" y="142" text-anchor="end">OUT (ben 2)</text>
+  <text class="m" x="392" y="172">GND (ben 1)</text>
+  <circle class="pin" cx="300" cy="110" r="4"/><circle class="pin" cx="450" cy="110" r="4"/><circle class="pin" cx="375" cy="150" r="4"/>
+  <text class="m" x="300" y="62">10 µF fra IN og OUT til GND (påkrævet for stabilitet)</text>
+
+  <!-- Level converter -->
+  <rect class="box" x="300" y="215" width="200" height="160" rx="6"/>
+  <text class="h" x="400" y="236" text-anchor="middle">Level converter</text>
+  <text class="t" x="310" y="264">HV</text><text class="t" x="490" y="264" text-anchor="end">LV</text>
+  <text class="t" x="310" y="304">HV1</text><text class="t" x="490" y="304" text-anchor="end">LV1</text>
+  <text class="t" x="310" y="349">HV2</text><text class="t" x="490" y="349" text-anchor="end">LV2</text>
+  <text class="m" x="400" y="284" text-anchor="middle">GND (begge sider)</text>
+  <circle class="pin" cx="300" cy="260" r="4"/><circle class="pin" cx="500" cy="260" r="4"/>
+  <circle class="pin" cx="300" cy="300" r="4"/><circle class="pin" cx="500" cy="300" r="4"/>
+  <circle class="pin" cx="300" cy="345" r="4"/><circle class="pin" cx="500" cy="345" r="4"/>
+  <circle class="pin" cx="400" cy="375" r="4"/>
+
+  <!-- ESP-01 -->
+  <rect class="esp" x="650" y="40" width="240" height="350" rx="8"/>
+  <path d="M668 52 h40 v8 h-30 v8 h30 v8 h-30 v8 h40" stroke="#d9b44a" stroke-width="3" fill="none"/>
+  <text class="w" x="870" y="88" text-anchor="end" font-weight="700" font-size="15">ESP-01</text>
+  <text class="w" x="870" y="106" text-anchor="end" font-size="12" opacity=".8">ESP8266, KUN 3,3 V</text>
+  <text class="w" x="664" y="114">VCC</text>
+  <text class="w" x="664" y="139">EN (CH_PD)</text>
+  <text class="w" x="664" y="164">GND</text>
+  <text class="w" x="664" y="204">RST</text>
+  <text class="w" x="664" y="229">GPIO0</text>
+  <text class="w" x="664" y="254">GPIO2</text>
+  <text class="w" x="664" y="304">RX</text>
+  <text class="w" x="664" y="349">TX</text>
+  <circle fill="#d9b44a" cx="650" cy="110" r="4"/><circle fill="#d9b44a" cx="650" cy="135" r="4"/>
+  <circle fill="#d9b44a" cx="650" cy="160" r="4"/><circle fill="#d9b44a" cx="650" cy="200" r="4"/>
+  <circle fill="#d9b44a" cx="650" cy="225" r="4"/><circle fill="#d9b44a" cx="650" cy="250" r="4"/>
+  <circle fill="#d9b44a" cx="650" cy="300" r="4"/><circle fill="#d9b44a" cx="650" cy="345" r="4"/>
+
+  <!-- Header map -->
+  <g transform="translate(756 210)">
+    <text class="w" x="54" y="-6" text-anchor="middle" font-size="11" opacity=".8">Stiftrække (komponentside)</text>
+    <g font-size="11" text-anchor="middle">
+      <rect x="0" y="0" width="27" height="20" fill="none" stroke="#d9b44a"/><text class="w" x="13.5" y="14">GND</text>
+      <rect x="27" y="0" width="27" height="20" fill="none" stroke="#d9b44a"/><text class="w" x="40.5" y="14">IO2</text>
+      <rect x="54" y="0" width="27" height="20" fill="none" stroke="#d9b44a"/><text class="w" x="67.5" y="14">IO0</text>
+      <rect x="81" y="0" width="27" height="20" fill="none" stroke="#d9b44a"/><text class="w" x="94.5" y="14">RX</text>
+      <rect x="0" y="20" width="27" height="20" fill="none" stroke="#d9b44a"/><text class="w" x="13.5" y="34">TX</text>
+      <rect x="27" y="20" width="27" height="20" fill="none" stroke="#d9b44a"/><text class="w" x="40.5" y="34">EN</text>
+      <rect x="54" y="20" width="27" height="20" fill="none" stroke="#d9b44a"/><text class="w" x="67.5" y="34">RST</text>
+      <rect x="81" y="20" width="27" height="20" fill="none" stroke="#d9b44a"/><text class="w" x="94.5" y="34">VCC</text>
+    </g>
+    <text class="w" x="54" y="56" text-anchor="middle" font-size="11" opacity=".8">GND/VCC: modsatte hjørner</text>
+  </g>
+
+  <!-- 5 V -->
+  <path class="v5" d="M190 110 H300"/>
+  <path class="v5" d="M240 110 V260 H300"/>
+  <!-- 3.3 V -->
+  <path class="v33" d="M450 110 H650"/>
+  <path class="v33" d="M610 110 V135 H650"/>
+  <path class="v33" d="M570 110 V260 H500"/>
+  <!-- Signals -->
+  <path class="sig1" d="M190 300 H300"/><path class="sig1" d="M500 300 H650"/>
+  <path class="sig2" d="M190 345 H300"/><path class="sig2" d="M500 345 H650"/>
+  <!-- Not connected -->
+  <path class="nc" d="M650 200 H620"/><path class="nc" d="M650 225 H620"/><path class="nc" d="M650 250 H620"/>
+  <text class="m" x="614" y="229" text-anchor="end">ikke forbundet</text>
+
+  <!-- Grounds: one symbol per pin; all of them are the same net -->
+  <path class="gnd" d="M190 160 H215 v14 M206 174 h18 M209 178 h12 M212 182 h6"/>
+  <path class="gnd" d="M375 150 v24 M366 174 h18 M369 178 h12 M372 182 h6"/>
+  <path class="gnd" d="M400 375 v14 M391 389 h18 M394 393 h12 M397 397 h6"/>
+  <path class="gnd" d="M650 160 H628 v14 M619 174 h18 M622 178 h12 M625 182 h6"/>
+  <text class="m" x="400" y="430" text-anchor="middle">Alle ⏚ er samme GND: Mega, regulator, level converter og ESP-01 skal have fælles stel.</text>
+
+  <!-- Legend -->
+  <g transform="translate(20 490)" class="m">
+    <path class="v5" d="M0 0 h26"/><text x="32" y="4">5 V</text>
+    <path class="v33" d="M80 0 h26"/><text x="112" y="4">3,3 V</text>
+    <path class="sig1" d="M175 0 h26"/><text x="207" y="4">Mega TX1 → ESP RX</text>
+    <path class="sig2" d="M340 0 h26"/><text x="372" y="4">ESP TX → Mega RX1</text>
+    <path class="gnd" d="M505 0 h26"/><text x="537" y="4">GND (fælles)</text>
+    <text x="0" y="30">+ 100–470 µF elektrolyt tæt på ESP'ens VCC/GND (fra elektrolyt-kittet) mod spændingsfald ved WiFi-spidser på ~300 mA.</text>
+  </g>
+</svg>

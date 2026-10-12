@@ -1,0 +1,413 @@
+<title>SENNEP V2 Skelet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column of drafting sheets; drawings break wider than the text column. */
+:root{
+  --paper:#f6f4ec; --sheet:#fffdf7; --ink:#23241f; --muted:#6b6a5f; --line:#c9c5b4;
+  --mustard:#b8860b; --mustard-soft:#f1e3b4; --steel:#4f6b7a; --steel-soft:#dbe5ea;
+  --warn:#b4471f; --warn-soft:#f6ddd2; --ok:#3f7a43;
+  --wheel:#d9c27a; --part:#e6e1cf; --motor:#9aa3a8;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#1b1c18; --sheet:#22231e; --ink:#e9e6da; --muted:#a19f92; --line:#46463d;
+  --mustard:#e0b43c; --mustard-soft:#4a3d17; --steel:#8fb3c6; --steel-soft:#24343c;
+  --warn:#f08a5d; --warn-soft:#4a2618; --ok:#86c38a;
+  --wheel:#7d6a2c; --part:#3a3a32; --motor:#5d666b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#1b1c18; --sheet:#22231e; --ink:#e9e6da; --muted:#a19f92; --line:#46463d;
+  --mustard:#e0b43c; --mustard-soft:#4a3d17; --steel:#8fb3c6; --steel-soft:#24343c;
+  --warn:#f08a5d; --warn-soft:#4a2618; --ok:#86c38a;
+  --wheel:#7d6a2c; --part:#3a3a32; --motor:#5d666b; color-scheme:dark}
+body{background:var(--paper);color:var(--ink);font:15px/1.6 var(--f-body)}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px;padding-block:28px 64px}
+.col{max-width:68ch}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:2.4rem;font-weight:700;letter-spacing:.01em}
+h2{font-size:1.55rem;font-weight:600;margin-top:2.6rem;margin-bottom:.6rem}
+h3{font-size:1.15rem;font-weight:600;margin-top:1.4rem;margin-bottom:.3rem}
+p{margin:.5rem 0}
+.eyebrow{font-family:var(--f-mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:1.05rem;color:var(--ink);margin-top:.8rem}
+.titleblock{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:14px;font-family:var(--f-mono);font-size:.78rem;color:var(--muted);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding-block:8px}
+.titleblock b{color:var(--ink);font-weight:500}
+.sheet{background:var(--sheet);border:1px solid var(--line);margin-top:1rem;padding:12px;overflow-x:auto}
+.sheet svg{display:block;width:100%;height:auto;min-width:560px}
+.caption{font-size:.85rem;color:var(--muted);margin-top:.5rem}
+.callout{border-left:4px solid var(--warn);background:var(--warn-soft);padding:12px 16px;margin:1rem 0}
+.callout.info{border-color:var(--mustard);background:var(--mustard-soft)}
+.callout h3{margin-top:0}
+.tablewrap{overflow-x:auto;margin-top:.6rem}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-display);font-weight:600;font-size:.95rem;letter-spacing:.02em}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:.85rem;white-space:nowrap}
+code,.mono{font-family:var(--f-mono);font-size:.85em}
+.bad{color:var(--warn);font-weight:600}.good{color:var(--ok);font-weight:600}
+.path{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:.8rem 0;font-size:.88rem}
+.path span{background:var(--sheet);border:1px solid var(--line);padding:4px 10px}
+.path i{color:var(--muted);font-style:normal}
+.path span.t{border-color:var(--steel);color:var(--steel)}
+ol,ul{padding-left:1.3rem}li{margin:.25rem 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:1rem}
+.grid2>div{min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.8rem;color:var(--muted);margin-top:.5rem}
+.sw{display:inline-block;width:12px;height:12px;border:1px solid var(--ink);vertical-align:-2px;margin-right:5px}
+/* svg classes */
+svg text{font-family:var(--f-mono);fill:var(--ink)}
+svg .lbl{font-family:var(--f-display);font-weight:600}
+svg .mut{fill:var(--muted)}
+.s-out{fill:none;stroke:var(--muted);stroke-dasharray:6 4;stroke-width:1.2}
+.s-wheel{fill:var(--wheel);stroke:var(--ink);stroke-width:.8}
+.s-pod{fill:var(--mustard-soft);stroke:var(--mustard);stroke-width:1.4}
+.s-part{fill:var(--part);stroke:var(--ink);stroke-width:.8}
+.s-motor{fill:var(--motor);stroke:var(--ink);stroke-width:.8}
+.s-steel{fill:var(--steel-soft);stroke:var(--steel);stroke-width:.9}
+.s-ghost{fill:none;stroke:var(--steel);stroke-dasharray:4 3;stroke-width:.9}
+.s-hid{fill:none;stroke:var(--muted);stroke-dasharray:3 2;stroke-width:.7}
+.s-warn{fill:none;stroke:var(--warn);stroke-width:1.4}
+.s-dim{stroke:var(--muted);stroke-width:.5;fill:none}
+.s-axis{stroke:var(--warn);stroke-width:.5;stroke-dasharray:8 2 2 2;fill:none}
+.s-ground{stroke:var(--ink);stroke-width:1.2}
+.f-ink{fill:var(--ink)}
+</style>
+
+<div class="wrap">
+<div class="col">
+  <div class="eyebrow">SENNEP V2 · 20 Chassis · udkast 1 til vurdering</div>
+  <h1>Skelettet som generator</h1>
+  <p class="lede">Forslag til et parametrisk skelet, bygget som <code>SENNEP_ChassisGenerator</code> efter samme model som hjulgeneratoren: parametre ind, komponenten genbygges på stedet, og tjek af frigang, printstørrelse og overhang kører hver gang. Intet er modelleret i Fusion endnu.</p>
+  <div class="titleblock">
+    <span>Dato <b>2026-10-05</b></span><span>Mål <b>mm</b></span><span>Front <b>−Y</b></span><span>Materiale <b>PETG, X1C</b></span><span>Maks. del <b>250 mm</b></span><span>Last <b>50 kg samlet</b></span>
+  </div>
+</div>
+
+<div class="callout info">
+  <h3>Opdateret 2026-10-05: overhalet af v0</h3>
+  <p class="col">Robotten er nu 800 × 650, og printgrænsen er 220 mm. Det første hjørne er bygget i Fusion ("21 Pod Lab"), og flere detaljer er ændret: lejet holdes af en printet lejeholder, og motoren bæres af røret om gearkassen. Siden her viser stadig det oprindelige forslag.</p>
+</div>
+
+<div class="callout">
+  <h3>Først: ved 500 mm bredde kolliderer motorerne</h3>
+  <p class="col">Hjul, afstandsrør, leje, kobling og motor ligger på én akse. Fra hjulets yderside og ind er stakken 4 + 64,1 + 12,7 + 19,5 + 19 + 4 + 111,9 + 9 (terminaler) ≈ <b>244 mm pr. side</b>. Venstre og højre motor peger mod hinanden og deler akse, så de mødes i midten.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>RobotWidth</th><th>Hjulplacering</th><th class="num">Luft mellem terminalerne</th><th>Vurdering</th></tr></thead>
+    <tbody>
+      <tr><td>500 (nu)</td><td>WheelOuterOffset 47,6</td><td class="num bad">−11,5</td><td>Overlapper</td></tr>
+      <tr><td>500</td><td>Hjul i flugt med siden</td><td class="num bad">7,6</td><td>Ingen plads til ledninger</td></tr>
+      <tr><td>520</td><td>Hjul i flugt med siden</td><td class="num">27,6</td><td>Kun med loddede ledninger og bøjede terminaler</td></tr>
+      <tr><td><b>540</b></td><td>Hjul i flugt med siden</td><td class="num good">47,6</td><td><b>Anbefalet.</b> Plads til stik og en samleklods i midten</td></tr>
+    </tbody>
+  </table></div>
+  <p class="col">Tegningerne nedenfor er derfor vist ved <b>540 × 700</b>. Generatoren beregner det samme for enhver bredde og stopper med en fejl, hvis luften bliver under <code>Chassis_MotorGapMin</code>.</p>
+</div>
+
+<h2>Plan, set oppefra</h2>
+<div class="sheet">
+<svg viewBox="-300 -385 600 770" role="img" aria-label="Plan af skelettet set oppefra">
+  <!-- shell outline -->
+  <rect class="s-out" x="-270" y="-350" width="540" height="700"/>
+  <!-- bumpers -->
+  <g class="s-part">
+    <rect x="-270" y="-350" width="178" height="63"/><rect x="-90" y="-350" width="180" height="63"/><rect x="92" y="-350" width="178" height="63"/>
+    <rect x="-270" y="287" width="178" height="63"/><rect x="-90" y="287" width="180" height="63"/><rect x="92" y="287" width="178" height="63"/>
+  </g>
+  <!-- floor tiles -->
+  <g class="s-part">
+    <rect x="-154" y="-164" width="153" height="163"/><rect x="1" y="-164" width="153" height="163"/>
+    <rect x="-154" y="1" width="153" height="163"/><rect x="1" y="1" width="153" height="163"/>
+  </g>
+  <!-- rails -->
+  <g class="s-steel"><rect x="155" y="-120" width="40" height="240"/><rect x="-195" y="-120" width="40" height="240"/></g>
+  <!-- pods: well block + sleeve + rail stub (one part each) -->
+  <g class="s-pod">
+    <path d="M160.5,-285 H270 V-165 H195 V-120 H155 V-165 H160.5 V-198.7 H30 V-251.3 H160.5 Z"/>
+    <path d="M160.5,285 H270 V165 H195 V120 H155 V165 H160.5 V198.7 H30 V251.3 H160.5 Z"/>
+    <path d="M-160.5,-285 H-270 V-165 H-195 V-120 H-155 V-165 H-160.5 V-198.7 H-30 V-251.3 H-160.5 Z"/>
+    <path d="M-160.5,285 H-270 V165 H-195 V120 H-155 V165 H-160.5 V198.7 H-30 V251.3 H-160.5 Z"/>
+  </g>
+  <!-- splice blocks -->
+  <g class="s-steel"><rect x="-35" y="-253" width="70" height="56"/><rect x="-35" y="197" width="70" height="56"/></g>
+  <!-- motors (hidden, inside sleeves) -->
+  <g class="s-hid">
+    <rect x="32.8" y="-247.3" width="111.9" height="44.6"/><rect x="-144.7" y="-247.3" width="111.9" height="44.6"/>
+    <rect x="32.8" y="202.7" width="111.9" height="44.6"/><rect x="-144.7" y="202.7" width="111.9" height="44.6"/>
+  </g>
+  <!-- wheels -->
+  <g class="s-wheel">
+    <rect x="199.9" y="-278.1" width="64.1" height="106.2" rx="6"/><rect x="-264" y="-278.1" width="64.1" height="106.2" rx="6"/>
+    <rect x="199.9" y="171.9" width="64.1" height="106.2" rx="6"/><rect x="-264" y="171.9" width="64.1" height="106.2" rx="6"/>
+  </g>
+  <!-- electronics placeholders -->
+  <rect class="s-ghost" x="-65" y="-30" width="130" height="80"/>
+  <text x="0" y="16" font-size="10" text-anchor="middle" class="mut">batteri 3S6P (mål?)</text>
+  <circle class="s-ghost" cx="0" cy="-95" r="30"/>
+  <text x="0" y="-91" font-size="10" text-anchor="middle" class="mut">LiDAR (top)</text>
+  <g class="s-ghost"><rect x="55" y="-160" width="50" height="50"/><rect x="-105" y="-160" width="50" height="50"/><rect x="55" y="110" width="50" height="50"/><rect x="-105" y="110" width="50" height="50"/></g>
+  <text x="80" y="-131" font-size="8" text-anchor="middle" class="mut">driver</text>
+  <text x="-80" y="-131" font-size="8" text-anchor="middle" class="mut">driver</text>
+  <text x="80" y="139" font-size="8" text-anchor="middle" class="mut">driver</text>
+  <text x="-80" y="139" font-size="8" text-anchor="middle" class="mut">driver</text>
+  <!-- axes -->
+  <line class="s-axis" x1="-290" y1="-225" x2="290" y2="-225"/><line class="s-axis" x1="-290" y1="225" x2="290" y2="225"/>
+  <!-- labels -->
+  <text x="0" y="-362" font-size="12" text-anchor="middle" class="lbl">FRONT (−Y)</text>
+  <text x="215" y="-300" font-size="10" text-anchor="middle" class="lbl">Pod FR</text>
+  <text x="-215" y="-300" font-size="10" text-anchor="middle" class="lbl">Pod FL</text>
+  <text x="0" y="-262" font-size="9" text-anchor="middle">samleklods</text>
+  <text x="175" y="4" font-size="9" text-anchor="middle" transform="rotate(-90 175 4)">skinne 240</text>
+  <text x="-175" y="4" font-size="9" text-anchor="middle" transform="rotate(-90 -175 4)">skinne 240</text>
+  <text x="-77" y="-150" font-size="8" text-anchor="middle" class="mut">gulvflise</text>
+  <text x="0" y="-322" font-size="9" text-anchor="middle">kofanger: ToF, kantsensorer</text>
+  <!-- dims -->
+  <g class="s-dim"><line x1="-270" y1="372" x2="270" y2="372"/><line x1="-270" y1="366" x2="-270" y2="378"/><line x1="270" y1="366" x2="270" y2="378"/></g>
+  <text x="0" y="368" font-size="10" text-anchor="middle">RobotWidth 540</text>
+  <g class="s-dim"><line x1="-288" y1="-350" x2="-288" y2="350"/><line x1="-294" y1="-350" x2="-282" y2="-350"/><line x1="-294" y1="350" x2="-282" y2="350"/></g>
+  <text x="-292" y="60" font-size="10" text-anchor="middle" transform="rotate(-90 -292 60)">RobotLength 700</text>
+  <g class="s-dim"><line x1="282" y1="-225" x2="282" y2="225"/></g>
+  <text x="278" y="60" font-size="10" text-anchor="middle" transform="rotate(-90 278 60)">Wheelbase 450</text>
+  <g class="s-dim"><line x1="-231.95" y1="-160" x2="231.95" y2="-160"/></g>
+  <text x="0" y="-171" font-size="9" text-anchor="middle" class="mut">Track 463,9 (afledt)</text>
+  <text x="0" y="-212" font-size="8" text-anchor="middle" class="mut">luft 47,6</text>
+</svg>
+<div class="legend">
+  <span><i class="sw" style="background:var(--mustard-soft);border-color:var(--mustard)"></i>pod (én printet del pr. hjørne)</span>
+  <span><i class="sw" style="background:var(--steel-soft);border-color:var(--steel)"></i>bærende forbindelser</span>
+  <span><i class="sw" style="background:var(--part)"></i>gulv og kofangere</span>
+  <span><i class="sw" style="background:var(--wheel)"></i>hjul (fra hjulchatten)</span>
+  <span>stiplet: motor, elektronik</span>
+</div>
+</div>
+<p class="caption">Hver skinne er ét stykke på 240 mm, fordi poddene har en 45 mm stump skinne indbygget. Samlingerne sidder tæt på hjulene, hvor bøjningsmomentet er mindst. Gulvet er fire fliser på 155 × 165 med et 20 mm-gitter af M3-indsatser, så elektronik kan sættes hvor som helst.</p>
+
+<h2>Pod: snit gennem akslen</h2>
+<div class="col"><p>Et pod er hjulkasse, lejevæg og motorrør i <b>én printet del</b>. Leje og motor sidder derfor på samme stykke plast, og fejl fra samlinger kan ikke skubbe dem ud af akse. Snittet viser højre forhjul set forfra.</p></div>
+<div class="sheet">
+<svg viewBox="-12 -150 300 185" role="img" aria-label="Snit gennem pod langs hjulakslen">
+  <line class="s-ground" x1="-10" y1="0" x2="285" y2="0"/>
+  <text x="-8" y="8" font-size="5" class="mut">gulv z=0</text>
+  <!-- pod: roof, bearing wall, sleeve -->
+  <g class="s-pod">
+    <rect x="160.45" y="-112.2" width="109.55" height="4"/>
+    <rect x="160.45" y="-112.2" width="10" height="85.4"/>
+    <rect x="30" y="-79.4" width="130.45" height="3"/>
+    <rect x="30" y="-29.8" width="130.45" height="3"/>
+    <rect x="40" y="-86" width="100" height="6.6"/>
+    <rect x="40" y="-26.8" width="100" height="6.6"/>
+    <polygon points="160.45,-108.2 160.45,-79.4 131.65,-79.4"/>
+  </g>
+  <!-- end cap -->
+  <rect class="s-part" x="26" y="-79.4" width="4" height="52.6"/>
+  <!-- rail & splice (behind) -->
+  <rect class="s-ghost" x="155" y="-87" width="40" height="60"/>
+  <rect class="s-ghost" x="0" y="-82" width="26" height="58"/>
+  <!-- motor -->
+  <rect class="s-motor" x="32.8" y="-75.4" width="66" height="44.6"/>
+  <rect class="s-motor" x="98.8" y="-74.3" width="45.9" height="42.4"/>
+  <rect class="s-motor" x="23.8" y="-62" width="9" height="3"/>
+  <rect class="s-motor" x="23.8" y="-47" width="9" height="3"/>
+  <!-- collar with lugs -->
+  <rect class="s-steel" x="144.7" y="-82.3" width="4" height="58.4"/>
+  <!-- coupling, bearing, spacer, axle -->
+  <rect class="s-part" x="148.7" y="-61.55" width="19" height="16.9"/>
+  <rect class="s-steel" x="170.45" y="-88.6" width="14" height="71"/>
+  <rect class="s-part" x="167.7" y="-69.6" width="19.5" height="33"/>
+  <g class="f-ink"><rect x="158" y="-83.6" width="29" height="5"/><rect x="158" y="-27.6" width="29" height="5"/></g>
+  <rect class="s-part" x="187.2" y="-66.1" width="12.7" height="26"/>
+  <rect class="s-wheel" x="199.9" y="-106.2" width="64.1" height="106.2" rx="7"/>
+  <rect class="s-hid" x="199.9" y="-62.1" width="64.1" height="18"/>
+  <rect class="s-part" x="264" y="-74.1" width="4" height="42"/>
+  <!-- clearance -->
+  <rect class="s-warn" x="197.9" y="-108.2" width="72.1" height="108.2" fill="none" stroke-dasharray="2 2"/>
+  <line class="s-axis" x1="-5" y1="-53.1" x2="280" y2="-53.1"/>
+  <!-- labels -->
+  <g font-size="5">
+    <text x="62" y="-50">motor (flyder)</text>
+    <text x="100" y="-50" class="mut">gear Ø42,4</text>
+    <text x="150" y="-127" class="lbl" font-size="6">lejevæg 10</text>
+    <line class="s-dim" x1="165" y1="-123" x2="165" y2="-112"/>
+    <text x="171" y="-96" class="mut">KFL003</text>
+    <text x="196" y="-118" class="mut">hjulkasse, 2 mm frigang</text>
+    <text x="236" y="-55">hjul</text>
+    <text x="118" y="-90" class="mut">kanal til lug (±Z)</text>
+    <text x="131" y="-20" class="mut">krave + 4× M4</text>
+    <line class="s-dim" x1="146" y1="-23.5" x2="146" y2="-18"/>
+    <text x="196" y="-20" class="mut">2× M5 gennem</text>
+    <line class="s-dim" x1="186" y1="-23" x2="194" y2="-19"/>
+    <text x="0" y="-88" class="mut">samleklods</text>
+    <text x="160" y="-36" class="mut">kobling</text>
+  </g>
+  <!-- print direction -->
+  <g>
+    <line x1="18" y1="-115" x2="18" y2="-93" stroke="var(--mustard)" stroke-width="1"/>
+    <polygon points="14,-97 22,-97 18,-90" fill="var(--mustard)"/>
+    <text x="22" y="-118" font-size="5.2" class="lbl">printes stående på denne ende</text>
+    <text x="22" y="-111" font-size="4.5" class="mut">lag ⟂ akslen, alle huller lodrette</text>
+  </g>
+  <!-- dimension chain -->
+  <g class="s-dim">
+    <line x1="23.8" y1="16" x2="270" y2="16"/>
+    <line x1="23.8" y1="12" x2="23.8" y2="20"/><line x1="32.8" y1="12" x2="32.8" y2="20"/>
+    <line x1="144.7" y1="12" x2="144.7" y2="20"/><line x1="148.7" y1="12" x2="148.7" y2="20"/>
+    <line x1="167.7" y1="12" x2="167.7" y2="20"/><line x1="187.2" y1="12" x2="187.2" y2="20"/>
+    <line x1="199.9" y1="12" x2="199.9" y2="20"/><line x1="264" y1="12" x2="264" y2="20"/>
+    <line x1="270" y1="12" x2="270" y2="20"/>
+  </g>
+  <g font-size="4.6" text-anchor="middle">
+    <text x="28.3" y="25">9</text><text x="88.7" y="14">motor 111,9</text><text x="146.7" y="25">4</text>
+    <text x="158.2" y="14">19</text><text x="177.4" y="14">19,5</text><text x="193.5" y="25">12,7</text>
+    <text x="232" y="14">hjul 64,1</text><text x="267" y="25">4+2</text>
+  </g>
+  <g class="s-dim"><line x1="10" y1="0" x2="10" y2="-26.8"/></g>
+  <text x="8" y="-11" font-size="4.6" text-anchor="end">27</text>
+  <text x="250" y="-138" font-size="5" text-anchor="middle" class="mut">sidelinje x = 270 →</text>
+  <line class="s-dim" x1="270" y1="-134" x2="270" y2="-112"/>
+</svg>
+</div>
+<p class="caption">Frihøjden under motorerne bliver 27 mm (hjulradius − motorradius − væg). Den er afledt af hjulet og motoren og kan ikke vælges frit, medmindre motoren flyttes op.</p>
+
+<div class="grid2">
+<div>
+<h3>Lasten går gennem lejet, ikke motoren</h3>
+<div class="path">
+  <span>hjul</span><i>→</i><span>aksel</span><i>→</i><span>KFL003</span><i>→</i><span>2× M5 gennem</span><i>→</i><span>lejevæg</span><i>→</i><span>pod</span><i>→</i><span>skinne + gulv</span>
+</div>
+<div class="path"><span class="t">motor</span><i>→</i><span class="t">kun drejningsmoment</span><i>→</i><span class="t">2 lugs i kanaler</span><i>→</i><span class="t">pod</span></div>
+<p>Lejet centreres af en ring i lejevæggen, der passer til lejehusets bagside (0,1 mm pr. side). M5-boltene i Ø7-hullerne spænder kun. Vægten bliver presset sammen mellem lejeflangen og møtrikken, så lagene trykkes og ikke trækkes fra hinanden. Der er ingen gevindindsatser i lastvejen.</p>
+</div>
+<div>
+<h3>Motoren slottes ind og flyder</h3>
+<svg viewBox="-42 -42 84 84" role="img" aria-label="Endebillede af motorrør med krave og lugs" style="width:100%;max-width:300px;display:block;margin:auto">
+  <circle r="26.3" class="s-pod"/>
+  <circle r="23.3" fill="var(--sheet)" stroke="var(--mustard)" stroke-width=".8"/>
+  <rect x="-10" y="-33" width="20" height="8" class="s-pod"/><rect x="-10" y="25" width="20" height="8" class="s-pod"/>
+  <polygon points="-6.2,-22 6.2,-22 0,-28.4" fill="var(--sheet)" stroke="var(--mustard)" stroke-width=".6"/>
+  <polygon points="-6.2,22 6.2,22 0,28.4" fill="var(--sheet)" stroke="var(--mustard)" stroke-width=".6"/>
+  <circle r="22.3" class="s-steel"/>
+  <polygon points="-6,-22 6,-22 0,-28" class="s-steel"/><polygon points="-6,22 6,22 0,28" class="s-steel"/>
+  <circle r="12.8" fill="var(--sheet)" stroke="var(--steel)" stroke-width=".6"/>
+  <circle r="12.5" class="s-motor"/>
+  <path d="M-4,0 A4,4 0 1,0 3,-1.9 V1.9 A4,4 0 0,0 -4,0 Z" class="f-ink" transform="rotate(90)"/>
+  <g class="f-ink"><circle cx="12.37" cy="12.37" r="2"/><circle cx="-12.37" cy="12.37" r="2"/><circle cx="12.37" cy="-12.37" r="2"/><circle cx="-12.37" cy="-12.37" r="2"/></g>
+  <path d="M26.3,-6 A26.3,26.3 0 0,1 26.3,6" stroke="var(--warn)" stroke-width="2.4" fill="none"/>
+  <text x="29" y="2" font-size="4">vindue</text>
+  <text x="0" y="-36" font-size="4" text-anchor="middle">lug op</text>
+  <text x="0" y="39.5" font-size="4" text-anchor="middle">lug ned</text>
+  <text x="-40" y="-30" font-size="3.6" class="mut">4× M4 i motorens</text>
+  <text x="-40" y="-26" font-size="3.6" class="mut">egne gevind (PCD 35)</text>
+</svg>
+<p>En printet <b>krave</b> skrues på motorens front med 4× M4 i dens egne M4×6-gevind. Kraven har to trekantede lugs (45°, oppe og nede), der glider i kanaler i motorrøret: stramt på tværs (0,1 mm) og med luft radialt og langs aksen. Motoren skubbes ind fra midten, koblingen glider på akslen, pinolskruen spændes gennem vinduet, og et endedæksel med 2× M3 lukker røret med 2 mm aksial luft.</p>
+</div>
+</div>
+
+<div class="callout info">
+  <h3>Derfor flyder motoren</h3>
+  <p class="col">Kanalerne holder kun drejningsmomentet. Motoren kan ikke blive spændt skævt af røret, så små fejl i print og montage ender ikke i koblingen. Den finder selv sin plads langs aksen via koblingen. Lodret er den fri, og akslen bærer kun motorens egen vægt (6 N af de tilladte 50 N). Ved maks. moment (5,3 Nm) tager hver lug ca. 100 N.</p>
+</div>
+
+<h2>Styrke ved 50 kg</h2>
+<div class="tablewrap"><table>
+  <thead><tr><th>Sted</th><th>Last</th><th class="num">Beregnet</th><th>Vurdering</th></tr></thead>
+  <tbody>
+    <tr><td>Pr. hjul</td><td>50 kg / 4, ×2 for bump</td><td class="num">123 / 245 N</td><td>Lejet er langt over (KFL003 er dimensioneret til kN)</td></tr>
+    <tr><td>Moment i lejet</td><td>245 N × 54,5 mm fra hjulmidte til lejemidte</td><td class="num">13,4 Nm</td><td class="bad">Svageste punkt. Se nedenfor</td></tr>
+    <tr><td>M5-bolte i lejeflangen</td><td>13,4 Nm over 56 mm</td><td class="num">≈ 240 N/bolt</td><td>OK. Gennembolt med møtrik, vægge i tryk</td></tr>
+    <tr><td>Skinne (I-profil 60 × 40, 3–4 mm gods)</td><td>Hele lasten ×2 på 450 mm</td><td class="num">5,3 MPa · 1,8 mm</td><td>OK (PETG tåler ca. 15 MPa varigt). Statisk nedbøjning ca. 0,9 mm</td></tr>
+    <tr><td>Skinnesamling ved pod</td><td>Moment 105 mm fra hjulaksen</td><td class="num">20 Nm</td><td>OK med 4× M5 gennem (8 MPa i hullerne). For meget til M3 i indsatser</td></tr>
+    <tr><td>Lugs i motorrøret</td><td>5,3 Nm kortvarigt</td><td class="num">≈ 100 N/lug</td><td>OK</td></tr>
+    <tr><td>Lejevæg (bøjning)</td><td>13,4 Nm, væg 10 × 110</td><td class="num">7,4 MPa</td><td>OK, fordi lagene ligger parallelt med væggen. Det ville ikke holde, hvis poddet blev printet liggende</td></tr>
+  </tbody>
+</table></div>
+
+<div class="callout">
+  <h3>Svageste punkt: KFL003 er selvjusterende</h3>
+  <p class="col">Lejet har en kugleformet yderring i huset. Det er lavet til at tilgive skævhed ved montering, ikke til at bære et moment. Hjulet sidder 54,5 mm ude på akslen. Hvis kuglesædet drejer under last, går momentet videre til motorakslen: ca. 450 N mod tilladte 50 N. Jeg er ret sikker på konstruktionen, men ikke på hvor stramt sædet sidder på netop dine lejer.</p>
+  <p class="col"><b>Test, 2 minutter:</b> spænd lejet fast, stik akslen i, og hæng 10–15 kg 55 mm ude på akslen. Hvis inderringen vipper synligt, er der to veje: (a) 2 lejer pr. hjul (2 ekstra KFL003 ≈ 45 kr, og hjulchatten skal forlænge akslen), eller (b) en udvendig støtte uden om akselhovedet. Det koster det flugtende look. Poddet kan forberedes til (a) fra start.</p>
+</div>
+
+<h2>Generatoren</h2>
+<div class="col">
+<p><code>fusion/SENNEP_ChassisGenerator/</code> bygges efter samme opskrift som hjulgeneratoren: et <code>PARAMS</code>-dict bliver til Fusion-parametre, base features laves med TemporaryBRepManager, afrundinger går gennem en "try"-funktion, og der er en <code>build()</code> til MCP. Den læser hjulets parametre (<code>Wheel_OD</code>, <code>Axle_*</code>), men ændrer dem aldrig.</p>
+</div>
+
+<div class="tablewrap"><table>
+  <thead><tr><th>Modul</th><th class="num">Antal</th><th class="num">Ca. størrelse</th><th>Print</th><th>Samles med</th></tr></thead>
+  <tbody>
+    <tr><td><b>Pod</b> (hjulkasse + lejevæg + motorrør + skinnestump)</td><td class="num">4</td><td class="num">240 × 120 × 115</td><td>Stående på motorenden</td><td>Spejles venstre/højre af generatoren</td></tr>
+    <tr><td>Motorkrave med lugs</td><td class="num">4</td><td class="num">Ø60 × 4</td><td>Fladt</td><td>4× M4 i motoren</td></tr>
+    <tr><td>Endedæksel</td><td class="num">4</td><td class="num">Ø53 × 4</td><td>Fladt</td><td>2× M3 i indsatser</td></tr>
+    <tr><td>Samleklods (forreste og bageste akse)</td><td class="num">2</td><td class="num">70 × 56 × 60</td><td>Stående</td><td>4× M5 gennem til hvert pod</td></tr>
+    <tr><td>Sideskinne (I-profil)</td><td class="num">2</td><td class="num">240 × 40 × 60</td><td>På siden, så lagene følger længden</td><td>4× M5 gennem pr. ende</td></tr>
+    <tr><td>Gulvflise med trekantribber</td><td class="num">4</td><td class="num">155 × 165 × 12</td><td>Fladt</td><td>M3 i indsatser, 20 mm gitter</td></tr>
+    <tr><td>Kofanger (sensorholder)</td><td class="num">6</td><td class="num">180 × 63 × ~80</td><td>Fladt</td><td>M3 i indsatser</td></tr>
+  </tbody>
+</table></div>
+
+<div class="grid2">
+<div>
+<h3>Egne parametre</h3>
+<ul>
+  <li><code>Chassis_SideGap</code> 2: hjulets yderside til sidelinjen. Giver hjulets x-position og gør <code>Track</code> afledt.</li>
+  <li><code>Chassis_WheelClear</code> 2: frigang i hjulkassen.</li>
+  <li><code>Chassis_Wall</code> 4, <code>Chassis_BearingWall</code> 10.</li>
+  <li><code>Chassis_MotorFloat</code> 1,0 radialt, <code>Chassis_LugClear</code> 0,1.</li>
+  <li><code>Chassis_MotorGapMin</code> 30.</li>
+  <li><code>Chassis_RailH</code> 60, <code>Chassis_RailStub</code> 45.</li>
+  <li><code>Chassis_FloorRib</code> 8, <code>Chassis_GridPitch</code> 20.</li>
+  <li><code>Brg_*</code>: flange 71 × 46, boltafstand 56, huller Ø7, centrum 7 mm fra flangen. Læst i den gamle model, skal bekræftes.</li>
+  <li><code>Mot_*</code>: Ø42,4/Ø44,6, 45,9 + 66 lang, tap Ø25 × 2, 4× M4 på PCD 35 (datablad), terminaler 9 (gæt fra gammel model).</li>
+</ul>
+</div>
+<div>
+<h3>Tjek ved hver kørsel</h3>
+<ul>
+  <li>Luft mellem motorer ≥ <code>MotorGapMin</code>, ellers stop.</li>
+  <li>Hjulkasse ≥ 2 mm fra hjulets kontur (læses fra "11 Wheel Lab").</li>
+  <li>Hver del ≤ <code>MaxPrint</code> i sin printretning.</li>
+  <li>Ingen flader under 45° i printretningen (samme normal-tjek som bajonetten).</li>
+  <li>Ingen kollision mellem dele, motor, leje og hjul.</li>
+  <li>Log: frihøjde, skinnelængde, spænding i skinnen og lejemomentet ved 50 kg.</li>
+  <li>STL til <code>print/skelet_vX/</code> med <code>LÆS MIG.md</code>.</li>
+</ul>
+</div>
+</div>
+
+<h2>Udskiftelig skal (ikke MVP, men grænsefladen lægges nu)</h2>
+<div class="col">
+<p>Skelettet er platformen, og skallen er kun udseende. Alt, hvad robotten skal bruge for at køre, sidder på skelettet. Så kan en ny skal tegnes og printes uden at røre ved elektronikken.</p>
+</div>
+<div class="tablewrap"><table>
+  <thead><tr><th>Sidder på skelettet</th><th>Sidder i skallen, som aftagelige moduler</th></tr></thead>
+  <tbody><tr>
+    <td>Batteri, drivere, Pi 5, Nano, buck-convertere, sikringer, relæ, nødstop. <b>LiDAR på en mast</b> og <b>ToF + kantsensorer i kofangerne</b>. Deres position skal være den samme uanset skal, ellers skal softwaren kalibreres om.</td>
+    <td>Skærm, kamera, blæsere, højttalere og lys. Hvert modul er en lille printet ramme med 2× M3, der skrues ind i skallen indefra, og et stik i stedet for loddede ledninger.</td>
+  </tr></tbody>
+</table></div>
+<ul class="col">
+  <li><b>Skalbeslag:</b> 6 faste punkter på skelettet (toppen af de 4 pods og midten af skinnerne), placeret ud fra de samme parametre. En senere skalgenerator læser dem, så alle skaller passer.</li>
+  <li><b>Én stikplade</b> på skelettet, som alle skalmoduler sættes i (5 V, 12 V, I²C, PWM til blæsere, HDMI/USB til skærmen). En skal skiftes ved at tage stikkene ud, løsne 6 bolte og løfte.</li>
+  <li><b>Højdegrænse:</b> LiDAR-masten bestemmer, hvor høj en skal må være (frit 360° udsyn). Det bliver en parameter, som skalgeneratoren tjekker imod.</li>
+  <li>Prisen nu er lille: beslag og stikplade kommer med i generatoren fra start. Vi bygger kun én skal.</li>
+</ul>
+
+<h2>Rækkefølge</h2>
+<ol class="col">
+  <li>Du beslutter bredden og bekræfter målene nedenfor.</li>
+  <li>Generator v0 bygger <b>ét pod</b> med proxies for hjul, leje og motor og kører alle tjek. Det printes som et "rullende hjørne" med rigtigt hjul, leje og motor, så pasninger og leje kan testes før resten.</li>
+  <li>Spejling til 4 pods, samleklodser, skinner og gulv.</li>
+  <li>Stolper og mellemdæk til elektronik og top. Det hører sammen med 30 Electronics, så det tager vi bagefter.</li>
+</ol>
+
+<h2>Det skal jeg bruge fra dig</h2>
+<ol class="col">
+  <li><b>Bredde:</b> 540 (anbefalet), 520 med loddede ledninger, eller noget andet.</li>
+  <li><b>KFL003:</b> flangens længde og bredde, boltafstand, hullets diameter, lejehusets bagside (Ø og højde) og afstanden fra flangens bagside til midten af inderringen. Den gamle model siger 71 × 46, 56, Ø7, Ø46, 7.</li>
+  <li><b>Motor:</b> hvor langt stikker terminalerne bag ud, og sidder M4-hullerne på diagonalerne (PCD 35)?</li>
+  <li><b>Batteripakken:</b> ydre mål, som den er samlet nu.</li>
+  <li><b>Lejetesten</b> ovenfor.</li>
+  <li><b>Flydende motor:</b> er du med på princippet, eller vil du hellere have den boltet fast til lejevæggen?</li>
+</ol>
+</div>

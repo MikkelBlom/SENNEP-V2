@@ -1,0 +1,10 @@
+{
+	"autodeskProduct": "Fusion",
+	"type": "script",
+	"author": "Mikkel Blom",
+	"description": {
+		"": "SENNEP V2 mecanum wheel generator - rebuilds the wheel from the Wheel_/Axle_ parameters"
+	},
+	"supportedOS": "windows|mac",
+	"editEnabled": true
+}

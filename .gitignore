@@ -1,0 +1,23 @@
+# dependencies / build output
+node_modules/
+.next/
+out/
+dist/
+build/
+*.log
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+# secrets
+.env
+.env.*
+# python
+__pycache__/
+*.pyc
+# private: invoices, order lists and chat exports (kept locally only)
+/*.pdf
+gpttxt.txt
+botnroll.txt
+*.invoice.pdf

@@ -1,0 +1,14 @@
+Kamera hul højde skal være 0,5mm større
+Kamera monteringshuller ser korrekte ud
+
+LED huller er korrekt størrelse - men skal være ca. 1mm tætter på hinanden
+
+Lum sensor ser korrekt ud
+
+ToF ser korrekt ud
+
+Fan huller skal nok være 0,5mm tættere på hinanden
+
+Proto-board passer på den lange længde, men skal ca. 1mm tætter på den korte led.
+
+Skærm hul passer perfekt, men huller er helt forkerte

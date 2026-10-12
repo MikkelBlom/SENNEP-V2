@@ -1,0 +1,36 @@
+{
+  "name": "lidar-test-enviornment",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "concurrently \"npm run next:dev\" \"npm run electron:dev\"",
+    "next:dev": "next dev",
+    "electron:dev": "wait-on http://localhost:3000 && electron .",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "list": "node list-ports.js"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "next": "15.2.1",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "serialport": "^13.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "electron": "^34.3.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "15.1.4",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.0.0",
+    "wait-on": "^8.0.1"
+  }
+}

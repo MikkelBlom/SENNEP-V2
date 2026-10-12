@@ -1,0 +1,10 @@
+{
+	"autodeskProduct": "Fusion",
+	"type": "script",
+	"author": "Mikkel Blom",
+	"description": {
+		"": "SENNEP V2 chassis generator - rebuilds the corner pod from the Chassis_/Brg_/Mot_ parameters"
+	},
+	"supportedOS": "windows|mac",
+	"editEnabled": true
+}
