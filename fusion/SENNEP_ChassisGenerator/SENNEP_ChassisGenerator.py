@@ -262,7 +262,7 @@ KIT = [(2, 12), (2, 19), (3, 12), (3, 19), (4, 12), (4, 25)]
 INSERT = dict(od=4.5, L=5.0)      # M3 brass heat-set insert (approx.)
 # Printed M8x1.25 (Mikkel cuts the thread himself: die on the bolt, tap in the nut)
 PM8 = dict(blank=7.85, flat=3.4, head_s=13.0, head_k=5.5, nut_s=13.0, nut_m=6.5, nut_hole=7.0,
-           clear=8.8, w_od=16.0, w_t=2.0, L=26.0)
+           clear=8.8, w_od=16.0, w_t=2.0, L=22.0, flange=16.0, flange_t=2.0)   # flange replaces loose washers
 
 
 class Hardware:
@@ -306,6 +306,7 @@ class Hardware:
         """Printed M8 bolt blank: hex head + round shank (die-cut thread). D-D flats so it prints lying."""
         G = self.G
         b = self.hex_prism(PM8['head_s'], 0, PM8['head_k'])
+        G.op(b, G.tbm.createCylinderOrCone(Pt(0, 0, 0), PM8['flange'] / 2 * MM, Pt(0, 0, PM8['flange_t']), PM8['flange'] / 2 * MM), G.U)
         G.op(b, G.tbm.createCylinderOrCone(Pt(0, 0, -L), PM8['blank'] / 2 * MM, Pt(0, 0, 0.01), PM8['blank'] / 2 * MM), G.U)
         if flats:
             G.op(b, G.box(-20, 20, -PM8['flat'], PM8['flat'], -L - 1, PM8['head_k'] + 1), G.I)
@@ -314,6 +315,7 @@ class Hardware:
     def pnut(self):
         G = self.G
         b = self.hex_prism(PM8['nut_s'], 0, PM8['nut_m'])
+        G.op(b, G.tbm.createCylinderOrCone(Pt(0, 0, 0), PM8['flange'] / 2 * MM, Pt(0, 0, PM8['flange_t']), PM8['flange'] / 2 * MM), G.U)
         return G.op(b, G.tbm.createCylinderOrCone(Pt(0, 0, -1), PM8['nut_hole'] / 2 * MM, Pt(0, 0, PM8['nut_m'] + 1), PM8['nut_hole'] / 2 * MM), G.D)
 
     def pwasher(self):
@@ -322,13 +324,10 @@ class Hardware:
         return G.op(b, G.tbm.createCylinderOrCone(Pt(0, 0, -1), PM8['clear'] / 2 * MM, Pt(0, 0, PM8['w_t'] + 1), PM8['clear'] / 2 * MM), G.D)
 
     def pbolt_stack(self, face, up, nut_face, extra=None):
-        """Printed M8: washer + bolt on the head side, washer + nut on the other side."""
-        t = PM8['w_t']
-        out = [('P-Washer M8', self.place(self.pwasher(), face, up, extra))]
-        out.append(('P-M8x%d' % PM8['L'], self.place(self.pbolt(flats=False), (face[0] + up[0] * t, face[1] + up[1] * t, face[2] + up[2] * t), up, extra)))
+        """Printed M8 with flanged head and flanged nut (no loose washers)."""
+        out = [('P-M8x%d' % PM8['L'], self.place(self.pbolt(flats=False), face, up, extra))]
         dn = (-up[0], -up[1], -up[2])
-        out.append(('P-Washer M8', self.place(self.pwasher(), nut_face, dn, extra)))
-        out.append(('P-Nut M8', self.place(self.pnut(), (nut_face[0] + dn[0] * t, nut_face[1] + dn[1] * t, nut_face[2] + dn[2] * t), dn, extra)))
+        out.append(('P-Nut M8', self.place(self.pnut(), nut_face, dn, extra)))
         return out
 
     @staticmethod
@@ -779,6 +778,23 @@ def frame_numbers(des, Q, G, log):
     return F
 
 
+KEY_L = 30.0   # loose V-key bar length (horizontal, between the two bolt rows of a centre joint)
+
+
+def key_bar(G, Q, c, n, axis):
+    """Diamond bar that sits half in each of two facing V-grooves (one part for every centre joint)."""
+    kd = Q['Frame_KeyDepth']
+    L = KEY_L
+    nv, av = V(*n), V(*axis)
+    w = av.crossProduct(nv)
+    u = V(nv.x + w.x, nv.y + w.y, nv.z + w.z)
+    v = V(nv.x - w.x, nv.y - w.y, nv.z - w.z)
+    u.normalize()
+    v.normalize()
+    s = kd * math.sqrt(2)
+    return G.tbm.createBox(adsk.core.OrientedBoundingBox3D.create(Pt(*c), u, v, s * MM, s * MM, L * MM))
+
+
 def make_frame(G, Q, F):
     """Ladder frame parts (temporary bodies, robot coordinates) + bolt list.
     All beams are an upside-down U (web on top, open below): they print web-down with no overhang,
@@ -842,29 +858,33 @@ def make_frame(G, Q, F):
             # key into the pod: ridges on the end plate
             ye = sy * (y_in - g)
             G.op(r, ridge(xm, ye, (0, sy, 0), Zb + 3), U)
-            xa_, xb_ = sx * F['kxa'], sx * F['kxb']
-            G.op(r, G.vkey(((xa_ + xb_) / 2, ye, F['kz']), (0, sy, 0), (1, 0, 0), abs(xb_ - xa_), kd), U)
+            # horizontal key centred on the rail (symmetric, so one rail fits all four places)
+            kh = min(F['kx'] - F['kxa'], F['kxb'] - F['kx'])
+            G.op(r, G.vkey((xm, ye, F['kz']), (0, sy, 0), (1, 0, 0), 2 * kh, kd), U)
             for (ax, az) in F['ins']:
                 if xr0 + 3 < ax < xr1 - 3:
                     c = (sx * ax, ye, az)
                     G.op(r, hole(c, (0, -sy, 0), -1, T + 1), D)
                     bolts.append(('M3x12 i indsats', (sx * ax, ye - sy * T, az), (0, -sy, 0), 12, False))
-            # centre joint: the front half carries the ridge, the rear half the groove
+            # centre joint: a horizontal groove into each half (between the bolt rows) + a loose V-key bar
             yj = sy * g
-            G.op(r, ridge(xm, yj, (0, 1, 0), Zb + 3) if sy < 0 else groove(xm, yj, (0, 1, 0), Zb), U if sy < 0 else D)
+            G.op(r, G.vkey((xm, yj, sum(rows(Zb, Zr - T)) / 2), (0, sy, 0), (1, 0, 0), KEY_L + 2.0, kd + kc), D)
             for bx in (xm - 12, xm + 12):
                 for bz in rows(Zb, Zr - T):
                     G.op(r, hole((bx, yj, bz), (0, 1, 0), -T - 1, T + 1, RB), D)
                     if sy < 0:
                         bolts.append((KB, (bx, -g - T, bz), (0, -1, 0), PM8['L'], (bx, g + T, bz)))
-            # cross member joints in the inner wall: groove + 2x2 bolts
+            # cross member joints: groove + bolt holes in BOTH walls, so the rail is symmetric and
+            # the same part fits left/right and front/rear (the outer set is unused)
             xi = sx * xr0
             for yc in F['yc']:
                 if sy * yc <= 0:
                     continue
-                G.op(r, groove(xi, yc, (sx, 0, 0), Zb), D)
+                for xw, nw in ((xi, (sx, 0, 0)), (sx * xr1, (-sx, 0, 0))):
+                    G.op(r, groove(xw, yc, nw, Zb), D)
+                    for bz in rows(Zc0, Zr - T):
+                        G.op(r, hole((xw, yc, bz), (1, 0, 0), -T - 1, T + 1, RB), D)
                 for bz in rows(Zc0, Zr - T):
-                    G.op(r, hole((xi, yc, bz), (1, 0, 0), -T - 1, T + 1, RB), D)
                     bolts.append((KB, (xi - sx * (T + g), yc, bz), (-sx, 0, 0), PM8['L'], (xi + sx * T, yc, bz)))
             # lightening holes (diamonds) in both walls, between the cross members
             ys = [y for y in (sy * 30.0, sy * 115.0) if abs(y) + 16 < y_in - T]
@@ -880,9 +900,9 @@ def make_frame(G, Q, F):
             G.op(c, ridge(xe, yc, (sx, 0, 0), Zc0 + 3), U)
             for bz in rows(Zc0, Zr - T):
                 G.op(c, hole((xe, yc, bz), (1, 0, 0), -T - 1, T + 1, RB), D)
-            # centre joint: left half ridge, right half groove
+            # centre joint: a horizontal groove into each half (between the bolt rows) + a loose V-key bar
             xj = sx * g
-            G.op(c, ridge(xj, yc, (1, 0, 0), Zc0 + 3) if sx < 0 else groove(xj, yc, (1, 0, 0), Zc0), U if sx < 0 else D)
+            G.op(c, G.vkey((xj, yc, sum(rows(Zc0, Zr - T)) / 2), (sx, 0, 0), (0, 1, 0), KEY_L + 2.0, kd + kc), D)
             for bz in rows(Zc0, Zr - T):
                 G.op(c, hole((xj, yc, bz), (1, 0, 0), -T - 1, T + 1, RB), D)
                 if sx < 0:
@@ -892,6 +912,12 @@ def make_frame(G, Q, F):
             for k in range(1, int((xr0 - 20) // 30) + 1):
                 G.op(c, G.tbm.createCylinderOrCone(Pt(sx * 30 * k - sx * 15, yc, Zr - T - 1), RB * MM, Pt(sx * 30 * k - sx * 15, yc, Zr + 1), RB * MM), D)
             parts.append(('Cross y%+.0f %s' % (yc, 'left' if sx < 0 else 'right'), c))
+
+    # ---------- loose V-key bars for the centre joints (one part, printed many times) ----------
+    joints = [((sx * F['kx'], 0.0, sum(rows(Zb, Zr - T)) / 2), (0, 1, 0), (1, 0, 0)) for sx in (-1, 1)]
+    joints += [((0.0, yc, sum(rows(Zc0, Zr - T)) / 2), (1, 0, 0), (0, 1, 0)) for yc in F['yc']]
+    for (c, n, ax) in joints:
+        parts.append(('Key bar %s' % ('rail' if n[1] else 'cross'), key_bar(G, Q, c, n, ax)))
 
     # ---------- bumpers front/rear: 3 segments, bolted to the pods' outer faces ----------
     xs3 = W2 / 3
@@ -1087,8 +1113,8 @@ def build_chassis():
     npm8 = cnt['P-M8'] + 8                      # + 8 for the battery plate (build_battery)
     log.append('Koebt hardware: M3 (12 eller 19 mm) %d til hjoernerne + 8 M3x19 til lejeholderne = %d M3 (saet: 20+20), '
                'M3-skiver %d, M3-indsatser %d, M4x12 16 + M4-skiver 16 til motorkraverne' % (npod, npod + 8, npod + 8, npod + 8))
-    log.append('Printet hardware: %d P-M8x%d bolte, %d P-M8 moetrikker, %d P-skiver (du skaerer gevind M8x1.25)' %
-               (npm8, PM8['L'], npm8, 2 * npm8))
+    log.append('Printet hardware: %d P-M8x%d bolte, %d P-M8 moetrikker, begge med flange (ingen skiver; du skaerer gevind M8x1.25)' %
+               (npm8, PM8['L'], npm8))
     log.append('Dele: %d bjaelker/kofangere + mast + 4 hjoerner' % len(parts))
 
     # ---------- hardware examples: every bolt of the front-left quarter ----------
@@ -1105,8 +1131,8 @@ def build_chassis():
             ex.append(('Insert M3', HWm.place(HWm.insert(), (face[0] - up[0] * Q['Frame_Wall'], face[1] - up[1] * Q['Frame_Wall'], face[2] - up[2] * Q['Frame_Wall']), up)))
     m = F['corner'](-1, -1)
     for sy in (-1, 1):
-        ex += HWm.bolt_stack(3, 19, (P['x_keep0'], sy * P['hl'], 0), (-1, 0, 0), extra=m)
-        ex.append(('Insert M3', HWm.place(HWm.insert(), (I['x_back'], sy * P['hl'], 0), (-1, 0, 0), m)))
+        ex += HWm.bolt_stack(3, 19, (P['x_head_seat'], sy * P['hl'], 0), (1, 0, 0), extra=m)
+        ex.append(('Insert M3', HWm.place(HWm.insert(), (P['x_keep0'], sy * P['hl'], 0), (-1, 0, 0), m)))
     for k in range(4):
         a = math.radians(45 + 90 * k)
         ex += HWm.bolt_stack(4, 12, (P['x_coll0'], Q['Mot_HolePCD'] / 2 * math.cos(a), Q['Mot_HolePCD'] / 2 * math.sin(a)), (-1, 0, 0), extra=m)
