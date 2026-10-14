@@ -167,3 +167,4 @@
 ## 2026-10-15 — Claude Code (Opus 5.5)
 **Summary:** Mikkel printede 4 ens hjul; to skal være spejlvendte. Spejlede STL'er direkte (x → −x i printframe, vindingsorden byttet, samme fortegn på volumen som originalen) i `print/testhjul_v3.1/spejlvendt/`: Rim A, Rim B, afstandsrør og samleringen. Afstandsrøret og samleringen er håndede (symmetritest på meshet: bedste spejlplan afviger 3,6 / 5,4 mm), derfor også de. Ruller, sleeves, aksel og housing er uændrede. Fusion var ikke forbundet; generatoren har stadig ikke en `HAND`-parameter (FEATURES: Left/right-handed wheels).
 **Open:** Hvilke hjørner der får hvilken hånd (X-mønster set oppefra) er ikke tegnet i Fusion.
+- (forts.) Rettelse: det originale afstandsrør virker i den spejlvendte Rim A (Fusion: lige ind ved 0° fri, drej −60° fri hele vejen, låst ved −60° = trukket ud blokeret, sekskant flugter). Spejlet afstandsrør slettet.
