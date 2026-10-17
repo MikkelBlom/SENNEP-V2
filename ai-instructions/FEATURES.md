@@ -37,7 +37,7 @@ Status: ✅ done · 🔄 in progress · ⏳ waiting (on a print/test/Mikkel) · 
 ## Software
 | Feature | Status | Description | Date | Depends on | Blocked by |
 |---|---|---|---|---|---|
-| LiDAR stack v2 (`lidar/`) | 🔄 | Rust: LD19 parser, safety zones, LiDAR odometry, occupancy grid, wall lines, objects, moving-thing tracking, auto-recording, playback in the page, simulator, bench. 36 tests green (incl. 3 real recordings). Runs on the real LiDAR (PC, Windows) | 2026-10-12 | — | Run on the Pi 5 |
+| LiDAR stack v2 (`lidar/`) | 🔄 | Rust: LD19 parser, safety zones, LiDAR odometry, occupancy grid, wall lines, objects, moving-thing tracking, auto-recording, playback in the page, simulator, bench. 36 tests green (incl. 3 real recordings), also on the Pi. **Runs on the Pi 5** as the `sennep-lidar` service (http://sennep.local:8080, recordings in `/var/lib/sennep-lidar/recordings`); ~4 % of one core (`docs/lidar/BENCHMARK-pi.md`) | 2026-10-17 | — | Kiosk on the 7" screen |
 | Pi ↔ Mega link | 🔄 | Approved design: GPIO UART 250 k, COBS + CRC-16, spec in `protocol/messages.json`. C core + Mega sketch done (12 071 checks green). Next: Rust Pi side | 2026-10-12 | — | — |
 | LiDAR test app | ✅ | Electron + Next.js viewer and pipeline. Known: `next build` fails on missing `onCalibrationProgress` preload type | 2026-04-10 | — | — |
 | Motor control firmware | 📋 | Mecanum kinematics, soft-start, collision backup, RF override | — | Drivers, Pi ↔ Mega link | — |

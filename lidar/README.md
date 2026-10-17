@@ -50,7 +50,8 @@ were made on a desk); otherwise everything inside the robot's outline (800 × 65
    The user must be in `dialout`: `sudo usermod -aG dialout sennep` (log out and in).
 3. Try: `./sennep-lidar --serial /dev/serial/by-id/usb-Silicon_Labs_…`, and open `http://<pi>:8080`.
 4. Record for later tests: add `--record tur1.ldr` (raw bytes + time; replayed bit for bit with `--replay tur1.ldr`).
-5. Start automatically: `deploy/sennep-lidar.service` (instructions at the top of the file).
+5. Start automatically: `deploy/sennep-lidar.service` (instructions at the top of the file). The service records into
+   `/var/lib/sennep-lidar/recordings/` and assumes the LiDAR is on the robot (no `--no-body`). Running on SENNEP's Pi since 2026-10-17.
 6. **Measure the Pi:** `./bench --long --recordings "<repo>/Lidar Test Enviornment/recordings" --out BENCHMARK-pi.md`
    and put the result in `docs/lidar/`.
 

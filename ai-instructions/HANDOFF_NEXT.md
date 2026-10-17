@@ -18,7 +18,7 @@ Read `/CLAUDE.md` → `INDEX.md` → this file. Everything below is on `main` (p
 | Breadboard M1 | Plan v0.2 **approved** (Pi 5 + Mega + 4 motors + LiDAR; Wago power, breadboard signals). Pin map = `firmware/sennep_mega/config.h` (+ A4 bus sense, 29 arm button reserved). **Next: wiring diagrams + step-by-step build guide** | `docs/electronics/BREADBOARD_PLAN.md` |
 | Pi ↔ Mega link | Design approved: GPIO UART 250 k via BSS138, COBS + CRC-16, `protocol/messages.json`. **Q1 decided: Arduino C++ + IDE on the Mega**, Rust on the Pi. C core + sketch done (12 071 checks). **Next: Rust Pi side** (replace `tools/sennep_link.py`), Mega drivers (VL53L0X, HC-SR04, NRF24) | `ai-instructions/PLAN_PI_MEGA_LINK.md` |
 | PCB | Blocked until the breadboard is built and tested | — |
-| LiDAR (`lidar/`, Rust) | **Runs on the real LiDAR on his PC.** Walls as stable lines, objects as outlines, moving-thing tracking (speed, trail, 1 s prediction, lost/re-acquire), auto-recording + Keep/Mark, **playback in the page** (Recordings list, jump to mm:ss, speed, marks, back to live). 36 tests incl. his 3 recordings. **Next:** Pi 5 (aarch64 build, by-id serial, kiosk), zone report over the link, gyro, more recordings | `lidar/README.md`, `docs/lidar/PLAN.md` §11 |
+| LiDAR (`lidar/`, Rust) | **Runs on the real LiDAR on his PC.** Walls as stable lines, objects as outlines, moving-thing tracking (speed, trail, 1 s prediction, lost/re-acquire), auto-recording + Keep/Mark, **playback in the page** (Recordings list, jump to mm:ss, speed, marks, back to live). 36 tests incl. his 3 recordings. **Runs on the Pi 5 since 2026-10-17** (service `sennep-lidar`, http://sennep.local:8080 or http://192.168.0.106:8080). **Next:** kiosk on the 7" screen, zone report over the link, gyro, more recordings | `lidar/README.md`, `docs/lidar/PLAN.md` §11 |
 
 ## LiDAR specifics for whoever continues
 - Windows build (no Rust on his PC): `rustup target add x86_64-pc-windows-gnu`, `apt-get install gcc-mingw-w64-x86-64`,
@@ -36,6 +36,6 @@ Read `/CLAUDE.md` → `INDEX.md` → this file. Everything below is on `main` (p
 
 ## Open questions / loose ends
 - **Delete the 6 old `claude/*` branches** on GitHub (the cloud proxy refused deletes; all merged into `main`).
-- Physical parts count (hub Parts/Tools, `counted` column); Pi 5 RAM (4 or 8 GB); Pi 5 / LiDAR prices (Gmail).
+- Physical parts count (hub Parts/Tools, `counted` column); Pi 5 RAM: 4 GB (seen on the Pi); Pi 5 / LiDAR prices (Gmail).
 - WORKING_NOTES C1–C23 (C2 and C9 resolved). Arm button vs Pi-only ARM (C21). E-stop second NC contact (C20).
 - Mechanics (local Fusion sessions): wheel v3.1, assembly ring, housing v2, frame joint test still to print/test.

@@ -9,6 +9,9 @@ After=network.target
 [Service]
 User=sennep
 Group=dialout
+# Recordings (auto + kept) go to /var/lib/sennep-lidar/recordings; systemd creates the folder.
+StateDirectory=sennep-lidar
+WorkingDirectory=/var/lib/sennep-lidar
 # Replace with the adapter's stable name: ls /dev/serial/by-id/
 ExecStart=/usr/local/bin/sennep-lidar --serial /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0 --http 0.0.0.0:8080
 Restart=always
