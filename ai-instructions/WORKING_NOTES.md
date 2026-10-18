@@ -27,6 +27,8 @@ Kept open until Mikkel decides. A full consolidation is planned; do not resolve 
 | C21 | **Arm button vs Pi-only ARM** | 2026-10-12 | Breadboard plan has a physical arm button (pin 29); link safety rules say ARM comes from the Pi. Role undecided |
 | C22 | **Test LiPo (Zippy 1000 mAh, no BMS) fried V1** | 2026-10-12 | Only with a fuse < 10 cm from the XT60, LiPo alarm, never < 10.5 V under load |
 | C23 | Inventory says 2 Mega / 2 Nano / 0 Uno; Mikkel says 1 Mega, several Uno, a few Nano | 2026-10-12 | Settle in the parts count |
+| C24 | **Screws shaking loose** (V1 shook so hard that screws came out) | 2026-10-18 | Nyloc nuts everywhere possible, blue Loctite only in brass inserts (counts as glue: ask first), paint marks to spot turning. Watch it on the first floor runs |
+| C25 | 2040/2020 profiles come in 50 mm steps; the frame must be drawn around those lengths. Housings are printed, so the brackets must use their existing M3 inserts (4 per flat face) and V-grooves | 2026-10-18 | In the frame redesign (t27) |
 | C18 | Screen mounting holes | 2025 | Wrong in the laser-cut test. Check the Waveshare drawing before the body panels. |
 
 ## Decisions
@@ -34,6 +36,13 @@ Newest first. Reasoning included so they are not re-litigated.
 
 | Date | Decision | Why | Rejected |
 |---|---|---|---|
+| 2026-10-18 | SENNEP's Pi software is built as **Faber apps/parts**; SENNEP may depend on Faber | It forces Faber to get better; Circuits, the Arduino editor and live state come for free on the robot | A standalone SENNEP binary like `lidar/` |
+| 2026-10-18 | The LiDAR view and the AI camera are **separate apps** installed into Faber, not built into Faber; they live in the SENNEP V2 repo | They are SENNEP's own custom viewers | Built-in Faber windows |
+| 2026-10-18 | No written M1 build guide or SVG diagrams: build step by step with Claude from the Circuits drawing in Faber | The drawing exists, is checked and simulates | Separate wiring SVGs + guide (t08/t09) |
+| 2026-10-18 | Next milestone: battery welded with BMS, charge and current tested, behind its fuse, driving the wheels on the floor | The robot is too big for a table | Bench test on a table |
+| 2026-10-18 | Frame and test parts in **black PLA** (Bambu PLA Basic only); only ~1 kg of other colours left and no mixed colours | Mikkel wants genuine Bambu filament and one colour | PETG, mixed colours |
+| 2026-10-18 | Explore an aluminium-profile frame (2040/2020) with M5 + nyloc instead of printed rails and printed M8 | Printed bolts and big rails look bad; V1 shook its screws loose | Slimmer printed rails (kept as fallback) |
+| 2026-10-18 | Spend as little as possible (Mikkel saves for an exchange trip): price everything before buying, workshop vs spot welder decided by the workshop's price | — | — |
 | 2026-10-12 | Battery orientation: black mark front-left on the top face; front row G1 (slots 1–6), middle G2, back G3; bottom view flipped front-over-back | One way to reference cells and strips, also after the tops are covered | — |
 | 2026-10-12 | Mega stays Arduino C++ with the Arduino IDE; Rust only on the Pi | Code already written and tested; IDE + Upload keeps working; AVR is Rust's weakest target | Rust on the Mega (avr-hal); later Rust MCU → RP2040/Pico |
 | 2026-10-12 | Project hub `hub/`: local HTML over plain CSV/Markdown files in the repo, edits saved through Chrome folder access | Mikkel and Claude edit the same files; no server, works offline | Tiny local server; online claude.ai page |

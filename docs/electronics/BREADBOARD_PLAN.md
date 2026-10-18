@@ -1,7 +1,7 @@
 # SENNEP V2 — Electronics, breadboard version (plan v0.2)
 
-Status: **Plan v0.2 — APPROVED by Mikkel 2026-10-12 (consolidation). Next: wiring diagrams + step-by-step build guide for M1.**
-No diagrams yet.
+Status: **Plan v0.2 — NOT reviewed by Mikkel** (2026-10-18: the consolidation marked it approved, but he hasn't read it).
+No build guide: Mikkel builds it step by step with Claude, from the drawing in Faber's Circuits (Add ▾ → Example: SENNEP V2).
 Owner: this file owns the *wiring* (power, connectors, pins, level shifting). The protocol between the Pi and the Mega is
 owned by `docs/electronics/PI_MEGA_LINK.md` and `ai-instructions/PLAN_PI_MEGA_LINK.md` (the plan is newer if they disagree).
 The Mega pin map lives in `firmware/sennep_mega/config.h`; §2.7 here mirrors it. The battery series connections are a
@@ -440,6 +440,8 @@ Open:
 ## 9. Changes in consolidation (2026-10-12)
 
 - Status: plan v0.2 approved by Mikkel; next step is wiring diagrams + a step-by-step build guide for M1.
+  **Corrected 2026-10-18:** Mikkel hasn't reviewed the plan. No diagrams or build guide: the Circuits drawing in Faber
+  is the diagram, and the build goes step by step.
 - Translated from Danish to English. Fixed two step references (IS and stall measurement is §7 step 5, not step 3).
 - Pi ↔ Mega is GPIO UART: Mega Serial1 (18/19) ↔ Pi GPIO14/15 via BSS138 at 250 000 baud, plus Pi GPIO4 → ch3 → Mega RESET; USB is only debug/plan B (was "proposal: USB").
 - ESP-01 dropped (the Pi has WiFi; the converter channels are needed for the link + reset): removed from Serial1 and the 3.3 V supply.

@@ -8,7 +8,7 @@ s06;LiPo alarm (balance-plug buzzer);1;20;minimum;Test LiPo has no BMS;to buy;;
 s07;Wago 221 (or screw terminals);20;50;minimum;Power distribution + star ground;to buy;;
 s08;USB-C pigtail, male;1;15;minimum;Buck → Pi 5;to buy;;
 s09;Fish-paper rings 18650 (self-adhesive);20;30;recommended;Battery + pole insulation;to buy;;
-s10;Spot-welding service;1;;minimum;Battery;to ask;;Price unknown: call Fyns Batteri Service
+s10;Spot-welding service;1;;minimum;Battery;to ask;;Mail sent to Fyns Batteri Service 2026-10-18, waiting for a price
 s11;Ring terminals M4 for 10 AWG;4;40;recommended;Battery main lead to strip;to buy;;
 s12;6-way blade fuse box with ground bar;1;80;recommended;Replaces the inline holders;to buy;;
 s13;BSS138 level converter;3;30;recommended;Spare + Pi link;to buy;;
@@ -16,3 +16,11 @@ s14;Dedicated 5 V / 5 A+ buck for the Pi 5;1;80;recommended;Only if the XL4015 d
 s15;INA226 + 50 A / 75 mV shunt;1;60;recommended;Measure total battery current (INA219 max ~3.2 A);to buy;;
 s16;Ferrules + crimp tool, ring lugs, heat shrink;1;125;recommended;Reliable screw terminals;to buy;;
 s17;Bench power supply 30 V / 5 A with current limit;1;500;recommended;Safe first power-up;to buy;;
+s18;Bambu PLA Basic black, refill 1 kg;10;825;minimum;Frame + test parts;to buy;https://eu.store.bambulab.com/da/products/pla-basic-refill-pack;110.44 € in Mikkel's cart (2026-10-18)
+s19;Spot welder AWithZ 9000 W with pedal (portable, own battery);1;345;minimum;Battery, only if the workshop is dearer;check first;https://www.aliexpress.com/w/wholesale-18650-spot-welder.html;5 000+ sold, 4.8 ★. The 90-gear AWithZ (190 kr, 8 000+ sold) is borderline for 0.15 mm pure nickel
+s20;Nyloc nuts M5, 304 stainless, DIN985;200;85;minimum;Frame (anti-vibration);to buy;https://www.aliexpress.com/w/wholesale-m5-nyloc-nut-stainless.html;0.41 kr/pc (5 000+ sold, 4.9 ★)
+s21;Hex socket screws M5, 304 stainless, DIN912, lengths per the redesign;200;60;minimum;Frame;check first;;~0.05–0.30 kr/pc depending on length. Check the 290-piece assortment first
+s22;Aluminium profile 2040 V-slot, black, cut to length (~450 mm);2;180;recommended;Frame side rails;check first;https://www.aliexpress.com/item/1005004679698586.html;88.73 kr each at 450 mm (1 000+ sold, 4.8 ★). Lengths in 50 mm steps
+s23;Aluminium profile 2020 V-slot, black, cut to length (~400 mm);4;210;recommended;Frame cross beams;check first;https://www.aliexpress.com/item/1005004679698586.html;52.25 kr each at 400 mm
+s24;2020 connector set (corner brackets + M5 T-nuts + M5×8);1;50;recommended;Frame;check first;;~47 kr for 100 pieces
+s25;Loctite 243 (blue, 10 ml);1;109;nice;Screws into brass inserts;check first;;Only where there is no nyloc. Buy locally (fakes on AliExpress)

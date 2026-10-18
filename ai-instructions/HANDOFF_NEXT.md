@@ -7,7 +7,20 @@ Read `/CLAUDE.md` → `INDEX.md` → this file. Everything below is on `main` (p
 - He forgets to pull → `.\sync "message"` (repo root, `sync.cmd`) = pull + add all + commit + push; stops on a conflict.
 - **Never assume what he did — look at the data first** (he was rightly angry when I blamed an "old exe").
 - **Show, don't describe:** coordinates and "far corner" mean nothing to him. Use screenshots or point him to a
-  time in the LiDAR playback ("open room_3, jump to 1:21"). Ask questions with the AskUserQuestion tool.
+  time in the LiDAR playback ("open room_3, jump to 1:21"). Ask questions **in plain text**, numbered with a
+  recommendation each: never AskUserQuestion or wrap-up question boxes (they hide the text in the desktop app).
+- Replies in Danish. He saves money (exchange trip to Korea): price things before suggesting a purchase.
+
+## Update 2026-10-18 (status grilling)
+- Wheels v3.1 + housings v2: all 4 printed and assembled with bearings and motors. Next mechanically: a frame they
+  bolt onto. Mikkel dislikes the printed rails and M8 bolts → explore 2040/2020 aluminium profiles (t27, C25). Out of
+  black Bambu filament; 10 rolls of black PLA Basic in his cart (~110 €).
+- Battery: he mailed Fyns Batteri Service for a price; otherwise a spot welder (~345 kr, hub Shopping s19).
+- Breadboard plan was never reviewed by him (status corrected). No build guide: step by step from the Circuits drawing.
+- Pi software = Faber. LiDAR view and AI camera (IMX500, already in inventory) become separate apps (t30, t31).
+  Faber already has `examples/apps/sennep` (LiDAR top view + safe driving); it should move to this repo.
+- Motor stall: ~8 A, computed from the measured 1.7–1.8 Ω winding (Circuits corrected; the 30 A main fuse still
+  blows with all four held still).
 - Short, direct answers; he answers questions, he does not read long output.
 
 ## State per workstream

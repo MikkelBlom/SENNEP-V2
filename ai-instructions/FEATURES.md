@@ -5,16 +5,17 @@ Status: ✅ done · 🔄 in progress · ⏳ waiting (on a print/test/Mikkel) · 
 ## Mechanics
 | Feature | Status | Description | Date | Depends on | Blocked by |
 |---|---|---|---|---|---|
-| Wheel generator v3.1 | ⏳ | Printed mecanum wheel, STLs pre-oriented (`print/testhjul_v3.1/`) | 2026-10-11 | — | Mikkel printing and assembling |
+| Wheel generator v3.1 | ✅ | Printed mecanum wheel, STLs pre-oriented (`print/testhjul_v3.1/`). All 4 printed and assembled in their housings with bearings and motors (2 mirrored) | 2026-10-18 | — | — |
 | Wheel assembly ring | ⏳ | Cradle that holds the rollers during assembly | 2026-10-12 | Wheel v3.1 | Test print |
 | Wheel fit tuning | 📋 | Adjust grooves, bayonet, hex and roller fits after the test assembly | 2026-10-12 | Wheel v3.1 + ring printed | Test result |
 | Left/right-handed wheels | 📋 | FR/RL need mirrored rollers (`HAND`) | 2026-10-05 | Wheel fits | — |
-| Corner housing v2 | ⏳ | Keeper screws from the back, tool channels (`print/housing_v2/`) | 2026-10-12 | Wheel v3.1 | Test print |
+| Corner housing v2 | ✅ | Keeper screws from the back, tool channels (`print/housing_v2/`). All 4 printed and in use | 2026-10-18 | Wheel v3.1 | — |
 | Motor lock | 📋 | Axial lock for the floating motor (only the set screw today) | 2026-10-06 | Housing v2 | — |
 | Housing material reduction | 📋 | Smaller outer volume (e.g. 45° wedge under the motor tube); hollowing alone did not help | 2026-10-12 | Housing v2 tested | — |
-| Rebuild "20 Chassis" with housing v2 | 📋 | Frame still uses the old keeper placement (`build_chassis` ~l.1066) | 2026-10-12 | Housing v2 | Fusion (local session only) |
+| Rebuild "20 Chassis" with housing v2 | ⛔ superseded | Frame still uses the old keeper placement (`build_chassis` ~l.1066) | 2026-10-12 | Housing v2 | Fusion (local session only) |
 | Ladder frame v3.3 | ✅ | Beams, bumpers, LiDAR mast, V-keys, printed M8, diamond channel | 2026-10-06 | — | — |
-| Frame joint test print | ⏳ | V-key + printed M8 bolt/nut (`print/skelet_test/`), then tune `Frame_KeyClear` and `PM8` | 2026-10-06 | — | Test print |
+| Frame joint test print | ⛔ superseded | V-key + printed M8 bolt/nut (`print/skelet_test/`), then tune `Frame_KeyClear` and `PM8` | 2026-10-06 | — | Test print |
+| Aluminium-profile frame | 📋 | 2040 side rails + 2020 cross beams (black V-slot, cut to length by the seller), printed brackets onto the housings' M3 inserts and V-grooves, M5 + nyloc. Replaces the printed rails and M8 bolts (Mikkel: ugly, shook loose on V1) | 2026-10-18 | Housing v2 | Mikkel's go on the price (~450 kr) |
 | Full frame STL export | 📋 | All frame parts to `print/` | 2026-10-06 | Joint test | — |
 | Battery mount | ✅ | Plate + clamps on the cross beams (modelled) | 2026-10-06 | Battery pack dimensions | — |
 | Body v0 | ✅ | Visual shell with all cut-outs | 2026-10-06 | Frame | — |
@@ -28,8 +29,8 @@ Status: ✅ done · 🔄 in progress · ⏳ waiting (on a print/test/Mikkel) · 
 |---|---|---|---|---|---|
 | Parts list (`components/`) | ✅ | English inventory with `source` + `condition` columns, datasheets | 2026-10-12 | — | — |
 | Physical parts count | 🔄 | Tick `counted` per part in the hub (Parts/Tools tabs); set qty, source, condition; add missing parts. Pi 5 RAM/price + LiDAR price still open | 2026-10-12 | Parts list | Mikkel counting |
-| 3S6P battery pack | ⏳ | Plan v2 approved: measure + match cells now, then spot-weld at a workshop in Odense (`docs/electronics/BATTERY_PLAN.md`) | 2026-10-12 | — | Mikkel measuring cells + calling the workshop |
-| Breadboard circuits (M1) | 🔄 | Plan v0.2 approved (`docs/electronics/BREADBOARD_PLAN.md`). M1 = Pi 5 + Mega + 4 motors + LiDAR. Next: wiring diagrams + build guide | 2026-10-12 | — | — |
+| 3S6P battery pack | ⏳ | Cells measured and matched. Spot-welding: mail sent to Fyns Batteri Service 2026-10-18; if dearer than a ~350 kr spot welder, buy the welder (hub Shopping s19). Then BMS, charge and current test, fuse, wheels | 2026-10-18 | — | Workshop's answer |
+| Breadboard circuits (M1) | 🔄 | Plan v0.2 **not reviewed by Mikkel** (`docs/electronics/BREADBOARD_PLAN.md`). The diagram is the Circuits drawing in Faber; no written guide, built step by step. M1 runs on the floor, not a table | 2026-10-18 | — | — |
 | PCB | ⛔ | Carrier/shield board in KiCad. Session stopped: needs a tested breadboard first | 2026-10-12 | Breadboard circuits | Breadboard not built |
 | Motor drivers | 📋 | Replace L298N with the 43 A H-bridges | 2025-12 | Chip confirmed | — |
 | ESP-01 guide | ✅ | Pinout, wiring SVG, sketches. **ESP-01 dropped from the design** (Pi has WiFi) | 2026-10-12 | — | — |
